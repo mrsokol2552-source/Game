@@ -11,6 +11,7 @@ namespace Game.Presentation.UI
     public class HudController : MonoBehaviour
     {
         private static Rect s_LastHudArea;
+        private Vector2 _statusScroll;
 
         public static bool IsPointerOverHud()
         {
@@ -54,7 +55,7 @@ namespace Game.Presentation.UI
         {
             if (CompositionRoot.Game == null) return;
 
-            var area = new Rect(10, 10, 300, 200);
+            var area = new Rect(10, 10, 300, 230);
             s_LastHudArea = area;
             GUILayout.BeginArea(area, GUI.skin.box);
             GUILayout.Label("Resources:");
@@ -64,13 +65,7 @@ namespace Game.Presentation.UI
                 GUILayout.Label($"- {type}: {v}");
             }
 
-            var root = FindObjectOfType<CompositionRoot>();
-            if (root != null && !string.IsNullOrEmpty(root.LastStatusMessage))
-            {
-                GUILayout.Space(8);
-                GUILayout.Label(root.LastStatusMessage);
-            }
-
+            // Controls first so they stay visible
             if (GUILayout.Button("Save"))
             {
                 FindObjectOfType<CompositionRoot>()?.Save();
@@ -78,6 +73,17 @@ namespace Game.Presentation.UI
             if (GUILayout.Button("Load"))
             {
                 FindObjectOfType<CompositionRoot>()?.Load();
+            }
+
+            // Scrollable status area so long messages don't push controls out
+            var root = FindObjectOfType<CompositionRoot>();
+            if (root != null && !string.IsNullOrEmpty(root.LastStatusMessage))
+            {
+                GUILayout.Space(6);
+                var style = new GUIStyle(GUI.skin.label) { wordWrap = true };
+                _statusScroll = GUILayout.BeginScrollView(_statusScroll, GUILayout.Height(100));
+                GUILayout.Label(root.LastStatusMessage, style);
+                GUILayout.EndScrollView();
             }
             GUILayout.EndArea();
         }

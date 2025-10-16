@@ -60,17 +60,11 @@ Legend: Priority P1вЂ“P3; Size S/M/L; Status todo/in-progress/done.
   - Links: My project/Assets/Scripts/Domain/Combat/{DamageType.cs,CombatSimulator.cs}:1
   - Depends: S2-02
 
-- ID: S2-05 вЂ” Building placement API
-  - Area: Build | Priority: P1 | Size: M | Status: todo
+- ID: S2-05 — Building placement API
+  - Area: Build | Priority: P1 | Size: M | Status: done
   - DoD: Validate cost vs EconomyState; success/failure updates stocks; no visuals required.
-  - Links: вЂ”
-  - Depends: S1-03, S1-05, S1-09 — Config ScriptableObjects (resources/units/game)
-  - Area: Data | Priority: P2 | Size: S | Status: done
-  - DoD: Create ResourceConfig/UnitConfig/GameConfig assets; editable in editor; no runtime logic.
-  - Links: My project/Assets/Scripts/Infrastructure/Configs/*.cs:1
-  - Depends: S1-09
-
-- ID: S2-07 вЂ” SaveSystem integration (units/buildings/research)
+  - Links: My project/Assets/Scripts/Domain/Build/BuildingService.cs:1, My project/Assets/Scripts/Domain/Build/BuildResult.cs:1, My project/Assets/Scripts/Application/UseCases/PlaceBuilding.cs:1, My project/Assets/Scripts/Infrastructure/Configs/BuildingConfig.cs:1, My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs:69
+  - Depends: S1-03, S1-05, S1-09 - Config ScriptableObjects (resources/units/game)- ID: S2-07 вЂ” SaveSystem integration (units/buildings/research)
   - Area: Persistence | Priority: P1 | Size: M | Status: todo
   - DoD: Save/Load covers core game state beyond economy; round-trip works.
   - Links: My project/Assets/Scripts/Infrastructure/Persistence/SaveSystem.cs:1
@@ -97,6 +91,7 @@ Legend: Priority P1вЂ“P3; Size S/M/L; Status todo/in-progress/done.
 - Keep Domain/Application free from Unity API; use adapters in Infrastructure/Presentation.
 - Prefer event-driven UI updates; accept polling as temporary solution in prototype.
 - Defer Addressables and full CI until content scale requires them.
+
 
 
 

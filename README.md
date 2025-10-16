@@ -1,4 +1,4 @@
-# 2D RTS Prototype (Unity)
+﻿# 2D RTS Prototype (Unity)
 
 This repo contains the Unity project under `My project/` and design docs under `docs/`.
 
@@ -10,15 +10,9 @@ This repo contains the Unity project under `My project/` and design docs under `
   - `CompositionRoot`
   - `HudController`
   - `InputController`
-- Optionally create `GameConfig` (Create → Configs → Game Config) and assign it in `CompositionRoot`.
+- Optionally create `GameConfig` (Create в†’ Configs в†’ Game Config) and assign it in `CompositionRoot`.
 
-## Controls
-
-- HUD (top-left) shows resources.
-- Keys: `M` (+10 Materials), `F` (+5 Food).
-- Buttons: `Save` / `Load` use `Application.persistentDataPath/save.json`.
-
-## Structure
+## Controls\n\n- HUD (top-left) shows resources.\n- Keys (Input System aware):\n  - M: +10 Materials\n  - F: +5 Food\n  - B: Attempt to place Test Building (cost from Building Config or default)\n- Buttons: Save/Load use Application.persistentDataPath/save.json.\n\n## Structure
 
 - Domain: pure C# (no Unity API)
 - Application: services/use-cases (no Unity API)
@@ -29,4 +23,5 @@ This repo contains the Unity project under `My project/` and design docs under `
 
 - Units: `UnitStats` (Domain), `UnitView` (Presentation)
 - Spawner/Commander: spawn a unit prefab on LMB; set destination on RMB (placeholder)
+
 
