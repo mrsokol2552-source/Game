@@ -15,6 +15,7 @@ My project/[Pp]ackageCache/
 My project/Library*/
 My project/*.csproj
 My project/*.sln
+# keep .slnx ignored unless you want Rider/VS workspace tracked
 My project/*.slnx
 My project/*.user
 My project/*.unityproj
@@ -27,14 +28,37 @@ My project/*.VC.db
 
 # Local workspace tools and VCS
 My project/.plastic/
-My project/.vscode/
+# Keep VS Code project settings (helpful cross-PC)
+!My project/.vscode/
 
 # Additional local folders
-UnityProject/
 LOGS UNITY/
 
-# Root-only docs in binary format
-/*.docx
+# Second Unity project (track useful parts, ignore caches)
+UnityProject/[Ll]ibrary/
+UnityProject/[Tt]emp/
+UnityProject/[Oo]bj/
+UnityProject/[Bb]uild*/
+UnityProject/[Ll]ogs/
+UnityProject/[Uu]ser[Ss]ettings/
+UnityProject/[Mm]emoryCaptures/
+UnityProject/[Aa]rtifacts/
+UnityProject/[Pp]ackageCache/
+UnityProject/Library*/
+UnityProject/*.csproj
+UnityProject/*.sln
+UnityProject/*.slnx
+UnityProject/*.user
+UnityProject/*.unityproj
+UnityProject/*.pidb
+UnityProject/*.svd
+UnityProject/*.pdb
+UnityProject/*.mdb
+UnityProject/*.opendb
+UnityProject/*.VC.db
+
+# Allow binary docs in root (useful project docs)
+# /*.docx
 
 # OS junk
 .DS_Store
