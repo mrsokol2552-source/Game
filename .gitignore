@@ -15,6 +15,7 @@ My project/[Pp]ackageCache/
 My project/Library*/
 My project/*.csproj
 My project/*.sln
+My project/*.slnx
 My project/*.user
 My project/*.unityproj
 My project/*.pidb
@@ -23,6 +24,17 @@ My project/*.pdb
 My project/*.mdb
 My project/*.opendb
 My project/*.VC.db
+
+# Local workspace tools and VCS
+My project/.plastic/
+My project/.vscode/
+
+# Additional local folders
+UnityProject/
+LOGS UNITY/
+
+# Root-only docs in binary format
+/*.docx
 
 # OS junk
 .DS_Store
@@ -35,4 +47,3 @@ Thumbs.db
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-
