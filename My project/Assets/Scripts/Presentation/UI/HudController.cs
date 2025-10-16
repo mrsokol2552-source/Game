@@ -75,6 +75,19 @@ namespace Game.Presentation.UI
                 FindObjectOfType<CompositionRoot>()?.Load();
             }
 
+            // Research controls (test)
+            GUILayout.Space(4);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Start Research"))
+            {
+                FindObjectOfType<CompositionRoot>()?.AttemptStartTestResearch();
+            }
+            if (GUILayout.Button("Complete Research"))
+            {
+                FindObjectOfType<CompositionRoot>()?.AttemptCompleteTestResearch();
+            }
+            GUILayout.EndHorizontal();
+
             // Scrollable status area so long messages don't push controls out
             var root = FindObjectOfType<CompositionRoot>();
             if (root != null && !string.IsNullOrEmpty(root.LastStatusMessage))

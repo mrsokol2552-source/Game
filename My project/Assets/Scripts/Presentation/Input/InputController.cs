@@ -26,6 +26,16 @@ namespace Game.Presentation.Input
                     var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
                     root?.AttemptPlaceTestBuilding();
                 }
+                if (kb[Key.R].wasPressedThisFrame)
+                {
+                    var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                    root?.AttemptStartTestResearch();
+                }
+                if (kb[Key.C].wasPressedThisFrame)
+                {
+                    var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                    root?.AttemptCompleteTestResearch();
+                }
             }
 #else
             if (UnityEngine.Input.GetKeyDown(KeyCode.M))
@@ -36,6 +46,16 @@ namespace Game.Presentation.Input
             {
                 var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
                 root?.AttemptPlaceTestBuilding();
+            }
+            if (UnityEngine.Input.GetKeyDown(KeyCode.R))
+            {
+                var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                root?.AttemptStartTestResearch();
+            }
+            if (UnityEngine.Input.GetKeyDown(KeyCode.C))
+            {
+                var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                root?.AttemptCompleteTestResearch();
             }
 #endif
         }

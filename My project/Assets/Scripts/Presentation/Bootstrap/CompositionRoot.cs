@@ -20,6 +20,8 @@ namespace Game.Presentation.Bootstrap
         public UnitView DefaultUnitPrefab;
         [Header("Build")]
         public Game.Infrastructure.Configs.BuildingConfig TestBuilding;
+        [Header("Research")]
+        public Game.Infrastructure.Configs.ResearchConfig TestResearch;
         public bool AutoStart = true;
 
         private SaveSystem saveSystem;
@@ -99,6 +101,52 @@ namespace Game.Presentation.Bootstrap
                     Debug.LogWarning("[Build] Invalid request");
                     break;
             }
+        }
+
+        public void AttemptStartTestResearch()
+        {
+            var def = (TestResearch != null && TestResearch.Items != null && TestResearch.Items.Length > 0)
+                ? TestResearch.Items[0]
+                : null;
+            if (def == null)
+            {
+                SetStatus("Research: No ResearchConfig/Items set");
+                return;
+            }
+
+            var start = new StartResearch(Game);
+            if (start.Execute(def, out var shortfall))
+            {
+                SetStatus($"Research: '{def.Id}' started (Queued)");
+            }
+            else
+            {
+                string msg = $"Research: Not enough resources for '{def.Id}'";
+                if (shortfall != null)
+                {
+                    foreach (var s in shortfall)
+                        msg += $"\n- Need +{s.Amount} of {s.Type}";
+                }
+                SetStatus(msg);
+            }
+        }
+
+        public void AttemptCompleteTestResearch()
+        {
+            var def = (TestResearch != null && TestResearch.Items != null && TestResearch.Items.Length > 0)
+                ? TestResearch.Items[0]
+                : null;
+            if (def == null)
+            {
+                SetStatus("Research: No ResearchConfig/Items set");
+                return;
+            }
+
+            var complete = new CompleteResearch(Game);
+            if (complete.Execute(def))
+                SetStatus($"Research: '{def.Id}' completed (Done)");
+            else
+                SetStatus($"Research: '{def.Id}' not started (Locked)");
         }
 
         private IEnumerable<SaveSystem.UnitSnapshot> CaptureUnitsEx()
