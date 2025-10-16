@@ -1,0 +1,38 @@
+# Unity project ignores (scoped to "My project" folder)
+# Keep Assets/, Packages/, ProjectSettings/ tracked.
+
+My project/[Ll]ibrary/
+My project/[Tt]emp/
+My project/[Oo]bj/
+My project/[Bb]uild*/
+My project/[Ll]ogs/
+My project/[Uu]ser[Ss]ettings/
+My project/[Mm]emoryCaptures/
+My project/[Aa]rtifacts/
+My project/[Pp]ackageCache/
+
+# Unity auto-generated caches
+My project/Library*/
+My project/*.csproj
+My project/*.sln
+My project/*.user
+My project/*.unityproj
+My project/*.pidb
+My project/*.svd
+My project/*.pdb
+My project/*.mdb
+My project/*.opendb
+My project/*.VC.db
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
