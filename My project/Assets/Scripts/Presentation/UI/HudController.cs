@@ -2,11 +2,30 @@ using System;
 using Game.Domain.Economy;
 using Game.Presentation.Bootstrap;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace Game.Presentation.UI
 {
     public class HudController : MonoBehaviour
     {
+        private static Rect s_LastHudArea;
+
+        public static bool IsPointerOverHud()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var mouse = Mouse.current;
+            if (mouse == null) return false;
+            Vector2 p = mouse.position.ReadValue();
+#else
+            Vector2 p = UnityEngine.Input.mousePosition;
+#endif
+            // Convert to IMGUI coordinates (top-left origin)
+            p.y = Screen.height - p.y;
+            return s_LastHudArea.Contains(p);
+        }
+
         private void OnEnable()
         {
             Subscribe(true);
@@ -35,12 +54,21 @@ namespace Game.Presentation.UI
         {
             if (CompositionRoot.Game == null) return;
 
-            GUILayout.BeginArea(new Rect(10, 10, 300, 200), GUI.skin.box);
+            var area = new Rect(10, 10, 300, 200);
+            s_LastHudArea = area;
+            GUILayout.BeginArea(area, GUI.skin.box);
             GUILayout.Label("Resources:");
             foreach (ResourceType type in Enum.GetValues(typeof(ResourceType)))
             {
                 int v = CompositionRoot.Game.Economy.GetStock(type);
                 GUILayout.Label($"- {type}: {v}");
+            }
+
+            var root = FindObjectOfType<CompositionRoot>();
+            if (root != null && !string.IsNullOrEmpty(root.LastStatusMessage))
+            {
+                GUILayout.Space(8);
+                GUILayout.Label(root.LastStatusMessage);
             }
 
             if (GUILayout.Button("Save"))
@@ -55,4 +83,3 @@ namespace Game.Presentation.UI
         }
     }
 }
-

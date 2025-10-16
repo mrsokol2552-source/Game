@@ -21,12 +21,22 @@ namespace Game.Presentation.Input
                     CompositionRoot.Game.Economy.Add(ResourceType.Materials, 10);
                 if (kb[Key.F].wasPressedThisFrame)
                     CompositionRoot.Game.Economy.Add(ResourceType.Food, 5);
+                if (kb[Key.B].wasPressedThisFrame)
+                {
+                    var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                    root?.AttemptPlaceTestBuilding();
+                }
             }
 #else
             if (UnityEngine.Input.GetKeyDown(KeyCode.M))
                 CompositionRoot.Game.Economy.Add(ResourceType.Materials, 10);
             if (UnityEngine.Input.GetKeyDown(KeyCode.F))
                 CompositionRoot.Game.Economy.Add(ResourceType.Food, 5);
+            if (UnityEngine.Input.GetKeyDown(KeyCode.B))
+            {
+                var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                root?.AttemptPlaceTestBuilding();
+            }
 #endif
         }
     }

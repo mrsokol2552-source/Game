@@ -1,5 +1,20 @@
 # Project Decisions (active)
 
+## Решения, принятые в текущей итерации
+
+- Input Handling
+  - Поддерживаем и New Input System, и Legacy Input через компиляционные флаги; при необходимости в Player Settings использовать `Active Input Handling = Both`.
+  - Статус: accepted.
+- Persistence
+  - В рамках S1 используем `JsonUtility`; расширили сохранение до позиций и активных целей юнитов; переход на `System.Text.Json` рассмотрим позже.
+  - Статус: accepted (temporary).
+- UI (Prototype)
+  - HUD реализован через IMGUI (`OnGUI`); клики над HUD не передаются игровым системам. Плановая миграция на uGUI в следующих спринтах.
+  - Статус: accepted (temporary).
+- Build (минимальный цикл)
+  - Размещение постройки валидируется по стоимости (`BuildingConfig.Cost`), при успехе ресурсы списываются из `EconomyState`; при нехватке возвращается shortfall.
+  - Статус: accepted.
+
 Выбранные решения для ускорения прототипа. Ссылки указывают на строки в OPEN_QUESTIONS.md.
 
 ## Economy

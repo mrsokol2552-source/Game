@@ -14,6 +14,17 @@ namespace Game.Presentation.View
             destination = target;
         }
 
+        public bool TryGetDestination(out Vector3 target)
+        {
+            if (destination.HasValue)
+            {
+                target = destination.Value;
+                return true;
+            }
+            target = default;
+            return false;
+        }
+
         private void Update()
         {
             if (destination.HasValue)
@@ -39,4 +50,3 @@ namespace Game.Presentation.View
         }
     }
 }
-
