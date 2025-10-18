@@ -88,7 +88,7 @@ Legend: Priority P1вЂ“P3; Size S/M/L; Status todo/in-progress/done.
   - Depends: S2-01
 
 - ID: S2-10 вЂ” Persistence tests (manual)
-  - Area: CI | Priority: P3 | Size: S | Status: todo
+  - Area: CI | Priority: P3 | Size: S | Status: done
   - DoD: Scripted steps in README to verify save/load of all systems.
   - Links: README.md:1
   - Depends: S2-07
@@ -103,6 +103,7 @@ Legend: Priority P1вЂ“P3; Size S/M/L; Status todo/in-progress/done.
 - Keep Domain/Application free from Unity API; use adapters in Infrastructure/Presentation.
 - Prefer event-driven UI updates; accept polling as temporary solution in prototype.
 - Defer Addressables and full CI until content scale requires them.
+
 
 
 
