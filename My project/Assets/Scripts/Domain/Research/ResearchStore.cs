@@ -22,8 +22,6 @@ namespace Game.Domain.Research
             states[id] = status;
             OnChanged?.Invoke(id, status);
         }
-    }
-}
 
         public IReadOnlyDictionary<string, ResearchStatus> Snapshot()
         {
