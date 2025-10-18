@@ -116,19 +116,30 @@ namespace Game.Presentation.Bootstrap
 
             var start = new StartResearch(Game);
             var cost = (System.Collections.Generic.IReadOnlyList<Game.Domain.Economy.ResourceAmount>)(def.Cost ?? System.Array.Empty<Game.Domain.Economy.ResourceAmount>());
-            if (start.Execute(def.Id, cost, out var shortfall))
+            var res = start.Execute(def.Id, cost, out var shortfall);
+            switch (res)
             {
-                SetStatus($"Research: '{def.Id}' started (Queued)");
-            }
-            else
-            {
-                string msg = $"Research: Not enough resources for '{def.Id}'";
-                if (shortfall != null)
-                {
-                    foreach (var s in shortfall)
-                        msg += $"\n- Need +{s.Amount} of {s.Type}";
-                }
-                SetStatus(msg);
+                case Game.Domain.Research.ResearchStartResult.Started:
+                    SetStatus($"Research: '{def.Id}' started (Queued)");
+                    break;
+                case Game.Domain.Research.ResearchStartResult.AlreadyQueued:
+                    SetStatus($"Research: '{def.Id}' already queued");
+                    break;
+                case Game.Domain.Research.ResearchStartResult.AlreadyDone:
+                    SetStatus($"Research: '{def.Id}' already done");
+                    break;
+                case Game.Domain.Research.ResearchStartResult.InsufficientResources:
+                    string msg = $"Research: Not enough resources for '{def.Id}'";
+                    if (shortfall != null)
+                    {
+                        foreach (var s in shortfall)
+                            msg += $"\n- Need +{s.Amount} of {s.Type}";
+                    }
+                    SetStatus(msg);
+                    break;
+                default:
+                    SetStatus($"Research: invalid request");
+                    break;
             }
         }
 
