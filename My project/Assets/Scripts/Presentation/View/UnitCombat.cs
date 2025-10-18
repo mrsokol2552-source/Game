@@ -41,17 +41,28 @@ namespace Game.Presentation.View
             var target = FindNearestEnemy();
             if (target != null)
             {
-                float dist2 = (target.transform.position - transform.position).sqrMagnitude;
-                float range2 = AttackRange * AttackRange;
-                if (dist2 > range2)
+                Vector3 tp = target.transform.position;
+                Vector3 mp = transform.position;
+                float dist = (tp - mp).magnitude;
+                float stopDist = Mathf.Max(AttackRange * 0.9f, 0.1f);
+
+                if (dist > AttackRange)
                 {
-                    // Chase into range
-                    _view.SetDestination(target.transform.position);
+                    // Move to a point at stopDist from the target, to avoid overshooting and passing through.
+                    Vector3 dir = (mp - tp);
+                    if (dir.sqrMagnitude < 0.0001f) dir = Vector3.right;
+                    Vector3 desired = tp + dir.normalized * stopDist;
+                    _view.SetDestination(desired);
                 }
-                else if (_cooldown <= 0f)
+                else
                 {
-                    target.ApplyDamage(AttackDamage);
-                    _cooldown = AttackCooldown;
+                    // In range: hold position and attack on cooldown
+                    _view.ClearDestination();
+                    if (_cooldown <= 0f)
+                    {
+                        target.ApplyDamage(AttackDamage);
+                        _cooldown = AttackCooldown;
+                    }
                 }
             }
         }

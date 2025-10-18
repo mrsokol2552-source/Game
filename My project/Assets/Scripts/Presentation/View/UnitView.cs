@@ -14,6 +14,11 @@ namespace Game.Presentation.View
             destination = target;
         }
 
+        public void ClearDestination()
+        {
+            destination = null;
+        }
+
         public bool TryGetDestination(out Vector3 target)
         {
             if (destination.HasValue)
