@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Game.Application.UseCases;
 using Game.Domain.Economy;
@@ -30,7 +30,7 @@ namespace Game.Presentation.UI
             GUILayout.BeginArea(area, GUI.skin.box);
             GUILayout.Label("Research");
 
-            if (Root == null || Root.Game == null)
+            if (CompositionRoot.Game == null)
             {
                 GUILayout.Label("Game not ready");
                 GUILayout.EndArea();
@@ -50,7 +50,7 @@ namespace Game.Presentation.UI
             {
                 var def = cfg.Items[i];
                 if (string.IsNullOrEmpty(def.Id)) continue;
-                var status = Root.Game.Research.GetStatus(def.Id);
+                var status = CompositionRoot.Game.Research.GetStatus(def.Id);
 
                 GUILayout.BeginVertical(GUI.skin.box);
                 GUILayout.Label($"{def.Id} — {status}");
@@ -83,7 +83,7 @@ namespace Game.Presentation.UI
 
         private void TryStart(ResearchDef def)
         {
-            var use = new StartResearch(Root.Game);
+            var use = new StartResearch(CompositionRoot.Game);
             IReadOnlyList<ResourceAmount> cost = def.Cost ?? Array.Empty<ResourceAmount>();
             var res = use.Execute(def.Id, cost, out var shortfall);
             switch (res)
@@ -114,7 +114,7 @@ namespace Game.Presentation.UI
 
         private void TryComplete(ResearchDef def)
         {
-            var use = new CompleteResearch(Root.Game);
+            var use = new CompleteResearch(CompositionRoot.Game);
             if (use.Execute(def.Id))
                 Root.SetStatus($"Research: '{def.Id}' completed (Done)");
             else
@@ -147,4 +147,5 @@ namespace Game.Presentation.UI
         }
     }
 }
+
 
