@@ -11,7 +11,7 @@ namespace Game.Presentation.UI
 {
     public class ResearchPanel : MonoBehaviour
     {
-        public Vector2 Scroll;
+        public static bool Visible = false;`n        public Vector2 Scroll;
         public float Width = 360f;
         public float Height = 260f;
 
@@ -22,8 +22,7 @@ namespace Game.Presentation.UI
             Root = FindObjectOfType<CompositionRoot>();
         }
 
-        private void OnGUI()
-        {
+        private void OnGUI(){`n            if (!Visible) return;
             if (Root == null) Root = FindObjectOfType<CompositionRoot>();
             var area = new Rect(Screen.width - Width - 10f, 10f, Width, Height);
             HudController.AddUiRect(area);
@@ -147,5 +146,6 @@ namespace Game.Presentation.UI
         }
     }
 }
+
 
 

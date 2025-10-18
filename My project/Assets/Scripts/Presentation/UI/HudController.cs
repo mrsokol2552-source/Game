@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Game.Domain.Economy;
 using Game.Presentation.Bootstrap;
 using UnityEngine;
@@ -90,18 +90,12 @@ namespace Game.Presentation.UI
                 FindObjectOfType<CompositionRoot>()?.Load();
             }
 
-            // Research controls (test)
             GUILayout.Space(4);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Start Research"))
+            var label = ResearchPanel.Visible ? "Hide Research" : "Research";
+            if (GUILayout.Button(label))
             {
-                FindObjectOfType<CompositionRoot>()?.AttemptStartTestResearch();
+                ResearchPanel.Visible = !ResearchPanel.Visible;
             }
-            if (GUILayout.Button("Complete Research"))
-            {
-                FindObjectOfType<CompositionRoot>()?.AttemptCompleteTestResearch();
-            }
-            GUILayout.EndHorizontal();
 
             // Scrollable status area so long messages don't push controls out
             var root = FindObjectOfType<CompositionRoot>();
@@ -117,3 +111,4 @@ namespace Game.Presentation.UI
         }
     }
 }
+
