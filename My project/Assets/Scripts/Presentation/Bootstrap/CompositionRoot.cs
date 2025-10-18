@@ -166,11 +166,14 @@ namespace Game.Presentation.Bootstrap
             var units = Object.FindObjectsByType<UnitView>(FindObjectsSortMode.None);
             return units.Select(u =>
             {
+                var combat = u.GetComponent<Game.Presentation.View.UnitCombat>();
                 var snap = new SaveSystem.UnitSnapshot
                 {
                     Position = u.transform.position,
                     HasDestination = u.TryGetDestination(out var d),
-                    Destination = d
+                    Destination = d,
+                    Faction = combat != null ? (int)combat.Faction : (int)Game.Domain.Units.Faction.Player,
+                    Health = combat != null ? combat.CurrentHealth : u.Stats.MaxHealth
                 };
                 return snap;
             }).ToList();
@@ -200,6 +203,12 @@ namespace Game.Presentation.Bootstrap
                 var u = Instantiate(prefab, s.Position, Quaternion.identity);
                 if (s.HasDestination)
                     u.SetDestination(s.Destination);
+                var combat = u.GetComponent<Game.Presentation.View.UnitCombat>();
+                if (combat == null) combat = u.gameObject.AddComponent<Game.Presentation.View.UnitCombat>();
+                combat.Faction = (Game.Domain.Units.Faction)s.Faction;
+                combat.SetHealth(s.Health > 0 ? s.Health : u.Stats.MaxHealth);
+                var sr = u.GetComponent<UnityEngine.SpriteRenderer>();
+                if (sr != null) sr.color = combat.Faction == Game.Domain.Units.Faction.Enemy ? Color.red : Color.white;
                 last = u;
             }
 

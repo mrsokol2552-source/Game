@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using BuildingConfig = Game.Infrastructure.Configs.BuildingConfig;
+using Game.Presentation.UI;
 
 public static class RTSSetup
 {
@@ -80,6 +81,16 @@ public static class RTSSetup
         Selection.activeObject = asset;
         EditorGUIUtility.PingObject(asset);
         Debug.Log($"[RTSSetup] Created Building Config at {path}");
+    }
+
+    [MenuItem("Tools/RTS/Setup/Add Actions Panel To Scene")] 
+    public static void AddActionsPanelToScene()
+    {
+        var go = new GameObject("ActionsPanel");
+        go.AddComponent<ActionsPanel>();
+        EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+        Selection.activeObject = go;
+        Debug.Log("[RTSSetup] Added ActionsPanel to scene (bottom-right).");
     }
 
     private static void EnsureFolder(string path)

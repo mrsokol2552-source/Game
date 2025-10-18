@@ -12,4 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3ebf2eff682051418b32220fd93bcd2, type: 3}
   m_Name: ResearchConfig
   m_EditorClassIdentifier: RTS.Infrastructure::Game.Infrastructure.Configs.ResearchConfig
-  Items: []
+  Items:
+  - Id: test_1
+    Cost:
+    - Type: 2
+      Amount: 10
+    - Type: 3
+      Amount: 10
+  - Id: test_2
+    Cost:
+    - Type: 2
+      Amount: 15
+    - Type: 3
+      Amount: 20

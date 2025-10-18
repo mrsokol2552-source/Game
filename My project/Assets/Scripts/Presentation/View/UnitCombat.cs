@@ -77,6 +77,14 @@ namespace Game.Presentation.View
             }
         }
 
+        public int CurrentHealth => _currentHealth;
+        public int MaxHealth => _view != null ? _view.Stats.MaxHealth : 0;
+
+        public void SetHealth(int hp)
+        {
+            _currentHealth = Mathf.Clamp(hp, 1, Mathf.Max(1, MaxHealth));
+        }
+
         private UnitCombat FindNearestEnemy()
         {
             UnitCombat best = null;

@@ -352,6 +352,7 @@ GameObject:
   - component: {fileID: 1867906453}
   - component: {fileID: 1867906456}
   - component: {fileID: 1867906455}
+  - component: {fileID: 1867906457}
   m_Layer: 0
   m_Name: Bootstrap
   m_TagString: Untagged
@@ -374,6 +375,7 @@ MonoBehaviour:
   GameConfig: {fileID: 11400000, guid: ed8aac50463e7794da1da677eed14168, type: 2}
   DefaultUnitPrefab: {fileID: 0}
   TestBuilding: {fileID: 0}
+  TestResearch: {fileID: 11400000, guid: 3ca20e56fd551d84d833d898356f6f4d, type: 2}
   AutoStart: 1
 --- !u!4 &1867906454
 Transform:
@@ -414,6 +416,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d3dcf8d0cedae04ab131ec8e9f8d294, type: 3}
   m_Name: 
   m_EditorClassIdentifier: RTS.Presentation::Game.Presentation.UI.HudController
+--- !u!114 &1867906457
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867906452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5b2868a435a03c45ac2a7c5a71f6994, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: RTS.Presentation::Game.Presentation.UI.ResearchPanel
+  Scroll: {x: 0, y: 0}
+  Width: 360
+  Height: 260
 --- !u!1 &1998819866
 GameObject:
   m_ObjectHideFlags: 0

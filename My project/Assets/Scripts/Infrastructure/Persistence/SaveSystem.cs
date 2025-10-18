@@ -26,6 +26,8 @@ namespace Game.Infrastructure.Persistence
             public float x, y, z;
             public bool hasDest;
             public float dx, dy, dz;
+            public int faction;
+            public int hp;
         }
 
         private static string DefaultPath => Path.Combine(UnityEngine.Application.persistentDataPath, "save.json");
@@ -35,6 +37,8 @@ namespace Game.Infrastructure.Persistence
             public Vector3 Position;
             public bool HasDestination;
             public Vector3 Destination;
+            public int Faction; // Game.Domain.Units.Faction as int
+            public int Health;
         }
 
         [Serializable]
@@ -83,7 +87,9 @@ namespace Game.Infrastructure.Persistence
                         hasDest = s.HasDestination,
                         dx = s.Destination.x,
                         dy = s.Destination.y,
-                        dz = s.Destination.z
+                        dz = s.Destination.z,
+                        faction = s.Faction,
+                        hp = s.Health
                     }).ToList();
                 }
             }
@@ -129,7 +135,9 @@ namespace Game.Infrastructure.Persistence
                     {
                         Position = new Vector3(p.x, p.y, p.z),
                         HasDestination = p.hasDest,
-                        Destination = new Vector3(p.dx, p.dy, p.dz)
+                        Destination = new Vector3(p.dx, p.dy, p.dz),
+                        Faction = p.faction,
+                        Health = p.hp
                     }).ToList();
                     restoreUnitsEx(states);
                 }

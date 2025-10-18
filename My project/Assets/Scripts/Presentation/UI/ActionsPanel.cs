@@ -63,7 +63,7 @@ namespace Game.Presentation.UI
             GUILayout.Space(6);
             if (GUILayout.Button("Clear Save"))
             {
-                var path = Path.Combine(Application.persistentDataPath, "save.json");
+                var path = Path.Combine(UnityEngine.Application.persistentDataPath, "save.json");
                 if (File.Exists(path)) File.Delete(path);
                 root?.SetStatus("Save cleared");
             }
@@ -101,4 +101,3 @@ namespace Game.Presentation.UI
         }
     }
 }
-
