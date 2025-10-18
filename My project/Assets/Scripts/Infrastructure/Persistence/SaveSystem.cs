@@ -17,6 +17,7 @@ namespace Game.Infrastructure.Persistence
             public int Version = 1;
             public List<ResourceAmount> Stocks = new List<ResourceAmount>();
             public List<UnitState> Units = new List<UnitState>();
+            public List<ResearchEntry> Research = new List<ResearchEntry>();
         }
 
         [Serializable]
@@ -35,6 +36,14 @@ namespace Game.Infrastructure.Persistence
             public bool HasDestination;
             public Vector3 Destination;
         }
+
+        [Serializable]
+        private struct ResearchEntry
+        {
+            public string id;
+            public int status; // ResearchStatus as int
+        }
+
 
         private System.Func<IEnumerable<Vector3>> captureUnits; // legacy
         private System.Action<IEnumerable<Vector3>> restoreUnits; // legacy
@@ -87,6 +96,13 @@ namespace Game.Infrastructure.Persistence
                 }
             }
 
+            // Research statuses
+            var snap = game.Research.Snapshot();
+            foreach (var kv in snap)
+            {
+                dto.Research.Add(new ResearchEntry { id = kv.Key, status = (int)kv.Value });
+            }
+
             var json = JsonUtility.ToJson(dto, prettyPrint: true);
             var dir = Path.GetDirectoryName(DefaultPath);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
@@ -123,6 +139,18 @@ namespace Game.Infrastructure.Persistence
                     restoreUnits(list);
                 }
             }
+            // Restore research
+            if (dto.Research != null && dto.Research.Count > 0)
+            {
+                var map = new System.Collections.Generic.Dictionary<string, Game.Domain.Research.ResearchStatus>();
+                foreach (var e in dto.Research)
+                {
+                    if (string.IsNullOrEmpty(e.id)) continue;
+                    map[e.id] = (Game.Domain.Research.ResearchStatus)e.status;
+                }
+                game.Research.ReplaceAll(map);
+            }
+
             return true;
         }
     }

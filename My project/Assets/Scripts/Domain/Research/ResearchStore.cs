@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Game.Domain.Research
@@ -25,3 +25,23 @@ namespace Game.Domain.Research
     }
 }
 
+        public IReadOnlyDictionary<string, ResearchStatus> Snapshot()
+        {
+            return new Dictionary<string, ResearchStatus>(states);
+        }
+
+        public void ReplaceAll(Dictionary<string, ResearchStatus> newStates)
+        {
+            states.Clear();
+            if (newStates == null) return;
+            foreach (var kv in newStates)
+            {
+                states[kv.Key] = kv.Value;
+            }
+            foreach (var kv in states)
+            {
+                OnChanged?.Invoke(kv.Key, kv.Value);
+            }
+        }
+    }
+}
