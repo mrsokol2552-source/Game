@@ -104,3 +104,98 @@
 - Anomalies: world events affecting economy/combat; time-limited; spawn rules.
 - Automation: macros for routine actions (build/harvest/research queue) with limits.
 - Eco: environmental modifiers (pollution/renewables) affecting costs/effects.
+
+## Project Navigator (Quick)
+
+- Core Plans
+  - Master Plan: docs/Master Plan.md
+  - Near-Term: docs/NEAR_TERM.md
+  - Sprint Plan: docs/SPRINT_PLAN.md
+  - Tickets: docs/TICKETS.md
+  - Decisions: docs/DECISIONS.md
+  - Open Questions: docs/OPEN_QUESTIONS.md
+
+- Add-ons
+  - States/Diplomacy/Rarities/Anomalies/Automation/Eco: docs/ADDON_STATES_DIPLOMACY_RESEARCH_RARITIES_AUTOMATION.md
+  - Research Automation Plan: docs/ADDON_STATES_RESEARCH_AUTOMATION_PLAN.md
+
+- Code Map (entry points)
+  - CompositionRoot: My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs
+  - HUD: My project/Assets/Scripts/Presentation/UI/HudController.cs
+  - ResearchPanel: My project/Assets/Scripts/Presentation/UI/ResearchPanel.cs
+  - SaveSystem: My project/Assets/Scripts/Infrastructure/Persistence/SaveSystem.cs
+  - Economy: My project/Assets/Scripts/Domain/Economy/
+  - Build (domain): My project/Assets/Scripts/Domain/Build/
+  - Research (domain): My project/Assets/Scripts/Domain/Research/
+
+## Controls & Toggles (Playmode)
+
+- Keys (Input System aware)
+  - M: +10 Materials
+  - F: +5 Food
+  - B: Attempt Test Building (cost from Test Building config or default)
+  - R: Start Research (first item in Test Research config)
+  - C: Complete Research (same item)
+- HUD
+  - Save / Load buttons (save.json at Application.persistentDataPath)
+  - Research: toggle ResearchPanel (right‑top)
+
+## Save/Load Coverage (Current)
+
+- Economy stocks: yes
+- Units: positions + active destinations (restored on load)
+- Research: planned (S2‑07) — statuses Queued/Done (to implement)
+- Buildings/history: planned (S2‑07+)
+
+## Systems Quick Facts
+
+- Economy
+  - Types: ResourceType, ResourceAmount
+  - State/Tick: EconomyState, EconomyManager
+  - Files: My project/Assets/Scripts/Domain/Economy/*
+
+- Build
+  - TryPlace: BuildingService.TryPlace(economy, cost) -> BuildResult/shortfall
+  - Use‑case: PlaceBuilding
+  - Config: BuildingConfig (Cost)
+
+- Research
+  - Store: ResearchStore (Get/Set Status)
+  - Status: ResearchStatus (Locked/Queued/Done)
+  - Start/Complete: StartResearch (Started/AlreadyQueued/AlreadyDone/InsufficientResources), CompleteResearch
+  - Config: ResearchConfig (array of ResearchDef{Id,Cost})
+  - UI: ResearchPanel (list + Start/Complete), toggle from HUD
+
+- Persistence
+  - SaveSystem (JsonUtility): economy + units (pos/dest). Bind units via BindUnitsEx
+
+- Input/UI
+  - Hybrid New/Legacy: compile‑time switches; set Active Input Handling = Both
+  - UI click filtering: HudController.AddUiRect + IsPointerOverHud
+
+## Add‑ons Pointers (Sections)
+
+- States/Diplomacy/Rarities/Anomalies/Automation/Eco
+  - Sections to find: States, Diplomacy, Research Rarities, Anomalies, Automation, Eco
+  - Doc: docs/ADDON_STATES_DIPLOMACY_RESEARCH_RARITIES_AUTOMATION.md
+
+- Research Automation Plan
+  - Focus: queues, compute units/cores, roles, interfaces
+  - Doc: docs/ADDON_STATES_RESEARCH_AUTOMATION_PLAN.md
+
+## Common Lookups
+
+- Where to start a new research from code
+  - StartResearch.Execute(id, cost, out shortfall)
+- Where to add a new building type
+  - Infrastructure/Configs/BuildingConfig.cs + domain data readers later
+- Where HUD/UI input is handled
+  - HudController.OnGUI + InputController.Update
+- How to prevent world clicks on UI
+  - HudController.AddUiRect + HudController.IsPointerOverHud
+
+## Glossary (working)
+
+- Queued Research: started, resources paid, awaiting completion
+- Shortfall: list of missing ResourceAmount for current action
+- CU (Compute Units): automation compute capacity (add‑on)

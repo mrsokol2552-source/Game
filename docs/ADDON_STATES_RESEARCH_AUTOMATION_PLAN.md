@@ -1,5 +1,4 @@
-﻿# Дополнение к проекту: **Государства, Дипломатия, Редкости Исследований, Аномалии и Автоматизация**
-Версия: 1.0 • Ядро: Unity (C#) • Архитектура: Domain/Data/Application/AI/Presentation/Infrastructure  
+﻿\r\n## Section Map\r\n- States\r\n- Diplomacy\r\n- Research Rarities\r\n- Anomalies\r\n- Automation\r\n- Eco\r\n\r\nВерсия: 1.0 • Ядро: Unity (C#) • Архитектура: Domain/Data/Application/AI/Presentation/Infrastructure  
 Совместимость: off‑screen LOD‑симуляция, EventBus, сохранения JSON, Pathfinding
 
 > Цель: оформить в рабочий план доп. подсистемы — несколько государств с дипломатией (посольства/союзы/слияние), пересобранное древо исследований (обычные/редкие/аномальные) и автоматизация процессов через серверные/ядра.
@@ -341,3 +340,4 @@ Automation/RecipeCompleted(core, target)
 ---
 
 **Готово.** План совместим с текущей архитектурой, поддерживает off‑screen симуляцию и скрытую редкость исследований. Следующий шаг — согласовать баланс констант и начать Спринт 1 (States+Intel).
+
