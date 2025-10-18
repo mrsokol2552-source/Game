@@ -209,6 +209,7 @@ namespace Game.Presentation.Bootstrap
                 combat.SetHealth(s.Health > 0 ? s.Health : u.Stats.MaxHealth);
                 var sr = u.GetComponent<UnityEngine.SpriteRenderer>();
                 if (sr != null) sr.color = combat.Faction == global::Game.Domain.Units.Faction.Enemy ? Color.red : Color.white;
+                if (u.GetComponent<Game.Presentation.View.UnitHpOverlay>() == null) u.gameObject.AddComponent<Game.Presentation.View.UnitHpOverlay>();
                 last = u;
             }
 

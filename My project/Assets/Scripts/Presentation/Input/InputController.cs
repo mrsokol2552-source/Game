@@ -96,6 +96,7 @@ namespace Game.Presentation.Input
 
             var sr = enemy.GetComponent<SpriteRenderer>();
             if (sr != null) sr.color = Color.red;
+            if (enemy.GetComponent<Game.Presentation.View.UnitHpOverlay>() == null) enemy.gameObject.AddComponent<Game.Presentation.View.UnitHpOverlay>();
         }
     }
 }

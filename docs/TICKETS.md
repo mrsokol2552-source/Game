@@ -54,10 +54,10 @@ Legend: Priority P1вЂ“P3; Size S/M/L; Status todo/in-progress/done.
   - Links: My project/Assets/Scripts/Presentation/View/UnitView.cs:1
   - Depends: S2-02
 
-- ID: S2-04 вЂ” Combat basics
-  - Area: Combat | Priority: P2 | Size: S | Status: in-progress
-  - DoD: DamageType + CombatSimulator.ResolveAttack(); trivial damage application verified.
-  - Links: My project/Assets/Scripts/Domain/Combat/{DamageType.cs,CombatSimulator.cs}:1
+- ID: S2-04 — Combat basics
+  - Area: Combat | Priority: P2 | Size: S | Status: done
+  - DoD: Units auto-attack nearest enemy within range; HP decreases and unit dies on zero; simple chase to stop distance; gizmo shows range.
+  - Links: My project/Assets/Scripts/Presentation/View/UnitCombat.cs:1, My project/Assets/Scripts/Domain/Combat/{DamageType.cs,CombatSimulator.cs}:1
   - Depends: S2-02
 
 - ID: S2-05 — Building placement API

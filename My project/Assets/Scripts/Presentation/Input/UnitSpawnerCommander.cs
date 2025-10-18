@@ -29,6 +29,7 @@ namespace Game.Presentation.Input
                     var combat = lastUnit.GetComponent<UnitCombat>();
                     if (combat == null) combat = lastUnit.gameObject.AddComponent<UnitCombat>();
                     combat.Faction = Game.Domain.Units.Faction.Player;
+                    if (lastUnit.GetComponent<UnitHpOverlay>() == null) lastUnit.gameObject.AddComponent<UnitHpOverlay>();
                 }
                 if (mouse.rightButton.wasPressedThisFrame && lastUnit != null)
                 {
@@ -44,6 +45,7 @@ namespace Game.Presentation.Input
                 var combat = lastUnit.GetComponent<UnitCombat>();
                 if (combat == null) combat = lastUnit.gameObject.AddComponent<UnitCombat>();
                 combat.Faction = Game.Domain.Units.Faction.Player;
+                if (lastUnit.GetComponent<UnitHpOverlay>() == null) lastUnit.gameObject.AddComponent<UnitHpOverlay>();
             }
             if (UnityEngine.Input.GetMouseButtonDown(1) && lastUnit != null)
             {
