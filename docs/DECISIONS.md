@@ -152,3 +152,22 @@
 ## Research (current iteration)
 - Decision: Minimal research loop — states (Locked/Queued/Done) stored in ResearchStore; data in ResearchConfig (id, cost). Effects are placeholders for later.
 - Status: accepted (in-progress)
+
+## Pathfinding (Planning)
+- Grid
+  - 2D grid aligned to world; initial cell size: 1 unit (configurable via settings later).
+  - World → grid: floor(x/size), floor(y/size); origin at (0,0) for now.
+- Neighbors
+  - Start with 4-connected (no diagonals) to avoid corner cutting; consider 8-connected later (with corner checks).
+- Costs
+  - Base move cost = 1 per cell; terrain weights (later): cost = base * weight; blocked = impassable.
+- Heuristic
+  - Manhattan (|dx|+|dy|) for 4-connected; if add diagonals, switch to Octile.
+- API
+  - Keep IGridPathfinder interface; implement A* service in Infrastructure; UnitView/AI request paths (Presentation controls movement).
+- Dynamics
+  - Cache static grid; mark dirty cells for dynamic obstacles; recompute local regions when needed.
+- Performance
+  - Small maps: single-thread A* is fine; later — partition grid, pool nodes, consider Jobs/Burst if needed.
+- DoD
+  - Decisions documented; interface in place; pathfinder impl tracked as a separate task (not required in this sprint).

@@ -93,11 +93,17 @@ Legend: Priority P1вЂ“P3; Size S/M/L; Status todo/in-progress/done.
   - Links: README.md:1
   - Depends: S2-07
 
+- ID: S2-09 — Pathfinding planning
+  - Area: AI/Path | Priority: P3 | Size: S | Status: done
+  - DoD: Select grid size, neighbor policy, base costs, and heuristic; decisions recorded in DECISIONS.md.
+  - Links: docs/DECISIONS.md:1
+  - Depends: S2-01
 ## Notes
 
 - Keep Domain/Application free from Unity API; use adapters in Infrastructure/Presentation.
 - Prefer event-driven UI updates; accept polling as temporary solution in prototype.
 - Defer Addressables and full CI until content scale requires them.
+
 
 
 
