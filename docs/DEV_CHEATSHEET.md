@@ -92,3 +92,15 @@
 - docs/document-2.md:33 — - Для ассетов — Addressables с дисциплиной `Load/Release` (зеркалить выгрузки, иначе «висящие» ассеты в памяти) citeturn2search10.
 - docs/document-2.md:46 — - Выберите основу: SIR/SEIR-подобная модель + клеточный автомат (диффузия по соседям Moore/Von Neumann), усиленная влиянием инфраструктуры (кордоны, турели, «санпункты») и транспортом. Это реалистично и объяснимо дизайнерски (SIR как канон) citeturn4search0.
 
+
+## Add-ons Quick Links
+- States/Diplomacy/Rarities/Anomalies/Automation/Eco: docs/ADDON_STATES_DIPLOMACY_RESEARCH_RARITIES_AUTOMATION.md
+- States/Research Automation Plan: docs/ADDON_STATES_RESEARCH_AUTOMATION_PLAN.md
+
+## Add-ons Notes (working)
+- States: map-level factions, AI stance (ally/neutral/hostile), progression.
+- Diplomacy: relations, treaties; events drive changes; UI: simple list + actions.
+- Research Rarities: common/rare/epic tiers; gating via states/progression.
+- Anomalies: world events affecting economy/combat; time-limited; spawn rules.
+- Automation: macros for routine actions (build/harvest/research queue) with limits.
+- Eco: environmental modifiers (pollution/renewables) affecting costs/effects.

@@ -15,3 +15,7 @@
 - [����⠫�� ���� ࠧࠡ�⪨ RTS-�஥�� (Unity 2D) ��� ��稭��饣�.md](����⠫�� ���� ࠧࠡ�⪨ RTS-�஥�� (Unity 2D) ��� ��稭��饣�.md)
 - [���� ࠧࠡ�⪨ RTS-�஥�� (Unity 2D) - ����� Production Pipeline.md](���� ࠧࠡ�⪨ RTS-�஥�� (Unity 2D) - ����� Production Pipeline.md)
 - [������� �孨�᪨� ���� �஥�� (2D RTS �� Unity).md](������� �孨�᪨� ���� �஥�� (2D RTS �� Unity).md)
+
+
+- [ADDON_STATES_RESEARCH_AUTOMATION_PLAN.md](ADDON_STATES_RESEARCH_AUTOMATION_PLAN.md)
+- [ADDON_STATES_DIPLOMACY_RESEARCH_RARITIES_AUTOMATION.md](ADDON_STATES_DIPLOMACY_RESEARCH_RARITIES_AUTOMATION.md)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Game.Application.UseCases;
 using Game.Domain.Economy;
@@ -11,7 +11,8 @@ namespace Game.Presentation.UI
 {
     public class ResearchPanel : MonoBehaviour
     {
-        public static bool Visible = false;`n        public Vector2 Scroll;
+        public static bool Visible = false;
+        public Vector2 Scroll;
         public float Width = 360f;
         public float Height = 260f;
 
@@ -22,7 +23,8 @@ namespace Game.Presentation.UI
             Root = FindObjectOfType<CompositionRoot>();
         }
 
-        private void OnGUI(){`n            if (!Visible) return;
+        private void OnGUI(){
+            if (!Visible) return;
             if (Root == null) Root = FindObjectOfType<CompositionRoot>();
             var area = new Rect(Screen.width - Width - 10f, 10f, Width, Height);
             HudController.AddUiRect(area);
