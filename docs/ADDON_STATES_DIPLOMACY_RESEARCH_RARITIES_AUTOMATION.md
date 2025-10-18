@@ -1,4 +1,49 @@
-﻿
+﻿## Исследования: редкости (Research Rarities) — Структурированный раздел
+
+Цель
+- Ввести уровни редкости исследований (Common/Rare/Epic/Anomalous), влияющие на базовую стоимость, доступность и прогрессию.
+
+Данные
+- ResearchDef (расширение): id, ranch, arity, aseCostRP, prereq[], equiresAssets[] (опц.).
+- Пример JSON:
+`json
+{
+  "research": [
+    { "id":"eco.extraction.1",  "branch":"economy.extraction", "rarity":"Common",    "baseCostRP":100, "prereq":[] },
+    { "id":"eco.extraction.R1", "branch":"economy.extraction", "rarity":"Rare",      "baseCostRP":160, "prereq":["eco.extraction.1"]},
+    { "id":"anom.capture.1",    "branch":"anomaly.capture",    "rarity":"Anomalous", "baseCostRP":220, "requiresAssets":["ContainmentLab","CaptureTeam"]}
+  ]
+}
+`
+
+Игровая логика (минимум)
+- Стоимость: inalCost = baseCostRP * rarityMultiplier[rarity] * globalModifiers.
+- Гейты: prereq по ветке, осмысленные требования ассетов/состояний (например, доступ к аномалиям).
+- Прогресс: редкие/эпические могут появляться позже через состояние/дипломатию/эко.
+
+Справочник (пример множителей; настраиваемые)
+- Common: ×1.0
+- Rare: ×1.6
+- Epic: ×2.2
+- Anomalous: ×2.8
+
+События (EventBus, план)
+- Research/Queued(id, rarity) — поставлено в очередь, ресурсы списаны.
+- Research/Completed(id, rarity) — завершено.
+
+UI (минимум)
+- Бейдж редкости (цвет/иконка), подсказка с множителем и требованиями.
+- Фильтры/сортировка по ветке и редкости.
+
+DoD (минимум)
+- Модель данных поддерживает rarity и prereq; стоимость считается с учётом множителя.
+- UI показывает бейдж и требования; события публикуются при старте/завершении.
+
+Ссылки
+- Быстрый навигатор: docs/ADDON_GUIDE.md
+- Оригинальный материал ниже.
+
+
 ## Оглавление
 - [Обзор](#обзор)
 - [Данные](#2-data)
@@ -56,3 +101,4 @@ DoD (минимум)
 Ссылки
 - Быстрый навигатор: docs/ADDON_GUIDE.md
 - Оригинальный материал данного файла — ниже.
+
