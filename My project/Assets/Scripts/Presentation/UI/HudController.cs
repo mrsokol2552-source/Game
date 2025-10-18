@@ -10,7 +10,8 @@ namespace Game.Presentation.UI
 {
     public class HudController : MonoBehaviour
     {
-        private static Rect s_LastHudArea;
+        private static System.Collections.Generic.List<Rect> s_UiAreas = new System.Collections.Generic.List<Rect>(4);
+        private static int s_LastFrame = -1;
         private Vector2 _statusScroll;
 
         public static bool IsPointerOverHud()
@@ -24,7 +25,21 @@ namespace Game.Presentation.UI
 #endif
             // Convert to IMGUI coordinates (top-left origin)
             p.y = Screen.height - p.y;
-            return s_LastHudArea.Contains(p);
+            for (int i = 0; i < s_UiAreas.Count; i++)
+            {
+                if (s_UiAreas[i].Contains(p)) return true;
+            }
+            return false;
+        }
+
+        public static void AddUiRect(Rect rect)
+        {
+            if (s_LastFrame != Time.frameCount)
+            {
+                s_UiAreas.Clear();
+                s_LastFrame = Time.frameCount;
+            }
+            s_UiAreas.Add(rect);
         }
 
         private void OnEnable()
@@ -56,7 +71,7 @@ namespace Game.Presentation.UI
             if (CompositionRoot.Game == null) return;
 
             var area = new Rect(10, 10, 300, 230);
-            s_LastHudArea = area;
+            AddUiRect(area);
             GUILayout.BeginArea(area, GUI.skin.box);
             GUILayout.Label("Resources:");
             foreach (ResourceType type in Enum.GetValues(typeof(ResourceType)))
