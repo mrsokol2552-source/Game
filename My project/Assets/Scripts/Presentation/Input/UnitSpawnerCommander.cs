@@ -26,6 +26,9 @@ namespace Game.Presentation.Input
                 {
                     var world = ScreenToWorld(cam, mouse.position.ReadValue());
                     lastUnit = Instantiate(UnitPrefab, world, Quaternion.identity);
+                    var combat = lastUnit.GetComponent<UnitCombat>();
+                    if (combat == null) combat = lastUnit.gameObject.AddComponent<UnitCombat>();
+                    combat.Faction = Game.Domain.Units.Faction.Player;
                 }
                 if (mouse.rightButton.wasPressedThisFrame && lastUnit != null)
                 {
@@ -38,6 +41,9 @@ namespace Game.Presentation.Input
             {
                 var world = ScreenToWorld(cam, UnityEngine.Input.mousePosition);
                 lastUnit = Instantiate(UnitPrefab, world, Quaternion.identity);
+                var combat = lastUnit.GetComponent<UnitCombat>();
+                if (combat == null) combat = lastUnit.gameObject.AddComponent<UnitCombat>();
+                combat.Faction = Game.Domain.Units.Faction.Player;
             }
             if (UnityEngine.Input.GetMouseButtonDown(1) && lastUnit != null)
             {

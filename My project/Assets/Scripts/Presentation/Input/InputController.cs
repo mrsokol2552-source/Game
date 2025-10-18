@@ -72,7 +72,7 @@ namespace Game.Presentation.Input
         {
             var cam = Camera.main; if (cam == null) return;
 #if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-            var mouse = Keyboard.current != null ? UnityEngine.InputSystem.Mouse.current : null;
+            var mouse = UnityEngine.InputSystem.Mouse.current;
             if (mouse == null) return;
             var pos = mouse.position.ReadValue();
 #else

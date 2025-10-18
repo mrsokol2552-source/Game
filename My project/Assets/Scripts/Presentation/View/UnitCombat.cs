@@ -38,11 +38,21 @@ namespace Game.Presentation.View
             if (_cooldown > 0f)
                 _cooldown -= Time.deltaTime;
 
-            var target = FindNearestEnemyInRange();
-            if (target != null && _cooldown <= 0f)
+            var target = FindNearestEnemy();
+            if (target != null)
             {
-                target.ApplyDamage(AttackDamage);
-                _cooldown = AttackCooldown;
+                float dist2 = (target.transform.position - transform.position).sqrMagnitude;
+                float range2 = AttackRange * AttackRange;
+                if (dist2 > range2)
+                {
+                    // Chase into range
+                    _view.SetDestination(target.transform.position);
+                }
+                else if (_cooldown <= 0f)
+                {
+                    target.ApplyDamage(AttackDamage);
+                    _cooldown = AttackCooldown;
+                }
             }
         }
 
@@ -56,17 +66,17 @@ namespace Game.Presentation.View
             }
         }
 
-        private UnitCombat FindNearestEnemyInRange()
+        private UnitCombat FindNearestEnemy()
         {
             UnitCombat best = null;
-            float bestDist2 = AttackRange * AttackRange;
+            float bestDist2 = float.MaxValue;
             Vector3 p = transform.position;
             foreach (var uc in All)
             {
                 if (uc == null || uc == this) continue;
                 if (uc.Faction == this.Faction) continue;
                 float d2 = (uc.transform.position - p).sqrMagnitude;
-                if (d2 <= bestDist2)
+                if (d2 < bestDist2)
                 {
                     best = uc;
                     bestDist2 = d2;
@@ -82,4 +92,3 @@ namespace Game.Presentation.View
         }
     }
 }
-
