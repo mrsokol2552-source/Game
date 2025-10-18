@@ -1,6 +1,5 @@
 using Game.Application.Services;
 using Game.Domain.Research;
-using Game.Infrastructure.Configs;
 
 namespace Game.Application.UseCases
 {
@@ -13,15 +12,14 @@ namespace Game.Application.UseCases
             this.game = game;
         }
 
-        public bool Execute(ResearchDef def)
+        public bool Execute(string id)
         {
-            if (def == null || string.IsNullOrEmpty(def.Id)) return false;
-            var st = game.Research.GetStatus(def.Id);
+            if (string.IsNullOrEmpty(id)) return false;
+            var st = game.Research.GetStatus(id);
             if (st == ResearchStatus.Done) return true;
             if (st == ResearchStatus.Locked) return false; // not started
-            game.Research.SetStatus(def.Id, ResearchStatus.Done);
+            game.Research.SetStatus(id, ResearchStatus.Done);
             return true;
         }
     }
 }
-

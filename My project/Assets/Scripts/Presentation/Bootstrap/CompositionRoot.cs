@@ -115,7 +115,8 @@ namespace Game.Presentation.Bootstrap
             }
 
             var start = new StartResearch(Game);
-            if (start.Execute(def, out var shortfall))
+            var cost = (System.Collections.Generic.IReadOnlyList<Game.Domain.Economy.ResourceAmount>)(def.Cost ?? System.Array.Empty<Game.Domain.Economy.ResourceAmount>());
+            if (start.Execute(def.Id, cost, out var shortfall))
             {
                 SetStatus($"Research: '{def.Id}' started (Queued)");
             }
@@ -143,7 +144,7 @@ namespace Game.Presentation.Bootstrap
             }
 
             var complete = new CompleteResearch(Game);
-            if (complete.Execute(def))
+            if (complete.Execute(def.Id))
                 SetStatus($"Research: '{def.Id}' completed (Done)");
             else
                 SetStatus($"Research: '{def.Id}' not started (Locked)");
