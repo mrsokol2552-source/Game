@@ -97,6 +97,26 @@ namespace Game.Presentation.UI
                 ResearchPanel.Visible = !ResearchPanel.Visible;
             }
 
+            var devLabel = ActionsPanel.Visible ? "Hide Dev" : "Dev";
+            if (GUILayout.Button(devLabel))
+            {
+                if (!ActionsPanel.Visible)
+                {
+                    // Ensure panel exists in scene before showing
+                    var ap = FindObjectOfType<ActionsPanel>();
+                    if (ap == null)
+                    {
+                        var go = new GameObject("ActionsPanel (Auto)");
+                        go.AddComponent<ActionsPanel>();
+                    }
+                    ActionsPanel.Visible = true;
+                }
+                else
+                {
+                    ActionsPanel.Visible = false;
+                }
+            }
+
             // Scrollable status area so long messages don't push controls out
             var root = FindObjectOfType<CompositionRoot>();
             if (root != null && !string.IsNullOrEmpty(root.LastStatusMessage))

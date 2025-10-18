@@ -13,7 +13,7 @@ namespace Game.Presentation.UI
 {
     public class ActionsPanel : MonoBehaviour
     {
-        public static bool Visible = true;
+        public static bool Visible = false;
         public float Width = 220f;
         public float Height = 220f;
 

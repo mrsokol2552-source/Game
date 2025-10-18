@@ -200,4 +200,48 @@
 - Shortfall: list of missing ResourceAmount for current action
 - CU (Compute Units): automation compute capacity (add‑on)
 
+## Session Snapshot (Working Memory)
+
+- Save/Load Coverage
+  - Economy stocks: yes
+  - Units: position, destination, faction, health (restored on load)
+  - Research: statuses (Queued/Done) saved and restored
+  - Buildings/history: not persisted yet (planned)
+
+- UI Surfaces
+  - HUD: resources, Save/Load, toggle Research, toggle Dev Actions
+  - ResearchPanel: list, rarity hints, Start/Complete per entry (toggle from HUD)
+  - ActionsPanel (Dev): spawn Unit/Enemy, add resources, attempt build, clear save (toggle from HUD)
+
+- Input/Controls
+  - Keys: M +10 Materials, F +5 Food, B Build, R Start Research, C Complete Research, E Spawn Enemy
+  - New Input System primary; Legacy fallback enabled; recommend Player Settings → Active Input Handling = Both
+
+- Combat
+  - UnitCombat: auto‑attack nearest enemy; chase until stop‑distance (~0.9×range); attack on cooldown; destroy on death
+  - Factions: Player (white), Enemy (red)
+
+- Editor Utilities (Tools → RTS → Setup)
+  - Create Unit Prefab; Add Spawner To Scene; Create Building Config Asset; Add Actions Panel To Scene
+
+- Persistence Paths
+  - Save file: `UnityEngine.Application.persistentDataPath/save.json`
+
+## Operating Rules (So we don’t forget)
+
+- Commit discipline: commit and push meaningful steps; keep messages scoped (feature/fix/docs)
+- Decisions live in `docs/DECISIONS.md`; close items in `docs/OPEN_QUESTIONS.md` as we resolve them
+- Use `global::Game.*` inside `CompositionRoot` to avoid the `Game` namespace vs. property collision
+- Use `UnityEngine.Application.persistentDataPath` (avoid `Game.Application.*` ambiguity)
+- When adding panels, register rectangles via `HudController.AddUiRect` to filter world clicks
+- When extending saves:
+  - Add fields to `SaveDto`; keep old fields readable; apply safe defaults on load
+  - Provide capture/restore bindings in `CompositionRoot` (e.g., BindUnitsEx)
+
+## Next Steps (Sprint 2)
+
+- S2‑09 Pathfinding planning: grid size, neighbor policy (4/8), base costs, heuristic; document in DECISIONS.md
+- S2‑10 Persistence tests: README checklist to verify Save/Load for Economy/Units/Research
+- Optional polish: HP overlay for units; refine chase/stop; HUD action shortcuts
+
 - Add‑On Guide: docs/ADDON_GUIDE.md
