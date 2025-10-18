@@ -148,3 +148,7 @@
 
 - Ref: docs/OPEN_QUESTIONS.md:283 — - Проверьте Memory Profiler (есть отдельный пакет) или хотя бы профайлер вкладку Memory: посмотрите, нет ли всплеска памяти после, например, сцены загрузки/выгрузки. Addressables часто ловят на том, что загрузили, а Release забыли – тогда на каждый повтор загрузка дублируется в памяти [defer]
 
+
+## Research (current iteration)
+- Decision: Minimal research loop — states (Locked/Queued/Done) stored in ResearchStore; data in ResearchConfig (id, cost). Effects are placeholders for later.
+- Status: accepted (in-progress)

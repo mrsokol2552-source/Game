@@ -358,3 +358,4 @@
 - Input Handling: decided to support New Input System with legacy fallback via compile-time; recommended Active Input Handling = Both.
 - Persistence scope (Sprint 1): Economy saved via JsonUtility; extended to units (positions + destinations). Further state (build/research) to be added in S2-07.
 - UI prototype: HUD via IMGUI; clicks over HUD filtered from world input.
+- Resolved: Research MVP — start/complete flow with cost; queued/done statuses; effects deferred.

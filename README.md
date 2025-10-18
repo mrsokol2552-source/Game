@@ -12,7 +12,10 @@ This repo contains the Unity project under `My project/` and design docs under `
   - `InputController`
 - Optionally create `GameConfig` (Create в†’ Configs в†’ Game Config) and assign it in `CompositionRoot`.
 
-## Controls\n\n- HUD (top-left) shows resources.\n- Keys (Input System aware):\n  - M: +10 Materials\n  - F: +5 Food\n  - B: Attempt to place Test Building (cost from Building Config or default)\n- Buttons: Save/Load use Application.persistentDataPath/save.json.\n\n## Structure
+## Controls\n\n- HUD (top-left) shows resources.\n- Keys (Input System aware):\n  - M: +10 Materials\n  - F: +5 Food\n  - B: Attempt to place Test Building (cost from Building Config or default)\n- Buttons: Save/Load use Application.persistentDataPath/save.json.\n\n- R: Start Research (from Test Research config)
+  - C: Complete Research (for the same entry)
+
+## Structure
 
 - Domain: pure C# (no Unity API)
 - Application: services/use-cases (no Unity API)
@@ -23,5 +26,6 @@ This repo contains the Unity project under `My project/` and design docs under `
 
 - Units: `UnitStats` (Domain), `UnitView` (Presentation)
 - Spawner/Commander: spawn a unit prefab on LMB; set destination on RMB (placeholder)
+
 
 
