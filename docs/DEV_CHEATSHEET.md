@@ -199,3 +199,5 @@
 - Queued Research: started, resources paid, awaiting completion
 - Shortfall: list of missing ResourceAmount for current action
 - CU (Compute Units): automation compute capacity (add‑on)
+
+- Add‑On Guide: docs/ADDON_GUIDE.md
