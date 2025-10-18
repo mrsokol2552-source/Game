@@ -1,10 +1,10 @@
-namespace RtsGame.Domain.Units
+namespace Game.Domain.Units
 {
     public enum Faction
     {
-        Neutral,
-        Player,
-        Enemy
+        Neutral = 0,
+        Player = 1,
+        Enemy = 2
     }
 }
 
