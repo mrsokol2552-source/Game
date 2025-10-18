@@ -20,6 +20,9 @@ namespace Game.Presentation.Bootstrap
         public UnitView DefaultUnitPrefab;
         [Header("Build")]
         public Game.Infrastructure.Configs.BuildingConfig TestBuilding;
+        [Header("Visuals")]
+        public Sprite PlayerSprite;
+        public Sprite EnemySprite;
         [Header("Research")]
         public Game.Infrastructure.Configs.ResearchConfig TestResearch;
         public bool AutoStart = true;
@@ -208,7 +211,16 @@ namespace Game.Presentation.Bootstrap
                 combat.Faction = (global::Game.Domain.Units.Faction)s.Faction;
                 combat.SetHealth(s.Health > 0 ? s.Health : u.Stats.MaxHealth);
                 var sr = u.GetComponent<UnityEngine.SpriteRenderer>();
-                if (sr != null) sr.color = combat.Faction == global::Game.Domain.Units.Faction.Enemy ? Color.red : Color.white;
+                if (sr != null)
+                {
+                    // Color tint by faction
+                    sr.color = combat.Faction == global::Game.Domain.Units.Faction.Enemy ? Color.red : Color.white;
+                    // Assign sprite if provided
+                    if (combat.Faction == global::Game.Domain.Units.Faction.Enemy && EnemySprite != null)
+                        sr.sprite = EnemySprite;
+                    else if (combat.Faction == global::Game.Domain.Units.Faction.Player && PlayerSprite != null)
+                        sr.sprite = PlayerSprite;
+                }
                 if (u.GetComponent<Game.Presentation.View.UnitHpOverlay>() == null) u.gameObject.AddComponent<Game.Presentation.View.UnitHpOverlay>();
                 last = u;
             }

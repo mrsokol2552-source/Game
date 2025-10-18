@@ -46,6 +46,9 @@ namespace Game.Presentation.Input
                 if (combat == null) combat = lastUnit.gameObject.AddComponent<UnitCombat>();
                 combat.Faction = Game.Domain.Units.Faction.Player;
                 if (lastUnit.GetComponent<UnitHpOverlay>() == null) lastUnit.gameObject.AddComponent<UnitHpOverlay>();
+                var sr = lastUnit.GetComponent<SpriteRenderer>();
+                var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                if (sr != null && root != null && root.PlayerSprite != null) sr.sprite = root.PlayerSprite;
             }
             if (UnityEngine.Input.GetMouseButtonDown(1) && lastUnit != null)
             {

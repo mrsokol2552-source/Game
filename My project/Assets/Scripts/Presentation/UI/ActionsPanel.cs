@@ -97,7 +97,19 @@ namespace Game.Presentation.UI
             combat.Faction = faction;
 
             var sr = u.GetComponent<SpriteRenderer>();
-            if (sr != null) sr.color = (faction == Faction.Enemy ? Color.red : Color.white);
+            if (sr != null)
+            {
+                // Color tint
+                sr.color = (faction == Faction.Enemy ? Color.red : Color.white);
+                // Assign sprite from Bootstrap Visuals if available
+                if (root != null)
+                {
+                    if (faction == Faction.Enemy && root.EnemySprite != null)
+                        sr.sprite = root.EnemySprite;
+                    else if (faction == Faction.Player && root.PlayerSprite != null)
+                        sr.sprite = root.PlayerSprite;
+                }
+            }
         }
     }
 }

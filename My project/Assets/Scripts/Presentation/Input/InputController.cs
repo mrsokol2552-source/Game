@@ -95,7 +95,12 @@ namespace Game.Presentation.Input
             combat.Faction = Game.Domain.Units.Faction.Enemy;
 
             var sr = enemy.GetComponent<SpriteRenderer>();
-            if (sr != null) sr.color = Color.red;
+            if (sr != null)
+            {
+                sr.color = Color.red;
+                var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                if (root != null && root.EnemySprite != null) sr.sprite = root.EnemySprite;
+            }
             if (enemy.GetComponent<Game.Presentation.View.UnitHpOverlay>() == null) enemy.gameObject.AddComponent<Game.Presentation.View.UnitHpOverlay>();
         }
     }
