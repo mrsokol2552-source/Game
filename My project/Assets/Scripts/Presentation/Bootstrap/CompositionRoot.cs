@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Game.Application.Services;
 using Game.Application.UseCases;
@@ -119,16 +119,16 @@ namespace Game.Presentation.Bootstrap
             var res = start.Execute(def.Id, cost, out var shortfall);
             switch (res)
             {
-                case Game.Domain.Research.ResearchStartResult.Started:
+                case global::Game.Domain.Research.ResearchStartResult.Started:
                     SetStatus($"Research: '{def.Id}' started (Queued)");
                     break;
-                case Game.Domain.Research.ResearchStartResult.AlreadyQueued:
+                case global::Game.Domain.Research.ResearchStartResult.AlreadyQueued:
                     SetStatus($"Research: '{def.Id}' already queued");
                     break;
-                case Game.Domain.Research.ResearchStartResult.AlreadyDone:
+                case global::Game.Domain.Research.ResearchStartResult.AlreadyDone:
                     SetStatus($"Research: '{def.Id}' already done");
                     break;
-                case Game.Domain.Research.ResearchStartResult.InsufficientResources:
+                case global::Game.Domain.Research.ResearchStartResult.InsufficientResources:
                     string msg = $"Research: Not enough resources for '{def.Id}'";
                     if (shortfall != null)
                     {
@@ -216,3 +216,4 @@ namespace Game.Presentation.Bootstrap
         }
     }
 }
+
