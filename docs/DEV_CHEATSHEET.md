@@ -211,7 +211,8 @@
 - UI Surfaces
   - HUD: resources, Save/Load, toggle Research, toggle Dev Actions
   - ResearchPanel: list, rarity hints, Start/Complete per entry (toggle from HUD)
-  - ActionsPanel (Dev): spawn Unit/Enemy, add resources, attempt build, clear save (toggle from HUD)
+  - ActionsPanel (Dev): spawn Unit/Enemy (random in camera view; HP bar auto-attached), add resources, attempt build, clear save, Self-Test Save/Load (toggle from HUD)
+    - Self-Test freezes combat during the run and cleans up test units afterward to avoid scene pollution.
 
 - Input/Controls
   - Keys: M +10 Materials, F +5 Food, B Build, R Start Research, C Complete Research, E Spawn Enemy
@@ -227,6 +228,8 @@
 - Persistence Paths
   - Save file: `UnityEngine.Application.persistentDataPath/save.json`
 
+See also: docs/PERSISTENCE_TESTS.md for a manual Save/Load checklist.
+
 ## Operating Rules (So we don’t forget)
 
 - Commit discipline: commit and push meaningful steps; keep messages scoped (feature/fix/docs)
@@ -237,6 +240,19 @@
 - When extending saves:
   - Add fields to `SaveDto`; keep old fields readable; apply safe defaults on load
   - Provide capture/restore bindings in `CompositionRoot` (e.g., BindUnitsEx)
+
+## Recent Changes (Sprint 2)
+
+- Dev ActionsPanel spawns units at random positions within the main camera viewport (about 12% margin from edges) instead of under the cursor.
+  - Code: My project/Assets/Scripts/Presentation/UI/ActionsPanel.cs:111 (RandomWorldPointInView), used from :74.
+- Dev ActionsPanel spawns now auto-attach HP bars via UnitHpOverlay.
+  - Code: My project/Assets/Scripts/Presentation/UI/ActionsPanel.cs:93
+- LMB spawn “white square” fixed for the new Input System path by assigning player sprite/tint.
+  - Code: My project/Assets/Scripts/Presentation/Input/UnitSpawnerCommander.cs:25, :39-42
+
+- Dev Self-Test Save/Load added: creates a deterministic scene, saves, loads, and verifies units (count, position, destination, faction, HP) and overlays. Reports PASS/FAIL in HUD status and Console.
+  - Code: My project/Assets/Scripts/Presentation/UI/ActionsPanel.cs (SelfTestSaveLoad)
+  - Note: overwrites save.json and replaces units in the scene for the test run.
 
 ## Next Steps (Sprint 2)
 
