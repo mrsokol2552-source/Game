@@ -171,3 +171,23 @@
   - Small maps: single-thread A* is fine; later — partition grid, pool nodes, consider Jobs/Burst if needed.
 - DoD
   - Decisions documented; interface in place; pathfinder impl tracked as a separate task (not required in this sprint).
+
+## Pathfinding Decisions (Sprint 2)
+
+- API Surface
+  - Interface: `IGridPathfinder` with `bool IsReachable(int fromX, int fromY, int toX, int toY)`.
+    - File: My project/Assets/Scripts/Infrastructure/AI/Pathfinding/IGridPathfinder.cs
+  - Service: `GridPathfinder` (pure C#) — BFS reachability on a walkable grid; later extend to A* and `FindPath`.
+    - File: My project/Assets/Scripts/Infrastructure/AI/Pathfinding/GridPathfinder.cs
+
+- Grid Model
+  - 2D integer grid; initial `cellSize = 1` world unit; origin at (0,0).
+  - World→Grid: `gx = floor(x/cellSize)`, `gy = floor(y/cellSize)`.
+  - Neighbors: 4-connected for now (no diagonals).
+  - Costs: base cost 1 per step; terrain weights to be added later.
+  - Heuristic (for A* later): Manhattan |dx|+|dy|.
+
+- Next Steps
+  - Add `FindPath` returning the sequence of grid cells using A*.
+  - Introduce `IGridProvider` to abstract walkability and weights from map/buildings.
+  - Consider jobs/Burst for heavy loads; editor gizmos for debug in Presentation.

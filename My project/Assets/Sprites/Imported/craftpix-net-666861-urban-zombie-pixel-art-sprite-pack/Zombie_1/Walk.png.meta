@@ -73,7 +73,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -364,7 +364,7 @@ TextureImporter:
     physicsShape: []
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
-    internalID: 0
+    internalID: 1537655665
     vertices: []
     indices: 
     edges: []
@@ -377,16 +377,16 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":true,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Walk_0: 4035959289877228764
-      Walk_1: -982904232830982447
-      Walk_2: -350908408369970039
-      Walk_3: -5409570386352685021
-      Walk_4: 1553940418269799609
-      Walk_5: 2416434504916517810
-      Walk_6: -6428935122508569504
-      Walk_7: 7144598999076838305
-      Walk_8: 7500509103958437945
-      Walk_9: 1008816216748069464
+      Walk_0: 67788767
+      Walk_1: -1199162940
+      Walk_2: 2077444997
+      Walk_3: 1639395793
+      Walk_4: 305860308
+      Walk_5: 1637228251
+      Walk_6: 788221566
+      Walk_7: 1550893491
+      Walk_8: 792920353
+      Walk_9: -2031708305
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

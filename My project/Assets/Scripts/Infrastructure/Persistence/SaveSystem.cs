@@ -18,6 +18,7 @@ namespace Game.Infrastructure.Persistence
             public List<ResourceAmount> Stocks = new List<ResourceAmount>();
             public List<UnitState> Units = new List<UnitState>();
             public List<ResearchEntry> Research = new List<ResearchEntry>();
+            public List<BlockCell> Obstacles = new List<BlockCell>();
         }
 
         [Serializable]
@@ -28,6 +29,12 @@ namespace Game.Infrastructure.Persistence
             public float dx, dy, dz;
             public int faction;
             public int hp;
+        }
+
+        [Serializable]
+        private struct BlockCell
+        {
+            public int c; public int r;
         }
 
         private static string DefaultPath => Path.Combine(UnityEngine.Application.persistentDataPath, "save.json");
@@ -53,6 +60,8 @@ namespace Game.Infrastructure.Persistence
         private System.Action<IEnumerable<Vector3>> restoreUnits; // legacy
         private System.Func<IEnumerable<UnitSnapshot>> captureUnitsEx;
         private System.Action<IEnumerable<UnitSnapshot>> restoreUnitsEx;
+        private System.Func<IEnumerable<Vector2Int>> captureObstacles;
+        private System.Action<IEnumerable<Vector2Int>> restoreObstacles;
 
         public void BindUnits(System.Func<IEnumerable<Vector3>> capture, System.Action<IEnumerable<Vector3>> restore)
         {
@@ -64,6 +73,12 @@ namespace Game.Infrastructure.Persistence
         {
             captureUnitsEx = capture;
             restoreUnitsEx = restore;
+        }
+
+        public void BindObstacles(System.Func<IEnumerable<Vector2Int>> capture, System.Action<IEnumerable<Vector2Int>> restore)
+        {
+            captureObstacles = capture;
+            restoreObstacles = restore;
         }
 
         public void SaveDefault(GameStateService game)
@@ -107,6 +122,16 @@ namespace Game.Infrastructure.Persistence
             foreach (var kv in snap)
             {
                 dto.Research.Add(new ResearchEntry { id = kv.Key, status = (int)kv.Value });
+            }
+
+            // Obstacles
+            if (captureObstacles != null)
+            {
+                var arr = captureObstacles()?.ToList();
+                if (arr != null)
+                {
+                    dto.Obstacles = arr.Select(v => new BlockCell { c = v.x, r = v.y }).ToList();
+                }
             }
 
             var json = JsonUtility.ToJson(dto, prettyPrint: true);
@@ -157,6 +182,13 @@ namespace Game.Infrastructure.Persistence
                     map[e.id] = (Game.Domain.Research.ResearchStatus)e.status;
                 }
                 game.Research.ReplaceAll(map);
+            }
+
+            // Restore obstacles
+            if (dto.Obstacles != null && dto.Obstacles.Count > 0 && restoreObstacles != null)
+            {
+                var list = dto.Obstacles.Select(b => new Vector2Int(b.c, b.r)).ToList();
+                restoreObstacles(list);
             }
 
             return true;

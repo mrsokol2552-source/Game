@@ -5,6 +5,7 @@ using Game.Application.UseCases;
 using Game.Infrastructure.Configs;
 using Game.Infrastructure.Persistence;
 using Game.Presentation.Input;
+using Game.Presentation.CameraControl;
 using Game.Presentation.View;
 using UnityEngine;
 
@@ -45,6 +46,34 @@ namespace Game.Presentation.Bootstrap
                     start.Execute(GameConfig.StartingResources);
                 else
                     start.Execute();
+            }
+
+            // Ensure camera zoom controller exists
+            var cam = Camera.main;
+            if (cam != null && cam.GetComponent<CameraZoom2D>() == null)
+            {
+                cam.gameObject.AddComponent<CameraZoom2D>();
+            }
+
+            // Ensure a HexPathfindingBootstrap exists by default and bind obstacles for persistence
+            var hex = FindObjectOfType<Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
+            if (hex == null)
+            {
+                var go = new GameObject("HexPathfinding (Auto)");
+                hex = go.AddComponent<Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
+            }
+            if (hex != null)
+            {
+                saveSystem.BindObstacles(hex.CaptureBlocked, hex.RestoreBlocked);
+            }
+
+            // Ensure procedural obstacles spawner exists (optional)
+            var proc = FindObjectOfType<Game.Presentation.Pathfinding.ProceduralObstacles>();
+            if (proc == null)
+            {
+                var goProc = new GameObject("ProceduralObstacles (Auto)");
+                proc = goProc.AddComponent<Game.Presentation.Pathfinding.ProceduralObstacles>();
+                // Optional: try to assign a default rock sprite if present via inspector later
             }
         }
 

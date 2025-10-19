@@ -11,6 +11,8 @@ namespace Game.Presentation.View
 
         public void SetDestination(Vector3 target)
         {
+            if ((target - transform.position).sqrMagnitude < 0.0001f)
+                return; // ignore tiny re-commands to avoid jitter
             destination = target;
         }
 

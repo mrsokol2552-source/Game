@@ -264,7 +264,7 @@ TextureImporter:
     physicsShape: []
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
-    internalID: 0
+    internalID: 1537655665
     vertices: []
     indices: 
     edges: []
@@ -277,12 +277,12 @@ TextureImporter:
       - key: SpriteEditor.SliceOnImport
         value: True
     nameFileIdTable:
-      Idle_0: 4723107735738678597
-      Idle_1: -7385789195546760866
-      Idle_2: 3234629978573100161
-      Idle_3: 6373048116405451881
-      Idle_4: 7264182050183361747
-      Idle_5: -2834552850196481573
+      Idle_0: 1535189785
+      Idle_1: -846022393
+      Idle_2: 931092137
+      Idle_3: -1700031231
+      Idle_4: 238509129
+      Idle_5: 1535204049
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
