@@ -1,0 +1,186 @@
+# Current Game State (RTS 2D)
+
+## Index / Search Hints
+- Bootstrap & lifecycle: CompositionRoot, GameStateService, SaveSystem, camera setup.
+- Domain & use cases: EconomyState/Manager, ResearchStore, StartNewGame, PlaceBuilding, StartResearch, CompleteResearch.
+- Configs: GameConfig, BuildingConfig, ResearchConfig, UnitConfig, MovementSettings.
+- Input & UI: InputController, UnitSpawnerCommander, HudController, ActionsPanel, ResearchPanel, camera controls.
+- Units & movement: UnitView, UnitStats, UnitHpOverlay, UnitVisualCulling, UnitPathFollower.
+- Pathfinding & navigation: PathManager, PathRequestQueue, HexPathfindingBootstrap, HexPathfinderJob, CrowdingResolver, ProceduralObstacles.
+- Combat & targeting: UnitCombat (steering, repath timers, budgets), UnitCombatJobScheduler, EnemySquadManager, OccupancyHash.
+- Persistence: SaveSystem bindings, what is persisted.
+- Debug/perf: PathProfiler, PathDebugHUD, diagnostic toggles.
+- Tests: Assets/Tests (EditMode + PlayMode).
+
+## Layers and code map
+- This doc describes runtime behavior; for file navigation see `docs/code_map.md`.
+- Domain: pure data + rules (`Domain/*`).
+- Application: use cases that orchestrate domain changes (`Application/*`).
+- Infrastructure: ScriptableObjects and persistence (`Infrastructure/*`).
+- Presentation: Unity MonoBehaviours (`Presentation/*`).
+
+## Bootstrap and Lifecycle
+- `CompositionRoot` (`Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs`)
+  - Creates `GameStateService` and binds SaveSystem capture/restore callbacks.
+  - Auto-starts a new game when `AutoStart=true`, using `GameConfig.StartingResources` or zeroing stocks.
+  - Ensures helpers: `CameraZoom2D`, `HexPathfindingBootstrap` ("HexPathfinding (Auto)"), `ProceduralObstacles`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `PathRequestQueue`.
+  - Applies `UnitVisualCulling` and sorting layer/order to existing `UnitView` objects.
+  - Ticks `EconomyManager` every frame (currently no passive income).
+  - Exposes UI helpers: `AttemptPlaceTestBuilding`, `AttemptStartTestResearch`, `AttemptCompleteTestResearch`, status in `LastStatusMessage`.
+
+## Domain and Application
+- `GameStateService`:
+  - Holds `EconomyState`, `EconomyManager`, `ResearchStore`.
+- Use cases:
+  - `StartNewGame` resets stocks and optionally applies `GameConfig.StartingResources`.
+  - `PlaceBuilding` delegates to `BuildingService.TryPlace`.
+  - `StartResearch` charges cost via `BuildingService` and sets status to `Queued`.
+  - `CompleteResearch` promotes `Queued` to `Done`.
+  - `SaveGame` and `LoadGame` wrap `SaveSystem`.
+
+## Configs and ScriptableObjects
+- `GameConfig`: `StartingResources`.
+- `BuildingConfig`: `Id`, `Cost`.
+- `ResearchConfig`: `ResearchDef` entries (`Id`, `Cost`).
+- `UnitConfig`: `Id`, `Speed`, `MaxHealth`, `Cost` (not wired to runtime yet).
+- `MovementSettings`: movement tuning for `UnitView` (`MaxSpeed`, accel/decel, slowdown, stop distance, rotate to velocity).
+
+## Input, Camera, and UI
+- Camera (`CameraZoom2D`):
+  - Zoom: mouse wheel or `+/-`, clamped `MinOrthoSize..MaxOrthoSize`, smooth lerp.
+  - Pan: MMB drag or WASD; speed scales with ortho size (`PanZoomScale`).
+  - Blocks zoom/drag when pointer is over HUD; WASD still works.
+- Hotkeys (`InputController`):
+  - `M` +10 Materials, `F` +5 Food, `B` attempt test build, `R` start first research, `C` complete first research, `E` spawn enemy at cursor (snapped to hex).
+  - Uses Input System if enabled, falls back to legacy input otherwise.
+- Spawning and commands (`UnitSpawnerCommander`):
+  - LMB: spawn player unit at nearest hex center using `UnitPrefab` or `CompositionRoot.DefaultUnitPrefab`.
+  - RMB: coalesced by `RmbCoalesceSeconds`, queued via `PathRequestQueue`.
+  - On spawn: ensures `UnitCombat`, `UnitHpOverlay`, `UnitVisualCulling`; applies faction tint/sprite and sorting.
+  - On manual move: `UnitCombat.NotifyManualMove` clears combat steering so manual commands persist.
+- HUD (`HudController`):
+  - Shows resource stocks, Save/Load buttons, toggle Research panel, toggle Dev panel.
+  - Keeps a list of UI rectangles for pointer blocking (`IsPointerOverHud`).
+- Dev panel (`ActionsPanel`):
+  - Spawn units, add resources, attempt build, toggle research panel, clear save file.
+  - Save/Load self-test: spawn deterministic units, save/load, validate data.
+- Research panel (`ResearchPanel`):
+  - Renders `ResearchConfig` items from `CompositionRoot.TestResearch`.
+  - Buttons call `StartResearch` / `CompleteResearch` use cases.
+
+## Units, Health, and Visuals
+- `UnitStats`: `MaxHealth`, `Speed` (movement uses `MovementSettings`, not `UnitStats.Speed`).
+- `UnitView`:
+  - Uses `MovementSettings.Default` if no asset assigned.
+  - `SetDestination` increments `PathProfiler.CountCommand`; optional jitter logs when `LogJitteryCommands` and `EnableJitterLog` are true.
+  - `ClearDestination` increments `PathProfiler.CountPathReset`.
+  - Movement: smooth accel/decel, snap within `StopDistance`, optional rotate-to-velocity, sprite mirror on X.
+- `UnitHpOverlay`:
+  - OnGUI health bar above units; draws only if HP < max.
+- `UnitVisualCulling`:
+  - Every `CheckInterval`, toggles `SpriteRenderer`, `Animator`, `UnitHpOverlay` when far/out of frustum.
+  - Logic continues to run; only visuals are disabled.
+
+## Movement, Path Following, and Crowding
+- `UnitPathFollower`:
+  - Maintains a queue of waypoints and advances when within `WaypointEpsilon`.
+  - Simplifies straight segments (`StraightDotThreshold`, `MinStraightRun`).
+  - `Source` flag (`Manual`, `Combat`) to prevent combat from overriding manual paths.
+  - `Cancel` clears points/destination and counts a reset if there was a path but no destination.
+- `CrowdingResolver`:
+  - Runs in `LateUpdate` every `Interval`.
+  - Groups units by hex cell; nudges units beyond `AllowStayCountPerCell`.
+  - Uses adaptive throttling (`FrameTimeSoftLimit/HardLimit`) and population scaling.
+  - Skips work when path builder budget is exhausted and uses `MoveCooldown` to prevent ping-pong.
+  - Can resolve stacks for a limited window after enemies disappear (`ResolveWithoutEnemies`).
+
+## Pathfinding and Navigation
+- `PathManager` (singleton):
+  - Prefers `HexPathfindingBootstrap`, falls back to `PathfindingBootstrap`.
+  - Budget: `MaxBuildsPerFrame` (0 = unlimited), `MaxPathNodes`.
+  - Occupancy: enemies always block; friendlies are reserved for `FriendlyReserveSeconds`.
+  - Optional `EnableGroupPathReuse` with `GroupReuseMaxStartDist2` and `GroupReuseFrames`.
+  - Uses pools for grid points, world points, and hash sets.
+- `PathRequestQueue`:
+  - Processes up to `MaxPerFrame` requests; `MaxQueueSize` drops oldest.
+  - Jobs: `UseJobs=true` schedules `HexPathfinderJob` when native walkable data exists.
+  - Fallback to sync `PathManager.BuildPath` when job fails or is disabled.
+  - `ProcessSynchronouslyIfIdle` can handle requests immediately when jobs are off.
+- `HexPathfindingBootstrap`:
+  - Odd-r hex grid, pointy-top. Defaults: `Width/Height=1024`, `HexSize=0.4`.
+  - `AutoClampSize` limits grid if `Width*Height` exceeds `MaxCells`.
+  - `BakeFromPhysics` uses `ObstacleMask` (or "Obstacles" layer) and `SampleRadius`.
+  - Maintains `NativeArray<byte>` walkable map; `UpdateNativeWalkable` completes jobs before rebuild.
+  - `CaptureBlocked`/`RestoreBlocked` for persistence.
+- `HexPathfinderJob`:
+  - A* on hex grid using native walkable map and enemy occupancy hash.
+  - Returns `int2` cell path; `PathRequestQueue` converts to world points and skips the start cell.
+- `PathfindingBootstrap` (square grid fallback):
+  - Uses `CellSize`, `AllowDiagonals`, `AutoFitToCamera`. `SmoothWorldPath` is present but not wired.
+- `HexPathfinderJobBurst.md` documents job usage and expectations.
+
+## Combat and Targeting
+- `UnitCombat`:
+  - Static `UnitCombat.All` holds all active combat units.
+  - Global switch `DisableCombat` freezes combat logic (used by tests/self-test).
+  - Timers: `CombatTickInterval` + `CombatTickJitter`, `TargetRefreshInterval`, `JobTargetTtl`, `Repath*` timers.
+  - Budgets: `RepathBudgetPerFrame` enforced; `TargetSearchBudgetPerFrame` declared but not currently enforced.
+  - Targeting pipeline:
+    - Uses job scheduler target (`SetJobNearest`) when available.
+    - Uses `OccupancyHash` only if the scheduler is disabled.
+    - Forced squad target (`AssignSquadTarget`) is overridden if a local target is within `AttackRange * LocalThreatOverrideMultiplier`.
+    - No O(n^2) fallback; if nothing resolved, the unit idles until next refresh.
+  - Movement steering:
+    - Desired point at stop distance; optional perpendicular jitter to avoid stacking.
+    - Snaps to hex center only when moving into a different cell.
+    - Cluster stepping (`UseClusterStepping`) uses `PathManager.TryGetClusterEdgeTarget`.
+    - Requests paths via `PathRequestQueue`; stale callbacks are ignored via request id.
+  - In-range behavior:
+    - Cancels combat path, clears destination, attacks on cooldown.
+  - No-enemy behavior:
+    - Cancels combat-driven movement and pending paths; leaves manual paths intact.
+  - Diagnostics:
+    - `LogCombatResets` logs destination/path resets with per-frame throttle.
+  - Notes:
+    - `EngageStopMultiplier` is exposed but not referenced by current logic.
+
+## Enemies, Squads, and Background Jobs
+- `EnemySquadManager`:
+  - Groups units by radius, assigns a shared target with TTL (`SquadTargetTTL`).
+  - Optional leader path sharing (`ShareLeaderPath`) with formation offsets.
+  - `DrivePlayers=true` allows the same logic for player squads; `ShareLeaderPathForPlayers` defaults to false.
+- `UnitCombatJobScheduler`:
+  - Jobified spatial hash (`NativeParallelMultiHashMap`) for nearest enemy search.
+  - `Interval`, `HashCellSize`, `HashRings` control cadence and coverage.
+  - Runs job and immediately completes it each tick (results applied same frame).
+- `OccupancyHash`:
+  - Rebuilt every frame; native hash for occupancy counts and a managed bucket map for nearest lookup.
+
+## Environment and Obstacles
+- `ProceduralObstacles`:
+  - Spawns rocks by `Count` or `CoveragePercent`.
+  - `UseRandomSeed=true` uses time-based randomness; `false` uses `Seed`.
+  - Ensures obstacle layer is included in `HexPathfindingBootstrap.ObstacleMask`.
+  - Re-bakes walkability after spawn.
+
+## Save / Load
+- `SaveSystem`:
+  - JSON schema version 1.
+  - Saves stocks, unit snapshots (position, destination, faction, HP), research status map, blocked cells.
+  - Restores units via `CompositionRoot.RestoreUnitsEx` with sprites, faction tint, overlays, and culling.
+
+## Debugging, Profiling, Diagnostics
+- `PathProfiler`:
+  - Tracks builds/accepts/rejects, max nodes, path lengths, commands, jitter, crowd moves, resets.
+  - Optional anomaly log with thresholds (`AnomalyFrameTimeMs`, `AnomalyJitter`, etc).
+- `PathDebugHUD`: OnGUI overlay for path stats.
+- `PathRequestQueue.LogJobResults` and `PathManager.LogBuildFailures` for verbose tracing.
+- `UnitView.EnableJitterLog` and `UnitCombat.LogCombatResets` for movement diagnostics.
+
+## Tests and Benchmarks
+- PlayMode:
+  - `FpsStressTests` logs average FPS per scenario (`[FpsStress]` line).
+  - `CombatPathResetTests` tracks destination reset rates during chase.
+  - `UnitCombatStallTests` checks close-range attacks and chasing.
+- EditMode:
+  - `UnitCombatTargetingTests` verifies target resolution priority.

@@ -10,11 +10,27 @@ namespace Game.Infrastructure.AI.Pathfinding
         private readonly int _width;
         private readonly int _height;
         private readonly Func<int, int, bool> _isWalkable; // (col,row) walkable
+        private readonly int _maxSearchNodes;
+        private readonly int[,] _g;
+        private readonly int[,] _cameC;
+        private readonly int[,] _cameR;
+        private readonly bool[,] _inOpen;
+        private readonly bool[,] _closed;
+        private readonly List<(int c, int r, int f)> _open;
+        private readonly List<GridPoint> _rev = new List<GridPoint>(128);
 
         public HexPathfinder(int width, int height, Func<int, int, bool> isWalkable)
         {
             if (width <= 0 || height <= 0) throw new ArgumentOutOfRangeException("Grid dimensions must be positive.");
             _width = width; _height = height; _isWalkable = isWalkable ?? throw new ArgumentNullException(nameof(isWalkable));
+            // Cap search to avoid pathological scans on huge/unreachable maps
+            _maxSearchNodes = Math.Min(Math.Max(10, width * height), 10_000);
+            _g = new int[_height, _width];
+            _cameC = new int[_height, _width];
+            _cameR = new int[_height, _width];
+            _inOpen = new bool[_height, _width];
+            _closed = new bool[_height, _width];
+            _open = new List<(int c, int r, int f)>(128);
         }
 
         public static HexPathfinder FromWalkableMap(bool[,] map)
@@ -65,35 +81,43 @@ namespace Game.Infrastructure.AI.Pathfinding
             if (fromCol == toCol && fromRow == toRow) { path.Add(new GridPoint(fromCol, fromRow)); return true; }
 
             const int INF = int.MaxValue / 4;
-            var g = new int[_height, _width];
-            var cameC = new int[_height, _width];
-            var cameR = new int[_height, _width];
-            var open = new List<(int c, int r, int f)>();
-            var inOpen = new bool[_height, _width];
-            var closed = new bool[_height, _width];
-            for (int r = 0; r < _height; r++) for (int c = 0; c < _width; c++) { g[r, c] = INF; cameC[r, c] = -1; cameR[r, c] = -1; }
-
-            g[fromRow, fromCol] = 0;
-            open.Add((fromCol, fromRow, HexHeuristic(fromCol, fromRow, toCol, toRow)));
-            inOpen[fromRow, fromCol] = true;
-
-            while (open.Count > 0)
+            // reset cached buffers
+            _open.Clear();
+            for (int r = 0; r < _height; r++)
             {
-                int bestIdx = 0; int bestF = open[0].f;
-                for (int i = 1; i < open.Count; i++) if (open[i].f < bestF) { bestF = open[i].f; bestIdx = i; }
-                var node = open[bestIdx]; open.RemoveAt(bestIdx); inOpen[node.r, node.c] = false;
-                if (closed[node.r, node.c]) continue; closed[node.r, node.c] = true;
+                for (int c = 0; c < _width; c++)
+                {
+                    _g[r, c] = INF;
+                    _cameC[r, c] = -1;
+                    _cameR[r, c] = -1;
+                    _inOpen[r, c] = false;
+                    _closed[r, c] = false;
+                }
+            }
+
+            _g[fromRow, fromCol] = 0;
+            _open.Add((fromCol, fromRow, HexHeuristic(fromCol, fromRow, toCol, toRow)));
+            _inOpen[fromRow, fromCol] = true;
+
+            int expanded = 0;
+            while (_open.Count > 0)
+            {
+                if (++expanded > _maxSearchNodes) return false;
+                int bestIdx = 0; int bestF = _open[0].f;
+                for (int i = 1; i < _open.Count; i++) if (_open[i].f < bestF) { bestF = _open[i].f; bestIdx = i; }
+                var node = _open[bestIdx]; _open.RemoveAt(bestIdx); _inOpen[node.r, node.c] = false;
+                if (_closed[node.r, node.c]) continue; _closed[node.r, node.c] = true;
                 if (node.c == toCol && node.r == toRow)
                 {
-                    // reconstruct into path
-                    int cc = toCol, rr = toRow; var rev = new List<GridPoint>(32);
-                    rev.Add(new GridPoint(cc, rr));
+                    // reconstruct into path using cached buffer
+                    _rev.Clear();
+                    int cc = toCol, rr = toRow; _rev.Add(new GridPoint(cc, rr));
                     while (!(cc == fromCol && rr == fromRow))
                     {
-                        int pc = cameC[rr, cc], pr = cameR[rr, cc]; if (pc < 0) break;
-                        cc = pc; rr = pr; rev.Add(new GridPoint(cc, rr));
+                        int pc = _cameC[rr, cc], pr = _cameR[rr, cc]; if (pc < 0) break;
+                        cc = pc; rr = pr; _rev.Add(new GridPoint(cc, rr));
                     }
-                    for (int i = rev.Count - 1; i >= 0; i--) path.Add(rev[i]);
+                    for (int i = _rev.Count - 1; i >= 0; i--) path.Add(_rev[i]);
                     return true;
                 }
 
@@ -106,15 +130,15 @@ namespace Game.Infrastructure.AI.Pathfinding
                     int nx = cx + dx, ny = cy + dy, nz = cz + dz;
                     int aq = nx; int ar = nz;
                     var (oc, orow) = AxialToOddR(aq, ar);
-                    if (!InBounds(oc, orow) || closed[orow, oc] || !_isWalkable(oc, orow)) continue;
-                    int tentative = g[node.r, node.c] + 1;
-                    if (tentative < g[orow, oc])
+                    if (!InBounds(oc, orow) || _closed[orow, oc] || !_isWalkable(oc, orow)) continue;
+                    int tentative = _g[node.r, node.c] + 1;
+                    if (tentative < _g[orow, oc])
                     {
-                        g[orow, oc] = tentative;
-                        cameC[orow, oc] = node.c;
-                        cameR[orow, oc] = node.r;
+                        _g[orow, oc] = tentative;
+                        _cameC[orow, oc] = node.c;
+                        _cameR[orow, oc] = node.r;
                         int f = tentative + HexHeuristic(oc, orow, toCol, toRow);
-                        if (!inOpen[orow, oc]) { open.Add((oc, orow, f)); inOpen[orow, oc] = true; }
+                        if (!_inOpen[orow, oc]) { _open.Add((oc, orow, f)); _inOpen[orow, oc] = true; }
                     }
                 }
             }
@@ -165,4 +189,3 @@ namespace Game.Infrastructure.AI.Pathfinding
         private bool InBounds(int col, int row) => col >= 0 && row >= 0 && col < _width && row < _height;
     }
 }
-

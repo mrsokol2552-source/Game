@@ -369,14 +369,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de59cd1b0acfb1949b3dabfe660279cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: RTS.Presentation::Game.Presentation.Pathfinding.HexPathfindingBootstrap
-  Width: 256
-  Height: 256
-  HexSize: 0.25
+  Width: 1024
+  Height: 1024
+  HexSize: 0.4
   Origin: {x: 0, y: 0}
   AutoFitToCamera: 1
+  AutoClampSize: 1
+  MaxCells: 200000
+  AutoBakeColliders: 1
+  ObstacleMask:
+    serializedVersion: 2
+    m_Bits: 8
+  SampleRadius: 0.24
   DrawGrid: 1
   DrawOnlyVisible: 1
   GridColor: {r: 0.3, g: 0.9, b: 0.6, a: 0.8}
+  LogBake: 1
 --- !u!4 &938074040
 Transform:
   m_ObjectHideFlags: 0
@@ -577,6 +585,63 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2003511185
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2003511187}
+  - component: {fileID: 2003511186}
+  m_Layer: 0
+  m_Name: ProceduralObstacles
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2003511186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2003511185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deeb54d221238bd44a5f43d5422afb0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: RTS.Presentation::Game.Presentation.Pathfinding.ProceduralObstacles
+  Count: 50
+  MinHexDistance: 2
+  CoveragePercent: 0.008
+  UseRandomSeed: 1
+  Seed: 12345
+  RockSprite: {fileID: 0}
+  RockSprites:
+  - {fileID: 21300000, guid: 26f76c211f224dd4c980dde1f6ad5e1a, type: 3}
+  - {fileID: 21300000, guid: 52d55b61902c9f24481c01c0e29c44e3, type: 3}
+  - {fileID: 21300000, guid: 70f240413b644d6408081e9a8646a7c2, type: 3}
+  UseCircleCollider: 1
+  ColliderRadiusScale: 0.45
+  ObstacleLayerName: Obstacles
+--- !u!4 &2003511187
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2003511185}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -587,3 +652,4 @@ SceneRoots:
   - {fileID: 1998819868}
   - {fileID: 1403094083}
   - {fileID: 938074040}
+  - {fileID: 2003511187}

@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Game.Domain.Units;
 using UnityEngine;
 using Game.Presentation.Pathfinding;
+using Game.Presentation.Performance;
+using System.Linq;
 
 namespace Game.Presentation.View
 {
@@ -17,6 +19,55 @@ namespace Game.Presentation.View
         public float AttackRange = 1.5f;
         public int AttackDamage = 10;
         public float AttackCooldown = 0.75f;
+        [Header("Pathfinding")]
+        [Tooltip("How often (seconds) to recompute combat path when target is moving (nearby clusters).")]
+        public float RepathInterval = 0.25f;
+        [Tooltip("How often to recompute when target is far (cluster distance >= FarClusterDistance).")]
+        public float RepathIntervalFar = 0.7f;
+        [Tooltip("How often to recompute when target is very far (cluster distance >= FarClusterDistance2).")]
+        public float RepathIntervalVeryFar = 1.5f;
+        [Tooltip("Cooldown after a failed path attempt to avoid expensive retries each frame.")]
+        public float RepathFailCooldown = 0.6f;
+        [Tooltip("Cluster size (in hex cells) used to decide far/near repath intervals.")]
+        public int ClusterSizeForRepath = 96;
+        [Tooltip("Cluster manhattan distance threshold to use far repath interval.")]
+        public int FarClusterDistance = 2;
+        [Tooltip("Second level cluster size for very far repath interval.")]
+        public int ClusterSizeForRepath2 = 256;
+        [Tooltip("Cluster distance threshold for very far repath interval.")]
+        public int FarClusterDistance2 = 1;
+        [Tooltip("Restrict each path build to current cluster; if target outside, step to cluster edge first.")]
+        public bool UseClusterStepping = true;
+        [Tooltip("Random offset added to repath timers to desync many units.")]
+        public float RepathJitter = 0.08f;
+        [Tooltip("If target changes hex cell, force repath immediately (ignores timer).")]
+        public bool InstantRepathOnTargetCellChange = true;
+        [Tooltip("If unit is idle near enemy for longer than this, force an immediate repath to shake stall.")]
+        public float StallRepathSeconds = 0.15f;
+        [Header("Targeting")]
+        [Tooltip("How often to refresh nearest enemy search.")]
+        public float TargetRefreshInterval = 0.1f;
+        [Tooltip("When target is within this multiple of AttackRange, cancel combat path and stand to fight.")]
+        public float EngageStopMultiplier = 1.2f;
+        [Tooltip("How long to trust a job-provided nearest target before falling back to forced/local search.")]
+        public float JobTargetTtl = 0.6f;
+        [Tooltip("If a forced target exists but a nearby enemy is within AttackRange * this multiplier, prefer the local enemy.")]
+        public float LocalThreatOverrideMultiplier = 3f;
+        [Header("Performance")]
+        [Tooltip("Run combat logic no more often than this interval.")]
+        public float CombatTickInterval = 0.04f;
+        [Tooltip("Jitter added to combat tick to desync updates.")]
+        public float CombatTickJitter = 0.02f;
+        [Header("Budgets")]
+        [Tooltip("Global cap per frame to spread expensive target searches across units. 0 or less = unlimited.")]
+        public static int TargetSearchBudgetPerFrame = 0;
+        [Tooltip("Global cap per frame to spread expensive repaths across units. 0 or less = unlimited.")]
+        public static int RepathBudgetPerFrame = 0;
+        [Header("Diagnostics")]
+        [Tooltip("Log combat-driven path/destination resets (throttled per frame).")]
+        public bool LogCombatResets = false;
+        [Tooltip("Max combat reset logs per frame across all units.")]
+        public int MaxCombatResetLogsPerFrame = 5;
 
         private float _cooldown;
         private int _currentHealth;
@@ -24,13 +75,43 @@ namespace Game.Presentation.View
         private float _repathTimer;
         private Vector3 _lastDesired;
         private bool _combatSteering;
+        private Vector2Int _lastTargetCell;
+        private Game.Presentation.Pathfinding.PathManager _pm;
+        private Game.Presentation.Pathfinding.HexPathfindingBootstrap _hex;
+        private UnitCombat _cachedTarget;
+        private float _targetRefreshTimer;
+        private float _combatTickTimer;
+        private UnitPathFollower _follower;
+        private Transform _tr;
+        private UnitCombat _forcedTarget;
+        private float _forcedTargetTimer;
+        private bool _pathPending;
+        private float _pathPendingTimer;
+        private int _pathRequestId;
+        private float _stallTimer;
+
+        private static int _budgetFrame = -1;
+        private static int _repathsThisFrame;
+        private static Game.Presentation.Pathfinding.HexPathfindingBootstrap _sharedHex;
+        private UnitCombat _jobNearest;
+        private float _jobNearestTimer;
+        private Game.Presentation.Performance.OccupancyHash _occ;
+        private static int _resetLogFrame = -1;
+        private static int _resetLogsThisFrame;
 
         private void OnEnable()
         {
             All.Add(this);
-            _view = GetComponent<UnitView>();
-            if (_view == null) _view = gameObject.AddComponent<UnitView>();
+            _tr = transform;
+            _view = GetComponent<UnitView>() ?? gameObject.AddComponent<UnitView>();
             _currentHealth = Mathf.Max(1, _view.Stats.MaxHealth);
+            _repathTimer = Random.Range(0f, RepathJitter);
+            _pm = Game.Presentation.Pathfinding.PathManager.Ensure();
+            _hex = SharedHex();
+            _targetRefreshTimer = Random.Range(0f, TargetRefreshInterval);
+            _combatTickTimer = Random.Range(0f, CombatTickInterval + CombatTickJitter);
+            UnitCombatJobScheduler.EnsureExists();
+            _occ = Game.Presentation.Performance.OccupancyHash.Instance;
         }
 
         private void OnDisable()
@@ -40,70 +121,229 @@ namespace Game.Presentation.View
 
         private void Update()
         {
+            _combatTickTimer -= Time.deltaTime;
+            if (_combatTickTimer > 0f) return;
+            _combatTickTimer = CombatTickInterval + Random.Range(0f, CombatTickJitter);
+
             if (DisableCombat) return;
             if (_cooldown > 0f)
-                _cooldown -= Time.deltaTime;
+                _cooldown = Mathf.Max(0f, _cooldown - (CombatTickInterval));
+            if (_forcedTargetTimer > 0f)
+                _forcedTargetTimer -= Time.deltaTime;
+            else
+                _forcedTarget = null;
+            if (_jobNearestTimer > 0f)
+                _jobNearestTimer -= Time.deltaTime;
+            else
+                _jobNearest = null;
+            if (_forcedTarget != null && (!_forcedTarget.isActiveAndEnabled || _forcedTarget.Faction == Faction))
+            {
+                _forcedTarget = null;
+                _forcedTargetTimer = 0f;
+            }
+            if (_jobNearest != null && (!_jobNearest.isActiveAndEnabled || _jobNearest.Faction == Faction))
+            {
+                _jobNearest = null;
+                _jobNearestTimer = 0f;
+            }
+            if (_occ == null) _occ = Game.Presentation.Performance.OccupancyHash.Instance;
 
-            var follower = GetComponent<UnitPathFollower>();
-            bool pathActive = follower != null && follower.HasPath;
+            EnsureCaches();
+            bool pathActive = _follower != null && _follower.HasPath;
+            if (_pathPendingTimer > 0f)
+            {
+                _pathPendingTimer -= Time.deltaTime;
+                if (_pathPendingTimer <= 0f)
+                {
+                    _pathPending = false;
+                }
+            }
 
-            var target = FindNearestEnemy();
+            // If нет врагов вообще, прекращаем любое боевое движение
+            bool enemiesPresent = UnitCombat.All.Any(uc => uc != null && uc.isActiveAndEnabled && uc.Faction != Faction);
+            if (!enemiesPresent && _forcedTarget == null)
+            {
+                if (_follower != null && _follower.Source == UnitPathFollower.PathSource.Combat) _follower.Cancel();
+                if (_combatSteering) _view.ClearDestination("combat-no-enemies");
+                _combatSteering = false;
+                _pathPending = false;
+                return;
+            }
+
+            var target = ResolveTarget();
             if (target != null)
             {
                 Vector3 tp = target.transform.position;
-                Vector3 mp = transform.position;
+                Vector3 mp = _tr.position;
+                if (_hex == null) _hex = SharedHex();
+                var targetCell = _hex != null ? _hex.WorldToGrid(tp) : Vector2Int.zero;
                 float dist = (tp - mp).magnitude;
                 float stopDist = Mathf.Max(AttackRange * 0.9f, 0.1f);
 
                 // If path follower is active, don't override its movement
+                float cancelDist = Mathf.Max(stopDist, AttackRange * 0.95f);
+                if (dist <= cancelDist && pathActive)
+                {
+                    if (_follower != null && _follower.Source == UnitPathFollower.PathSource.Combat) _follower.Cancel();
+                    _view.ClearDestination("combat-in-range");
+                    LogReset("in-range-stop", target, dist);
+                    pathActive = false;
+                    _pathPending = false;
+                }
 
                 if (dist > AttackRange)
                 {
                     // Move to a point at stopDist from the target
-                    Vector3 dir = (mp - tp);
-                    if (dir.sqrMagnitude < 0.0001f) dir = Vector3.right;
-                    Vector3 desired = tp + dir.normalized * stopDist;
+                    Vector3 dirToTarget = (tp - mp);
+                    if (dirToTarget.sqrMagnitude < 0.0001f) dirToTarget = Vector3.right;
+                    Vector3 desired = tp - dirToTarget.normalized * stopDist;
+                    // small per-unit jitter perpendicular to target direction to avoid piling into same hex
+                    float jitterScale = dist <= AttackRange * 2f ? 0.2f : 0.35f;
+                    float jitter = AttackRange * jitterScale;
+                    int hash = GetInstanceID();
+                    float r = (Mathf.Sin(hash * 12.9898f) * 43758.5453f) % 1f; // deterministic 0..1
+                    Vector3 perp = new Vector3(-dirToTarget.normalized.y, dirToTarget.normalized.x, 0f);
+                    desired += perp * ((r - 0.5f) * jitter);
+                    // Snap to hex center only when moving into a different cell to avoid "return to center" jitter.
+                    if (_hex == null) _hex = SharedHex();
+                    if (_hex != null)
+                    {
+                        var desiredCell = _hex.WorldToGrid(desired);
+                        var currentCell = _hex.WorldToGrid(mp);
+                        if (desiredCell != currentCell)
+                            desired = _hex.GridToWorld(desiredCell.x, desiredCell.y);
+                    }
+                    // Avoid targeting an already occupied enemy cell; friendlies will be handled by culling/resolver
+                    if (_pm != null && _pm.IsWorldOccupied(desired, _view, enemiesOnly: true) && _pm.TryFindNearestFreeWorld(desired, _view, 2, out var free))
+                    {
+                        desired = free;
+                    }
 
                     // Pathfinding is always enabled for combat steering
-                    if (true)
+                    if (_repathTimer > 0f) _repathTimer -= Time.deltaTime;
+                    float delta2 = (desired - _lastDesired).sqrMagnitude;
+                    bool targetMovedCell = _hex != null && targetCell != _lastTargetCell;
+                    if (InstantRepathOnTargetCellChange && targetMovedCell && !_pathPending)
                     {
-                        if (_repathTimer > 0f) _repathTimer -= Time.deltaTime;
-                        float delta2 = (desired - _lastDesired).sqrMagnitude;
-                        if (_repathTimer <= 0f || delta2 > 0.05f * 0.05f || !pathActive)
-                        {
-                            var pm = PathManager.Ensure();
-                            if (pm.BuildPath(_view, desired,
-                                allowDiag: true,
-                                smooth: true,
-                                autoFit: false,
-                                out var worldPath))
-                            {
-                                var follower2 = GetComponent<UnitPathFollower>();
-                                if (follower2 == null) follower2 = gameObject.AddComponent<UnitPathFollower>();
-                                else if (follower2.Source == UnitPathFollower.PathSource.Combat) follower2.Cancel();
-                                follower2.SetWorldPath(worldPath, UnitPathFollower.PathSource.Combat);
-                                _lastDesired = desired;
-                                _repathTimer = 0.2f;
-                                _combatSteering = true;
-                            }
-                            else if (!pathActive)
-                            {
-                                _view.SetDestination(desired);
-                                _combatSteering = true;
-                            }
-                        }
+                        _repathTimer = 0f;
                     }
-                    else if (!pathActive)
+                    // If we are in range band but idle, nudge toward desired to close gap
+                    if (!pathActive && !_pathPending && dist > AttackRange * 0.9f)
                     {
                         _view.SetDestination(desired);
                         _combatSteering = true;
                     }
+                    if (_repathTimer <= 0f && (!_pathPending || _pathPendingTimer <= 0f) && (!pathActive || targetMovedCell || delta2 > 0.05f * 0.05f))
+                    {
+                        if (!TryConsumeRepathBudget())
+                        {
+                            _repathTimer = 0.05f + Random.Range(0f, RepathJitter);
+                            goto SkipBuild;
+                        }
+                        if (_pm != null)
+                        {
+                            int cd2 = _pm.ClusterDistance(mp, tp, ClusterSizeForRepath2);
+                            if (cd2 >= FarClusterDistance2 + 2 && !pathActive)
+                            {
+                                _repathTimer = RepathIntervalVeryFar + Random.Range(0f, RepathJitter);
+                                _combatSteering = true;
+                                _lastTargetCell = targetCell;
+                                // skip building a path this tick
+                                goto SkipBuild;
+                            }
+                        }
+                            if (_pm != null && _pm.IsWorldOccupied(desired, _view) && _pm.TryFindNearestFreeWorld(desired, _view, 2, out var alt))
+                                desired = alt;
+                            Vector3 buildTarget = desired;
+                            if (UseClusterStepping && _pm != null && _pm.ClusterDistance(mp, tp, ClusterSizeForRepath) > 0)
+                            {
+                                if (_pm.TryGetClusterEdgeTarget(mp, tp, ClusterSizeForRepath, _view, out var edge))
+                                    buildTarget = edge;
+                            }
+                            Game.Presentation.Pathfinding.PathRequestQueue.Ensure();
+                            bool pathActiveLocal = pathActive;
+                            var desiredLocal = desired;
+                            var targetRef = target;
+                            _pathPending = true;
+                            _pathPendingTimer = 0.35f;
+                            int reqId = ++_pathRequestId;
+                            Game.Presentation.Pathfinding.PathRequestQueue.Instance.Enqueue(_view, buildTarget, allowDiag: true, smooth: true, onDone: (built, worldPath) =>
+                            {
+                                if (this == null || !isActiveAndEnabled || _view == null)
+                                {
+                                    if (worldPath != null) Game.Presentation.Pathfinding.PathManager.ReturnWorldList(worldPath);
+                                    return;
+                                }
+                                if (reqId != _pathRequestId)
+                                {
+                                    if (worldPath != null) Game.Presentation.Pathfinding.PathManager.ReturnWorldList(worldPath);
+                                    return;
+                                }
+                                _pathPending = false;
+                                // Drop stale results if target has changed
+                                if (_cachedTarget != targetRef || targetRef == null)
+                                {
+                                    if (worldPath != null) Game.Presentation.Pathfinding.PathManager.ReturnWorldList(worldPath);
+                                    return;
+                                }
+                                if (!built && buildTarget != desiredLocal && _pm != null)
+                                {
+                                    built = _pm.BuildPath(_view, desiredLocal, allowDiag: true, smooth: true, autoFit: false, out worldPath, blockFriendlies: false);
+                                }
+                                if (built)
+                                {
+                                    if (_follower == null) _follower = gameObject.AddComponent<UnitPathFollower>();
+                                    _follower.SetWorldPath(worldPath, UnitPathFollower.PathSource.Combat);
+                                    Game.Presentation.Pathfinding.PathManager.ReturnWorldList(worldPath);
+                                    _lastDesired = desiredLocal;
+                                    float interval = RepathInterval;
+                                    if (_pm != null)
+                                    {
+                                        int cd1 = _pm.ClusterDistance(mp, tp, ClusterSizeForRepath);
+                                        int cd2 = _pm.ClusterDistance(mp, tp, ClusterSizeForRepath2);
+                                        if (cd2 >= FarClusterDistance2)
+                                            interval = RepathIntervalVeryFar;
+                                        else if (cd1 >= FarClusterDistance)
+                                            interval = RepathIntervalFar;
+                                        // adapt interval by distance buckets
+                                        float distHex = _hex != null ? (mp - tp).magnitude / (_hex.HexSize * 0.75f) : 0f;
+                                        if (distHex > 100f) interval *= 3f;
+                                        else if (distHex > 50f) interval *= 2f;
+                                    }
+                                    _repathTimer = interval + Random.Range(0f, RepathJitter);
+                                    _combatSteering = true;
+                                    _lastTargetCell = targetCell;
+                                }
+                                else
+                                {
+                                    _repathTimer = RepathFailCooldown + Random.Range(0f, RepathJitter);
+                                    bool allowed = true;
+                                    if (_hex != null && !_hex.IsWalkableWorld(desiredLocal))
+                                        allowed = false;
+                                    if (_pm != null && _pm.IsWorldOccupied(desiredLocal, _view))
+                                        allowed = false;
+                                    if (!pathActiveLocal && allowed)
+                                    {
+                                        _view.SetDestination(desiredLocal);
+                                        _combatSteering = true;
+                                    }
+                                }
+                            });
+                        }
+                SkipBuild:
+                    ;
                 }
                 else
                 {
                     // In range: attack on cooldown; avoid clearing destination if path is active
+                    if (pathActive && _follower != null && _follower.Source == UnitPathFollower.PathSource.Combat)
+                    {
+                        _follower.Cancel();
+                        pathActive = false;
+                        _pathPending = false;
+                    }
                     if (!pathActive && _combatSteering)
-                        _view.ClearDestination();
+                        _view.ClearDestination("combat-in-range");
                     if (_cooldown <= 0f)
                     {
                         target.ApplyDamage(AttackDamage);
@@ -114,9 +354,49 @@ namespace Game.Presentation.View
             else
             {
                 // No targets left: only cancel combat-driven movement, keep player's commands/path
-                if (pathActive && follower.Source == UnitPathFollower.PathSource.Combat) follower.Cancel();
-                if (_combatSteering) _view.ClearDestination();
+                if (pathActive && _follower.Source == UnitPathFollower.PathSource.Combat) _follower.Cancel();
+                if (_combatSteering)
+                {
+                    _view.ClearDestination("combat-no-enemies");
+                    LogReset("no-enemies", null, 0f);
+                    // Snap back to hex center to avoid drifting offsets after combat
+                    if (_hex == null) _hex = SharedHex();
+                    if (_hex != null)
+                    {
+                        var cell = _hex.WorldToGrid(_tr.position);
+                        _tr.position = _hex.GridToWorld(cell.x, cell.y);
+                    }
+                }
                 _combatSteering = false;
+                _stallTimer = 0f;
+            }
+
+            // Stall breaker: if we are near an enemy but not moving/pathing, force a repath soon
+            if (target != null)
+            {
+                bool movingOrPending = pathActive || _pathPending || (_view != null && _view.TryGetDestination(out _));
+                if (!movingOrPending && target.isActiveAndEnabled)
+                {
+                    float dist = (target.transform.position - _tr.position).magnitude;
+                    if (dist > AttackRange * 0.9f)
+                    {
+                        _stallTimer += Time.deltaTime;
+                        if (_stallTimer >= StallRepathSeconds)
+                        {
+                            _repathTimer = 0f;
+                            _pathPending = false;
+                            _stallTimer = 0f;
+                        }
+                    }
+                    else
+                    {
+                        _stallTimer = 0f;
+                    }
+                }
+                else
+                {
+                    _stallTimer = 0f;
+                }
             }
         }
 
@@ -144,14 +424,24 @@ namespace Game.Presentation.View
             _combatSteering = false;
         }
 
+        public void AssignSquadTarget(UnitCombat target, float ttl = 1.5f)
+        {
+            if (target == null || target == this) return;
+            if (target.Faction == this.Faction) return;
+            _forcedTarget = target;
+            _forcedTargetTimer = Mathf.Max(0.1f, ttl);
+            _cachedTarget = target;
+        }
+
         private UnitCombat FindNearestEnemy()
         {
             UnitCombat best = null;
             float bestDist2 = float.MaxValue;
-            Vector3 p = transform.position;
+            Vector3 p = _tr != null ? _tr.position : transform.position;
             foreach (var uc in All)
             {
                 if (uc == null || uc == this) continue;
+                if (!uc.isActiveAndEnabled) continue;
                 if (uc.Faction == this.Faction) continue;
                 float d2 = (uc.transform.position - p).sqrMagnitude;
                 if (d2 < bestDist2)
@@ -163,10 +453,155 @@ namespace Game.Presentation.View
             return best;
         }
 
+        internal void SetJobNearest(UnitCombat uc)
+        {
+            if (uc != null && (uc == this || uc.Faction == Faction || !uc.isActiveAndEnabled))
+                uc = null;
+            _jobNearest = uc;
+            _jobNearestTimer = uc != null ? JobTargetTtl + Random.Range(0f, 0.1f) : 0f;
+        }
+
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, AttackRange);
         }
+
+        private void EnsureCaches()
+        {
+            if (_tr == null) _tr = transform;
+            if (_view == null) _view = GetComponent<UnitView>() ?? gameObject.AddComponent<UnitView>();
+            if (_follower == null) _follower = GetComponent<UnitPathFollower>();
+            if (_pm == null) _pm = Game.Presentation.Pathfinding.PathManager.Ensure();
+            if (_hex == null) _hex = SharedHex();
+        }
+
+        private bool IsLocalThreat(UnitCombat target)
+        {
+            if (target == null) return false;
+            if (_tr == null) _tr = transform;
+            float maxDist = Mathf.Max(AttackRange * LocalThreatOverrideMultiplier, AttackRange);
+            float d2 = (target.transform.position - _tr.position).sqrMagnitude;
+            return d2 <= maxDist * maxDist;
+        }
+
+        private UnitCombat ResolveTarget()
+        {
+            if (_cachedTarget != null && (!_cachedTarget.isActiveAndEnabled || _cachedTarget.Faction == Faction))
+            {
+                _cachedTarget = null;
+            }
+
+            _targetRefreshTimer -= Time.deltaTime;
+            if (_targetRefreshTimer > 0f && _cachedTarget != null)
+                return _cachedTarget;
+
+            var scheduler = UnitCombatJobScheduler.Instance;
+            bool jobEnabled = scheduler == null || !scheduler.Disabled;
+            UnitCombat jobTarget = null;
+            TryGetJobTarget(out jobTarget);
+
+            UnitCombat hashTarget = null;
+            if (jobTarget == null && !jobEnabled)
+                TryGetHashTarget(out hashTarget);
+
+            UnitCombat localTarget = jobTarget ?? hashTarget;
+
+            if (TryGetForcedTarget(out var forced))
+            {
+                _cachedTarget = IsLocalThreat(localTarget) ? localTarget : forced;
+                _targetRefreshTimer = TargetRefreshInterval;
+                return _cachedTarget;
+            }
+
+            if (localTarget != null)
+            {
+                _cachedTarget = localTarget;
+                _targetRefreshTimer = TargetRefreshInterval;
+                return _cachedTarget;
+            }
+
+            _cachedTarget = null;
+            _targetRefreshTimer = TargetRefreshInterval;
+            return _cachedTarget;
+        }
+
+        private bool TryGetJobTarget(out UnitCombat target)
+        {
+            target = null;
+            if (_jobNearestTimer <= 0f) return false;
+            if (_jobNearest == null || !_jobNearest.isActiveAndEnabled) return false;
+            if (_jobNearest.Faction == Faction) return false;
+            var scheduler = UnitCombatJobScheduler.Instance;
+            if (scheduler != null && scheduler.Disabled) return false;
+            target = _jobNearest;
+            return true;
+        }
+
+        private bool TryGetHashTarget(out UnitCombat target)
+        {
+            target = null;
+            if (_occ == null) return false;
+            if (_tr == null) _tr = transform;
+            if (_occ.TryGetNearestEnemy(_tr.position, Faction, out var enemy))
+            {
+                target = enemy;
+                return true;
+            }
+            return false;
+        }
+
+        private bool TryGetForcedTarget(out UnitCombat target)
+        {
+            target = null;
+            if (_forcedTarget == null || _forcedTargetTimer <= 0f) return false;
+            if (!_forcedTarget.isActiveAndEnabled) return false;
+            if (_forcedTarget.Faction == Faction) return false;
+            target = _forcedTarget;
+            return true;
+        }
+
+        private void LogReset(string reason, UnitCombat target, float dist)
+        {
+            if (!LogCombatResets) return;
+            int frame = Time.frameCount;
+            if (frame != _resetLogFrame)
+            {
+                _resetLogFrame = frame;
+                _resetLogsThisFrame = 0;
+            }
+            if (MaxCombatResetLogsPerFrame > 0 && _resetLogsThisFrame >= MaxCombatResetLogsPerFrame) return;
+            _resetLogsThisFrame++;
+            string targetName = target != null ? target.name : "none";
+            Debug.LogWarning($"[CombatReset] unit={name} reason={reason} dist={dist:F2} target={targetName} frame={frame} pos={_tr?.position ?? transform.position}");
+        }
+
+        private static bool TryConsumeRepathBudget()
+        {
+            TouchBudgetFrame();
+            if (RepathBudgetPerFrame <= 0) return true;
+            if (_repathsThisFrame >= RepathBudgetPerFrame) return false;
+            _repathsThisFrame++;
+            return true;
+        }
+
+        private static void TouchBudgetFrame()
+        {
+            if (RepathBudgetPerFrame <= 0)
+                return; // budgets disabled; skip frame tracking
+            int frame = Time.frameCount;
+            if (frame == _budgetFrame) return;
+            _budgetFrame = frame;
+            _repathsThisFrame = 0;
+        }
+
+        private static Game.Presentation.Pathfinding.HexPathfindingBootstrap SharedHex()
+        {
+            if (_sharedHex == null || !_sharedHex.isActiveAndEnabled)
+                _sharedHex = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
+            return _sharedHex;
+        }
     }
 }
+
+

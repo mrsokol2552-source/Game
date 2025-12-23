@@ -4,7 +4,10 @@
     "RTS.Domain",
     "RTS.Application",
     "RTS.Infrastructure",
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "Unity.Collections",
+    "Unity.Mathematics",
+    "Unity.Burst"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

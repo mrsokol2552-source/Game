@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Game.Domain.Economy;
 using Game.Presentation.Bootstrap;
 using UnityEngine;
@@ -83,11 +83,11 @@ namespace Game.Presentation.UI
             // Controls first so they stay visible
             if (GUILayout.Button("Save"))
             {
-                FindObjectOfType<CompositionRoot>()?.Save();
+                UnityEngine.Object.FindAnyObjectByType<CompositionRoot>()?.Save();
             }
             if (GUILayout.Button("Load"))
             {
-                FindObjectOfType<CompositionRoot>()?.Load();
+                UnityEngine.Object.FindAnyObjectByType<CompositionRoot>()?.Load();
             }
 
             GUILayout.Space(4);
@@ -103,7 +103,7 @@ namespace Game.Presentation.UI
                 if (!ActionsPanel.Visible)
                 {
                     // Ensure panel exists in scene before showing
-                    var ap = FindObjectOfType<ActionsPanel>();
+                    var ap = UnityEngine.Object.FindAnyObjectByType<ActionsPanel>();
                     if (ap == null)
                     {
                         var go = new GameObject("ActionsPanel (Auto)");
@@ -118,7 +118,7 @@ namespace Game.Presentation.UI
             }
 
             // Scrollable status area so long messages don't push controls out
-            var root = FindObjectOfType<CompositionRoot>();
+            var root = UnityEngine.Object.FindAnyObjectByType<CompositionRoot>();
             if (root != null && !string.IsNullOrEmpty(root.LastStatusMessage))
             {
                 GUILayout.Space(6);
@@ -131,4 +131,6 @@ namespace Game.Presentation.UI
         }
     }
 }
+
+
 

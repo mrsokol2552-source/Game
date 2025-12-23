@@ -1,47 +1,74 @@
-﻿# 2D RTS Prototype (Unity)
+# 2D RTS Prototype (Unity)
 
-This repo contains the Unity project under `My project/` and design docs under `docs/`.
+Small 2D RTS sandbox built in Unity with hex-grid navigation, unit combat, economy/research, and save/load.
 
-## Open & Run
+## Requirements
 
-- Open the folder `My project` in Unity Hub.
-- Open `Assets/Scenes/SampleScene.unity`.
-- In the scene, add an empty GameObject named `Bootstrap` and add components:
-  - `CompositionRoot`
-  - `HudController`
-  - `InputController`
-- Optionally create `GameConfig` (Create в†’ Configs в†’ Game Config) and assign it in `CompositionRoot`.
+- Unity 6000.2.7f2 (Unity 6.2)
+- Input System package enabled (legacy input also supported)
 
-## Controls\n\n- HUD (top-left) shows resources.\n- Keys (Input System aware):\n  - M: +10 Materials\n  - F: +5 Food\n  - B: Attempt to place Test Building (cost from Building Config or default)\n- Buttons: Save/Load use Application.persistentDataPath/save.json.\n\n- R: Start Research (from Test Research config)
-  - C: Complete Research (for the same entry)
+## Project layout
 
-## Manual Save/Load Checklist
+- `My project/` - Unity project root
+- `docs/` - gameplay state and architecture notes
+- `Sprites/` - external sprite packs (see license files inside)
+- `LOGS UNITY/` - editor/runtime logs (optional)
 
-- Setup
-  - Open SampleScene; ensure `Bootstrap`, `HudController`, `InputController` present.
-  - Ensure `ActionsPanel` exists (Tools → RTS → Setup → Add Actions Panel To Scene) or use HUD → Dev.
-- Economy
-  - Press M/F to add resources; press Save; press Load → values persist.
-- Units
-  - Spawn a player unit (LMB) and an enemy (E or ActionsPanel).
-  - Move player (RMB) to set a destination; press Save.
-  - Move both elsewhere; press Load → units return to saved positions/destinations; enemy stays red; combat resumes.
-- Research
-  - Open Research panel (HUD → Research). Start a research (Queued); press Save; press Load → status remains Queued.
-- Clear Save
-  - ActionsPanel → Clear Save (deletes file at `UnityEngine.Application.persistentDataPath/save.json`).
+## Quick start
 
-## Structure
+1. Open `My project/` in Unity Hub (use 6000.2.7f2).
+2. Open `Assets/Scenes/SampleScene.unity`.
+3. Press Play.
 
-- Domain: pure C# (no Unity API)
-- Application: services/use-cases (no Unity API)
-- Infrastructure: persistence/config adapters
-- Presentation: MonoBehaviours (UI/Input/Views)
+SampleScene already includes `Bootstrap` (CompositionRoot), `HudController`, `InputController`, `ActionsPanel`, and
+`ResearchPanel`. If anything is missing, use the menu items in `Tools/RTS/Setup`.
 
-## Sprint 2 (Scaffolds)
+Config assets live in `Assets/ScriptableObjects/Configs` and can be created via `Assets > Create > Configs`:
 
-- Units: `UnitStats` (Domain), `UnitView` (Presentation)
-- Spawner/Commander: spawn a unit prefab on LMB; set destination on RMB (placeholder)
+- `Game Config` (starting resources)
+- `Building Config` (test build costs)
+- `Research Config` (test research list)
 
+## Controls
 
+- Camera: mouse wheel or +/- to zoom; MMB drag or WASD to pan.
+- Spawn/move: LMB spawns a player unit; RMB sets destination for the last spawned unit.
+- Hotkeys: `M` +10 Materials, `F` +5 Food, `B` test build, `R` start first research, `C` complete first research,
+  `E` spawn enemy at cursor.
 
+## UI and dev tools
+
+- HUD shows resource stocks and Save/Load buttons.
+- Dev panel (ActionsPanel) can spawn units, add resources, run build/research helpers, clear the save file, and run a
+  quick save/load self-test.
+- Research panel lists items from `TestResearch` and lets you start/complete them.
+
+## Save/Load
+
+- File path: `Application.persistentDataPath/save.json`.
+- Saves: resources, units (position/destination/faction/HP), research status, and blocked hex cells.
+
+## Tech notes
+
+- Hex grid pathfinding with jobified A* (`HexPathfindingBootstrap`, `PathRequestQueue`), using enemy-only occupancy during jobs.
+- Unit combat/targeting with spatial-hash job scheduler (`UnitCombatJobScheduler`), squad targeting (`EnemySquadManager` can also drive player units), and optional OccupancyHash fallback when the scheduler is disabled.
+- Layered architecture: Domain / Application / Infrastructure / Presentation.
+
+## Quick code map
+
+- Bootstrap: `CompositionRoot` auto-adds `CameraZoom2D`, `HexPathfindingBootstrap`, `ProceduralObstacles`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, and `PathRequestQueue`.
+- Input/UI: `InputController`, `UnitSpawnerCommander`, `HudController`, `ActionsPanel`, `ResearchPanel`.
+- Units/combat: `UnitView`, `UnitCombat`, `UnitPathFollower`, `UnitHpOverlay`, `UnitVisualCulling`.
+- Pathing: `PathManager`, `PathRequestQueue`, `HexPathfindingBootstrap`, `CrowdingResolver`.
+- Persistence/tests: `SaveSystem`, `SaveGame`/`LoadGame`, PlayMode tests (see `Assets/Tests`).
+
+## Docs and tests
+
+- `docs/gameplay_current_state.md` for the detailed systems overview.
+- `docs/Architecture of High-Performance Navigation and Targeting Systems in 2D RTS Strategies.md` for design notes.
+- `docs/code_map.md` for a file-by-file map and runtime flows.
+- Unity Test Runner: EditMode and PlayMode tests under `Assets/Tests`.
+
+## Performance tests
+
+- PlayMode `FpsStressTests` logs average FPS per scenario; `AlliesVs200_Dist200` runs a sweep (10..20 units per side), `AlliesVs200_Dist50/100` run fixed counts.

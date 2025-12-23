@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Game.Application.Services;
 using Game.Application.UseCases;
@@ -6,6 +6,7 @@ using Game.Infrastructure.Configs;
 using Game.Infrastructure.Persistence;
 using Game.Presentation.Input;
 using Game.Presentation.CameraControl;
+using Game.Presentation.Performance;
 using Game.Presentation.View;
 using UnityEngine;
 
@@ -24,6 +25,9 @@ namespace Game.Presentation.Bootstrap
         [Header("Visuals")]
         public Sprite PlayerSprite;
         public Sprite EnemySprite;
+        [Header("Rendering")]
+        public string UnitSortingLayerName = "Units";
+        public int UnitSortingOrder = 0;
         [Header("Research")]
         public Game.Infrastructure.Configs.ResearchConfig TestResearch;
         public bool AutoStart = true;
@@ -56,11 +60,11 @@ namespace Game.Presentation.Bootstrap
             }
 
             // Ensure a HexPathfindingBootstrap exists by default and bind obstacles for persistence
-            var hex = FindObjectOfType<Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
+            var hex = UnityEngine.Object.FindAnyObjectByType<global::Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
             if (hex == null)
             {
                 var go = new GameObject("HexPathfinding (Auto)");
-                hex = go.AddComponent<Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
+                hex = go.AddComponent<global::Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
             }
             if (hex != null)
             {
@@ -68,12 +72,29 @@ namespace Game.Presentation.Bootstrap
             }
 
             // Ensure procedural obstacles spawner exists (optional)
-            var proc = FindObjectOfType<Game.Presentation.Pathfinding.ProceduralObstacles>();
+            var proc = UnityEngine.Object.FindAnyObjectByType<global::Game.Presentation.Pathfinding.ProceduralObstacles>();
             if (proc == null)
             {
                 var goProc = new GameObject("ProceduralObstacles (Auto)");
-                proc = goProc.AddComponent<Game.Presentation.Pathfinding.ProceduralObstacles>();
+                proc = goProc.AddComponent<global::Game.Presentation.Pathfinding.ProceduralObstacles>();
                 // Optional: try to assign a default rock sprite if present via inspector later
+            }
+
+            // Ensure performance helpers
+            global::Game.Presentation.Performance.UnitCombatJobScheduler.EnsureExists();
+            global::Game.Presentation.Performance.EnemySquadManager.EnsureExists();
+            global::Game.Presentation.Performance.OccupancyHash.Ensure();
+            global::Game.Presentation.Pathfinding.PathRequestQueue.Ensure();
+
+            // Ensure existing units in the scene also use visual culling
+            var units = Object.FindObjectsByType<UnitView>(FindObjectsSortMode.None);
+            foreach (var u in units)
+            {
+                if (u == null) continue;
+                if (u.GetComponent<UnitVisualCulling>() == null)
+                    u.gameObject.AddComponent<UnitVisualCulling>();
+                var sr = u.GetComponent<SpriteRenderer>();
+                ApplyUnitSorting(sr);
             }
         }
 
@@ -198,7 +219,7 @@ namespace Game.Presentation.Bootstrap
             var units = Object.FindObjectsByType<UnitView>(FindObjectsSortMode.None);
             return units.Select(u =>
             {
-                var combat = u.GetComponent<Game.Presentation.View.UnitCombat>();
+                var combat = u.GetComponent<global::Game.Presentation.View.UnitCombat>();
                 var snap = new SaveSystem.UnitSnapshot
                 {
                     Position = u.transform.position,
@@ -235,24 +256,26 @@ namespace Game.Presentation.Bootstrap
                 var u = Instantiate(prefab, s.Position, Quaternion.identity);
                 if (s.HasDestination)
                     u.SetDestination(s.Destination);
-                var combat = u.GetComponent<Game.Presentation.View.UnitCombat>();
-                if (combat == null) combat = u.gameObject.AddComponent<Game.Presentation.View.UnitCombat>();
+                var combat = u.GetComponent<global::Game.Presentation.View.UnitCombat>();
+                if (combat == null) combat = u.gameObject.AddComponent<global::Game.Presentation.View.UnitCombat>();
                 combat.Faction = (global::Game.Domain.Units.Faction)s.Faction;
                 combat.SetHealth(s.Health > 0 ? s.Health : u.Stats.MaxHealth);
                 var sr = u.GetComponent<UnityEngine.SpriteRenderer>();
                 if (sr != null)
                 {
                     // Color tint by faction
-                    sr.color = combat.Faction == global::Game.Domain.Units.Faction.Enemy ? Color.red : Color.white;
-                    // Assign sprite if provided
-                    if (combat.Faction == global::Game.Domain.Units.Faction.Enemy && EnemySprite != null)
-                        sr.sprite = EnemySprite;
-                    else if (combat.Faction == global::Game.Domain.Units.Faction.Player && PlayerSprite != null)
-                        sr.sprite = PlayerSprite;
-                }
-                if (u.GetComponent<Game.Presentation.View.UnitHpOverlay>() == null) u.gameObject.AddComponent<Game.Presentation.View.UnitHpOverlay>();
-                last = u;
+                sr.color = combat.Faction == global::Game.Domain.Units.Faction.Enemy ? Color.red : Color.white;
+                // Assign sprite if provided
+                if (combat.Faction == global::Game.Domain.Units.Faction.Enemy && EnemySprite != null)
+                    sr.sprite = EnemySprite;
+                else if (combat.Faction == global::Game.Domain.Units.Faction.Player && PlayerSprite != null)
+                    sr.sprite = PlayerSprite;
+                ApplyUnitSorting(sr);
             }
+            if (u.GetComponent<global::Game.Presentation.View.UnitHpOverlay>() == null) u.gameObject.AddComponent<global::Game.Presentation.View.UnitHpOverlay>();
+            if (u.GetComponent<UnitVisualCulling>() == null) u.gameObject.AddComponent<UnitVisualCulling>();
+            last = u;
+        }
 
             if (spawner != null && last != null)
             {
@@ -265,6 +288,25 @@ namespace Game.Presentation.Bootstrap
             if (ReferenceEquals(Game, null)) return;
             // keep Game static until domain teardown is needed
         }
+
+        private void ApplyUnitSorting(SpriteRenderer sr)
+        {
+            if (sr == null) return;
+            if (!string.IsNullOrEmpty(UnitSortingLayerName) && SortingLayerExists(UnitSortingLayerName))
+                sr.sortingLayerName = UnitSortingLayerName;
+            sr.sortingOrder = UnitSortingOrder;
+        }
+
+        private static bool SortingLayerExists(string name)
+        {
+            foreach (var l in SortingLayer.layers)
+            {
+                if (l.name == name) return true;
+            }
+            return false;
+        }
     }
 }
+
+
 

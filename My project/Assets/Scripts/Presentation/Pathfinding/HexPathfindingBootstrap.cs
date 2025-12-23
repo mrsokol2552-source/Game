@@ -7,13 +7,17 @@ namespace Game.Presentation.Pathfinding
     public class HexPathfindingBootstrap : MonoBehaviour
     {
         [Header("Hex Grid Settings (Odd-R)")]
-        public int Width = 64;   // columns (q/col)
-        public int Height = 64;  // rows (r)
-        public float HexSize = 1f; // radius of hex (center->corner)
+        public int Width = 1024;   // columns (q/col)
+        public int Height = 1024;  // rows (r)
+        public float HexSize = 0.4f; // radius of hex (center->corner)
         public Vector2 Origin = Vector2.zero;
         public bool AutoFitToCamera = true;
+        [Header("Grid Safety")]
+        [Tooltip("Clamp grid size if Width*Height exceeds this value (prevents huge allocations).")]
+        public bool AutoClampSize = true;
+        public int MaxCells = 1_500_000;
         [Header("Obstacles (Bake)")]
-        public bool AutoBakeColliders = true;
+        public bool AutoBakeColliders = false;
         public LayerMask ObstacleMask;
         [Tooltip("Sampling radius around hex center for collider check (defaults to HexSize*0.45)")]
         public float SampleRadius = -1f;
@@ -25,17 +29,48 @@ namespace Game.Presentation.Pathfinding
 
         private IGridPathfinder _pathfinder;
         private bool[,] _walkable;
+        private Unity.Collections.NativeArray<byte> _walkableNative;
+        private bool _nativeDirty = true;
 
         private void Awake()
         {
+            if (AutoClampSize && Width > 0 && Height > 0)
+            {
+                long cells = (long)Width * (long)Height;
+                if (cells > MaxCells && MaxCells > 0)
+                {
+                    float scale = Mathf.Sqrt((float)MaxCells / (float)cells);
+                    int newW = Mathf.Max(4, Mathf.RoundToInt(Width * scale));
+                    int newH = Mathf.Max(4, Mathf.RoundToInt(Height * scale));
+                    Debug.LogWarning($"[HexPathfinding] Grid clamped from {Width}x{Height} ({cells} cells) to {newW}x{newH} (<= {MaxCells}). Adjust MaxCells or disable AutoClampSize if needed.");
+                    Width = newW; Height = newH;
+                }
+            }
             _walkable = new bool[Height, Width];
             for (int r = 0; r < Height; r++) for (int q = 0; q < Width; q++) _walkable[r, q] = true;
             if (AutoFitToCamera) FitToCamera();
             _pathfinder = HexPathfinder.FromWalkableMap(_walkable);
             if (AutoBakeColliders) BakeFromPhysics();
+            UpdateNativeWalkable();
         }
 
         public IGridPathfinder Pathfinder => _pathfinder;
+
+        public bool IsWalkable(int col, int row)
+        {
+            if (_walkable == null) return true;
+            if (col < 0 || row < 0 || col >= Width || row >= Height) return false;
+            int h = _walkable.GetLength(0);
+            int w = _walkable.GetLength(1);
+            if (row < 0 || row >= h || col < 0 || col >= w) return false;
+            return _walkable[row, col];
+        }
+
+        public bool IsWalkableWorld(Vector3 world)
+        {
+            var cell = WorldToGrid(world);
+            return IsWalkable(cell.x, cell.y);
+        }
 
         public Vector2Int WorldToGrid(Vector3 world)
         {
@@ -75,6 +110,7 @@ namespace Game.Presentation.Pathfinding
             for (int r = 0; r < Height; r++)
                 for (int q = 0; q < Width; q++)
                     _walkable[r, q] = true;
+            _nativeDirty = true;
         }
 
         public void BakeFromPhysics()
@@ -100,6 +136,7 @@ namespace Game.Presentation.Pathfinding
                     if (!walk) blocked++;
                 }
             }
+            _nativeDirty = true;
             if (LogBake)
                 Debug.Log($"[HexPathfinding] BakeFromPhysics: blocked={blocked} / total={Width*Height}, mask=0x{maskVal:X}");
         }
@@ -126,6 +163,7 @@ namespace Game.Presentation.Pathfinding
                 if (c.y >= 0 && c.y < Height && c.x >= 0 && c.x < Width)
                     _walkable[c.y, c.x] = false;
             }
+            _nativeDirty = true;
         }
 
         public void FitToCamera()
@@ -141,6 +179,7 @@ namespace Game.Presentation.Pathfinding
         {
             if (col < 0 || row < 0 || col >= Width || row >= Height) return;
             _walkable[row, col] = walkable;
+            _nativeDirty = true;
         }
 
         private static (int q, int r) AxialRound(float qf, float rf)
@@ -224,6 +263,65 @@ namespace Game.Presentation.Pathfinding
                 prev = p;
             }
             Gizmos.DrawLine(prev, first);
+        }
+
+        public Unity.Collections.NativeArray<byte> GetWalkableNative()
+        {
+            if (_nativeDirty) UpdateNativeWalkable();
+            return _walkableNative;
+        }
+
+        private void UpdateNativeWalkable()
+        {
+            if (_walkable == null) return;
+            var queue = PathRequestQueue.Instance;
+            if (queue != null)
+                queue.CompleteActiveJobAndClear(); // ensure no jobs read from the array while we rebuild it
+            int len = Width * Height;
+            if (_walkableNative.IsCreated)
+            {
+                if (_walkableNative.Length != len)
+                {
+                    _walkableNative.Dispose();
+                    _walkableNative = new Unity.Collections.NativeArray<byte>(len, Unity.Collections.Allocator.Persistent);
+                }
+            }
+            else
+            {
+                _walkableNative = new Unity.Collections.NativeArray<byte>(len, Unity.Collections.Allocator.Persistent);
+            }
+
+            int idx = 0;
+            for (int r = 0; r < Height; r++)
+            {
+                for (int q = 0; q < Width; q++)
+                {
+                    _walkableNative[idx++] = (byte)(_walkable[r, q] ? 1 : 0);
+                }
+            }
+            _nativeDirty = false;
+        }
+
+        private void OnDestroy()
+        {
+            var queue = PathRequestQueue.Instance;
+            if (queue != null)
+                queue.CompleteActiveJobAndClear(); // complete jobs before disposing walkable map
+            if (_walkableNative.IsCreated)
+                _walkableNative.Dispose();
+        }
+
+        public struct GridInfo
+        {
+            public int Width;
+            public int Height;
+            public float HexSize;
+            public Vector2 Origin;
+        }
+
+        public GridInfo GetGridInfo()
+        {
+            return new GridInfo { Width = Width, Height = Height, HexSize = HexSize, Origin = Origin };
         }
     }
 }

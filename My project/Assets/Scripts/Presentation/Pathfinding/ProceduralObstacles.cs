@@ -22,12 +22,15 @@ namespace Game.Presentation.Pathfinding
         public bool UseCircleCollider = true;
         public float ColliderRadiusScale = 0.45f; // fraction of hex size
         public string ObstacleLayerName = "Obstacles";
+        [Tooltip("Sorting Layer used by rock sprites (optional)")]
+        public string RockSortingLayer = "Obstacles";
+        public int RockSortingOrder = 0;
 
         private HexPathfindingBootstrap _hex;
 
         private void Awake()
         {
-            _hex = FindObjectOfType<HexPathfindingBootstrap>();
+            _hex = UnityEngine.Object.FindAnyObjectByType<HexPathfindingBootstrap>();
             if (_hex == null) return;
 
             var rng = UseRandomSeed ? new System.Random() : new System.Random(Seed);
@@ -77,6 +80,7 @@ namespace Game.Presentation.Pathfinding
                 go.transform.position = pos;
                 var sr = go.AddComponent<SpriteRenderer>();
                 sr.sprite = PickSprite(rng); // may be null; collider still blocks path
+                ApplySorting(sr);
                 if (UseCircleCollider)
                 {
                     var cc = go.AddComponent<CircleCollider2D>();
@@ -125,6 +129,30 @@ namespace Game.Presentation.Pathfinding
             return -1;
         }
 
+        private void ApplySorting(SpriteRenderer sr)
+        {
+            if (sr == null) return;
+            if (!string.IsNullOrEmpty(RockSortingLayer))
+            {
+                if (SortingLayerExists(RockSortingLayer))
+                    sr.sortingLayerName = RockSortingLayer;
+#if UNITY_EDITOR
+                else
+                    Debug.LogWarning($"[ProceduralObstacles] Sorting Layer '{RockSortingLayer}' not found. Create it in Project Settings → Tags and Layers.");
+#endif
+            }
+            sr.sortingOrder = RockSortingOrder;
+        }
+
+        private static bool SortingLayerExists(string name)
+        {
+            foreach (var l in SortingLayer.layers)
+            {
+                if (l.name == name) return true;
+            }
+            return false;
+        }
+
 #if UNITY_EDITOR
         private void TryAutoAssignSpriteEditor()
         {
@@ -165,5 +193,7 @@ namespace Game.Presentation.Pathfinding
         }
     }
 }
+
+
 
 

@@ -26,6 +26,8 @@ namespace Game.Presentation.View
         {
             if (_combat == null) return;
             var cam = Camera.main; if (cam == null) return;
+            // Show only if not at full health
+            if (_combat.MaxHealth > 0 && _combat.CurrentHealth >= _combat.MaxHealth) return;
             Vector3 wp = transform.position + Offset;
             Vector3 sp = cam.WorldToScreenPoint(wp);
             if (sp.z < 0) return;
@@ -51,4 +53,3 @@ namespace Game.Presentation.View
         }
     }
 }
-

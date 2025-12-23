@@ -20,12 +20,12 @@ namespace Game.Presentation.UI
 
         private void Awake()
         {
-            Root = FindObjectOfType<CompositionRoot>();
+            Root = UnityEngine.Object.FindAnyObjectByType<CompositionRoot>();
         }
 
         private void OnGUI(){
             if (!Visible) return;
-            if (Root == null) Root = FindObjectOfType<CompositionRoot>();
+            if (Root == null) Root = UnityEngine.Object.FindAnyObjectByType<CompositionRoot>();
             var area = new Rect(Screen.width - Width - 10f, 10f, Width, Height);
             HudController.AddUiRect(area);
             GUILayout.BeginArea(area, GUI.skin.box);
@@ -148,6 +148,8 @@ namespace Game.Presentation.UI
         }
     }
 }
+
+
 
 
 

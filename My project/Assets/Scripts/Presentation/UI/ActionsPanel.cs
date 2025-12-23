@@ -25,13 +25,13 @@ namespace Game.Presentation.UI
 
         private void Awake()
         {
-            root = FindObjectOfType<CompositionRoot>();
+            root = UnityEngine.Object.FindAnyObjectByType<CompositionRoot>();
         }
 
         private void OnGUI()
         {
             if (!Visible) return;
-            if (root == null) root = FindObjectOfType<CompositionRoot>();
+            if (root == null) root = UnityEngine.Object.FindAnyObjectByType<CompositionRoot>();
 
             var area = new Rect(Screen.width - Width - 10f, Screen.height - Height - 10f, Width, Height);
             HudController.AddUiRect(area);
@@ -94,7 +94,7 @@ namespace Game.Presentation.UI
             // Spawn at a random visible point within the camera view (with margins)
             var world = RandomWorldPointInView(cam, 0.12f); // 12% margin from edges
 
-            var spawner = FindObjectOfType<UnitSpawnerCommander>();
+            var spawner = UnityEngine.Object.FindAnyObjectByType<UnitSpawnerCommander>();
             UnitView prefab = spawner != null ? spawner.UnitPrefab : null;
             if (prefab == null && root != null) prefab = root.DefaultUnitPrefab;
             if (prefab == null)
@@ -169,7 +169,7 @@ namespace Game.Presentation.UI
         {
             _selfTestRunning = true;
             var cam = Camera.main; if (cam == null) { root?.SetStatus("SelfTest: No Camera"); _selfTestRunning = false; yield break; }
-            var spawner = FindObjectOfType<UnitSpawnerCommander>();
+            var spawner = UnityEngine.Object.FindAnyObjectByType<UnitSpawnerCommander>();
             UnitView prefab = spawner != null ? spawner.UnitPrefab : null;
             if (prefab == null && root != null) prefab = root.DefaultUnitPrefab;
             if (prefab == null) { root?.SetStatus("SelfTest: No Unit prefab"); _selfTestRunning = false; yield break; }
@@ -179,7 +179,7 @@ namespace Game.Presentation.UI
             Game.Presentation.View.UnitCombat.DisableCombat = true;
 
             // 1) Clean scene (units) for deterministic test
-            var existing = FindObjectsOfType<UnitView>();
+            var existing = UnityEngine.Object.FindObjectsByType<UnitView>(FindObjectsSortMode.None);
             foreach (var u in existing)
             {
                 if (u != null) Destroy(u.gameObject);
@@ -279,7 +279,7 @@ namespace Game.Presentation.UI
             yield return null;
 
             // 4) Validate
-            var after = FindObjectsOfType<UnitView>();
+            var after = UnityEngine.Object.FindObjectsByType<UnitView>(FindObjectsSortMode.None);
             bool pass = true;
             var used = new System.Collections.Generic.HashSet<int>();
             int matched = 0;
@@ -332,7 +332,7 @@ namespace Game.Presentation.UI
             var keepAfterTest = false; // set true if you want to inspect results
             if (!keepAfterTest)
             {
-                var toRemove = FindObjectsOfType<UnitView>();
+                var toRemove = UnityEngine.Object.FindObjectsByType<UnitView>(FindObjectsSortMode.None);
                 foreach (var u in toRemove)
                 {
                     if (u != null) Destroy(u.gameObject);
@@ -369,3 +369,5 @@ namespace Game.Presentation.UI
         }
     }
 }
+
+

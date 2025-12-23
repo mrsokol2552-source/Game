@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8405744208871136946}
   - component: {fileID: 7149862206046492017}
   - component: {fileID: 3859796039554605570}
+  - component: {fileID: 4865058311059883226}
   m_Layer: 0
   m_Name: Unit
   m_TagString: Untagged
@@ -103,3 +104,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91b01f5ce1763904e83acfcea1975f7f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: RTS.Presentation::Game.Presentation.View.UnitView
+  Stats:
+    Speed: 2
+    MaxHealth: 100
+  Movement: {fileID: 11400000, guid: 82fa1712cf783804891bfbb67f8a8d7c, type: 2}
+--- !u!114 &4865058311059883226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8129896253358288555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 648d05b0512030749b2d15f36f997e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: RTS.Presentation::Game.Presentation.Performance.UnitVisualCulling
+  CheckInterval: 0.125
+  DistanceMargin: 2.7
+  UseFrustumTest: 1

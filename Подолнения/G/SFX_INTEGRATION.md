@@ -1,21 +1,21 @@
-# SFX_INTEGRATION.md — Интеграция звуковых эффектов в проект (Unity)
+﻿# SFX_INTEGRATION.md - Интеграция звуковых эффектов в проект (Unity)
 
-> Версия: 1.0 • Автор: Audio/Tech • Совместимо с `MUSIC_INTEGRATION.md`  
+> Версия: 1.0 - Автор: Audio/Tech - Совместимо с `MUSIC_INTEGRATION.md`  
 > Цель: стандартизировать **создание, импорт, маршрутизацию, воспроизведение и оптимизацию** SFX в нашей RTS.
 
 ---
 
-## 0) Кратко: TL;DR чек‑лист
-- Формат мастеров: **48 kHz / 24‑bit WAV**, **true peak ≤ −1 dBTP**.  
-- Генерация длин: **по умолчанию 3 с**, UI one‑shot — 1 с, амбиенты — 6–10 с (склейка из 3‑с).  
-- Громкость (ориентир): UI −18…−16 LUFS; in‑game SFX −16…−12 LUFS (короткие пики ок).  
-- На экспорт в игру: OGG/PCM; **моно** там, где можно (foley/steps), **стерео** — для широких (взрывы/UI wide).  
+## 0) Кратко: TL;DR чек-лист
+- Формат мастеров: **48 kHz / 24-bit WAV**, **true peak <= -1 dBTP**.  
+- Генерация длин: **по умолчанию 3 с**, UI one-shot - 1 с, амбиенты - 6-10 с (склейка из 3-с).  
+- Громкость (ориентир): UI -18...-16 LUFS; in-game SFX -16...-12 LUFS (короткие пики ок).  
+- На экспорт в игру: OGG/PCM; **моно** там, где можно (foley/steps), **стерео** - для широких (взрывы/UI wide).  
 - Нейминг: `SFX_<Категория>_<Событие>_<Var##>.wav`.  
-- Вариативность: **5–8 вариантов** на событие; в коде: random pitch ±3–5%, volume ±1.5 dB.  
-- Mixer‑группы: **SFX_UI, SFX_World, SFX_Combat, SFX_Voice, SFX_Ambience**. Экспонируем `SFX_Tension`, `SFX_War`, `OcclusionLPF`.  
-- Импорт: one‑shot — **Decompress on Load**, лупы длинные — **Streaming**, средние — **Compressed In Memory**.  
+- Вариативность: **5-8 вариантов** на событие; в коде: random pitch +/-3-5%, volume +/-1.5 dB.  
+- Mixer-группы: **SFX_UI, SFX_World, SFX_Combat, SFX_Voice, SFX_Ambience**. Экспонируем `SFX_Tension`, `SFX_War`, `OcclusionLPF`.  
+- Импорт: one-shot - **Decompress on Load**, лупы длинные - **Streaming**, средние - **Compressed In Memory**.  
 - Пространство: 2D для UI, 3D для мира; кастомные **Rolloff** и **LPF** по расстоянию/укрытию.  
-- Off‑screen/LOD: уменьшать громкость/полосу (LPF), сворачивать лупы толпы в дальних секторах.
+- Off-screen/LOD: уменьшать громкость/полосу (LPF), сворачивать лупы толпы в дальних секторах.
 
 ---
 
@@ -34,7 +34,7 @@ Assets/Audio/
 ```
 
 **Имена файлов:**  
-`SFX_<Категория>_<Событие>_<Var##>.wav` → `SFX_UI_Click_V03.wav`, `SFX_Combat_Explosion_M_V02.wav`
+`SFX_<Категория>_<Событие>_<Var##>.wav` -> `SFX_UI_Click_V03.wav`, `SFX_Combat_Explosion_M_V02.wav`
 
 **Метаданные (CSV/JSON для каталога, опционально):**
 ```json
@@ -52,37 +52,37 @@ Assets/Audio/
 ---
 
 ## 2) Спека контента
-- **Мастера:** 48 kHz / 24‑bit WAV, true peak ≤ −1 dBTP.  
-- **Громкость:** UI −18…−16 LUFS (короткий интеграл), боевые/мир — −16…−12 LUFS.  
+- **Мастера:** 48 kHz / 24-bit WAV, true peak <= -1 dBTP.  
+- **Громкость:** UI -18...-16 LUFS (короткий интеграл), боевые/мир - -16...-12 LUFS.  
 - **Длины генерации:**  
-  - UI one‑shot: генерируй ~1 с → резать до **80–300 мс** (fade 5–10 мс).  
-  - Whoosh/alerts: генерируй 2–3 с → **180–600 мс**.  
-  - Удары/двери: генерируй 2–3 с → **300–800 мс**.  
-  - Выстрел/взрыв: генерируй 3 с (саб‑хвост) → **0.3–1.2 с**.  
-  - Лупы (шаги, стройка, двигатель): генерируй 3 с → **1.2–1.8 с** seamless loop.  
-  - Толпа/shortwave: генерируй 3 с × 2–4 → склей **6–10 с** луп.
-- **Вариативность:** минимум **5–8** на событие (Var01..Var08).
+  - UI one-shot: генерируй ~1 с -> резать до **80-300 мс** (fade 5-10 мс).  
+  - Whoosh/alerts: генерируй 2-3 с -> **180-600 мс**.  
+  - Удары/двери: генерируй 2-3 с -> **300-800 мс**.  
+  - Выстрел/взрыв: генерируй 3 с (саб-хвост) -> **0.3-1.2 с**.  
+  - Лупы (шаги, стройка, двигатель): генерируй 3 с -> **1.2-1.8 с** seamless loop.  
+  - Толпа/shortwave: генерируй 3 с x 2-4 -> склей **6-10 с** луп.
+- **Вариативность:** минимум **5-8** на событие (Var01..Var08).
 
 ---
 
 ## 3) Импорт в Unity (AudioImporter)
 Для партий через Project Settings или ScriptedImporter (пример ниже).
 
-**One‑shots (UI/мелкие):**
+**One-shots (UI/мелкие):**
 - Load Type: **Decompress on Load**
-- Compression: **PCM** или Vorbis Q≈0.7 (если много)
+- Compression: **PCM** или Vorbis Q~0.7 (если много)
 - Force To Mono: **On** (кроме явно стерео)
 - Preload Audio Data: **On**
 
 **Средние лупы (шаги/стройка/двигатели):**
 - Load Type: **Compressed In Memory**
-- Compression: **Vorbis Q≈0.6–0.7**
+- Compression: **Vorbis Q~0.6-0.7**
 - Force To Mono: On (если ок по восприятию)
-- Loop: **On**, Fade‑in/out 5–10 ms в исходнике
+- Loop: **On**, Fade-in/out 5-10 ms в исходнике
 
 **Длинные амбиенты:**
 - Load Type: **Streaming**
-- Compression: **Vorbis Q≈0.6**
+- Compression: **Vorbis Q~0.6**
 - Stereo: **On**, Loop: **On**
 
 **Пример пакетной настройки (Editor script, C#):**
@@ -127,35 +127,35 @@ public static class SfxImportPreset
 
 ## 4) AudioMixer и маршрутизация
 Группы (см. `MUSIC_INTEGRATION.md`):  
-- **SFX_UI**, **SFX_World**, **SFX_Combat**, **SFX_Voice**, **SFX_Ambience** → все в `SFX/Main`, далее в `Master`.
+- **SFX_UI**, **SFX_World**, **SFX_Combat**, **SFX_Voice**, **SFX_Ambience** -> все в `SFX/Main`, далее в `Master`.
 - Экспонированные параметры:  
-  - `SFX_Tension (0..1)` — добавка яркости (эквалайзер/Transient Shaper) на шинах.  
-  - `SFX_War (0..1)` — поднимает боевые на +1..+2 dB, ослабляет музыку.  
-  - `OcclusionLPF (0..1)` — глобальный LPF для укрытий/офф‑скрина.
-- **Ducking:** В Calm/Tense музыка duck’ится SFX (side‑chain на Music). В War — duck меньше или отключён.
+  - `SFX_Tension (0..1)` - добавка яркости (эквалайзер/Transient Shaper) на шинах.  
+  - `SFX_War (0..1)` - поднимает боевые на +1..+2 dB, ослабляет музыку.  
+  - `OcclusionLPF (0..1)` - глобальный LPF для укрытий/офф-скрина.
+- **Ducking:** В Calm/Tense музыка duck'ится SFX (side-chain на Music). В War - duck меньше или отключён.
 
-Снапшоты: **Calm / Tense / War** (времена кросс‑фейда 250–400 мс).
+Снапшоты: **Calm / Tense / War** (времена кросс-фейда 250-400 мс).
 
 ---
 
-## 5) События → Звук (схема интеграции)
+## 5) События -> Звук (схема интеграции)
 Все игровые события публикуются в EventBus (или аналог), `SfxManager` подписывается и мапит на клипы.
 
 Примеры маппинга (сокр.):
 ```
-OnUiClick                → SFX_UI_Click_* (rand)
-OnResearchStarted        → SFX_UI_ResearchStart_*
-OnResearchCompleted      → SFX_UI_ResearchDone_*
-OnConvoyDepart/Arrive    → SFX_World_ConvoyDepart/Arrive_*
-OnBuildPlaced/Started    → SFX_World_BuildPlace / SFX_World_BuildLoop (loop start)
-OnBuildCompleted         → SFX_World_BuildDone_*
-OnFootstep(unit, mat)    → SFX_World_Footstep_{Light|Heavy}_{mat}_*
-OnFire(weapon)           → SFX_Combat_{RifleBurst|Cannon}_*
-OnHit(surface)           → SFX_Combat_Impact_{Dirt|Concrete}_*
-OnExplosionSmall/Medium  → SFX_Combat_Explosion_{S|M}_*
-OnInfectionTick          → SFX_World_InfectionPulse_*
-OnOutbreak               → SFX_World_InfectionSurge_*
-OnRadioPtt(in/out)       → SFX_Voice_RadioPTT_{In|Out}_*
+OnUiClick                -> SFX_UI_Click_* (rand)
+OnResearchStarted        -> SFX_UI_ResearchStart_*
+OnResearchCompleted      -> SFX_UI_ResearchDone_*
+OnConvoyDepart/Arrive    -> SFX_World_ConvoyDepart/Arrive_*
+OnBuildPlaced/Started    -> SFX_World_BuildPlace / SFX_World_BuildLoop (loop start)
+OnBuildCompleted         -> SFX_World_BuildDone_*
+OnFootstep(unit, mat)    -> SFX_World_Footstep_{Light|Heavy}_{mat}_*
+OnFire(weapon)           -> SFX_Combat_{RifleBurst|Cannon}_*
+OnHit(surface)           -> SFX_Combat_Impact_{Dirt|Concrete}_*
+OnExplosionSmall/Medium  -> SFX_Combat_Explosion_{S|M}_*
+OnInfectionTick          -> SFX_World_InfectionPulse_*
+OnOutbreak               -> SFX_World_InfectionSurge_*
+OnRadioPtt(in/out)       -> SFX_Voice_RadioPTT_{In|Out}_*
 ```
 
 ---
@@ -259,15 +259,15 @@ public class SfxManager : MonoBehaviour
 ## 7) Пространство, затухание, окклюзия
 - **UI:** `spatialBlend = 0`.  
 - **Мир:** `spatialBlend = 1`, **Custom Rolloff** (кривая проекта); **MinDistance** подбираем так, чтобы ближний звук не был слишком громок.  
-- **LPF/окклюзия:** параметр `OcclusionLPF (0..1)` в Mixer — повышается, если между источником и слушателем есть укрытие/стена или источник **off‑screen**.  
-- **Off‑screen & LOD:** при сворачивании сектора → останавливаем дорогостоящие лупы, оставляем только агрегированные (толпа, shortwave) на низком уровне и с LPF.
+- **LPF/окклюзия:** параметр `OcclusionLPF (0..1)` в Mixer - повышается, если между источником и слушателем есть укрытие/стена или источник **off-screen**.  
+- **Off-screen & LOD:** при сворачивании сектора -> останавливаем дорогостоящие лупы, оставляем только агрегированные (толпа, shortwave) на низком уровне и с LPF.
 
 ---
 
 ## 8) Addressables и память
 - Метки: **SFX_UI, SFX_World, SFX_Combat, SFX_Voice, SFX_Ambience**.  
-- **One‑shots частые** — держим в памяти; **длинные амбиенты** — Streaming.  
-- При смене сцены/сектора — выгружаем неиспользуемые группы (release by label).
+- **One-shots частые** - держим в памяти; **длинные амбиенты** - Streaming.  
+- При смене сцены/сектора - выгружаем неиспользуемые группы (release by label).
 
 ---
 
@@ -286,33 +286,33 @@ public class SfxManager : MonoBehaviour
 
 ## 10) Тесты и калибровка
 - **Уровни:** прогнать контрольную сцену, выровнять относительные громкости (UI не перекрикивает бой; бой не давит музыку).  
-- **Loop‑seamless:** бесшовность всех лупов (кросс‑фейд 5–10 мс + точка петли).  
-- **Вариативность:** нет “machine‑gun effect” у повторяемых клипов.  
-- **Ducking/Снапшоты:** проверить переходы Calm↔Tense↔War без щелчков.  
-- **OC/LPF:** проверить поведение за стенами/офф‑скрином.  
-- **Нагрузочные:** массовая стрельба + толпа + стройка — без треска/клиппинга; CPU/GC стабилен.
+- **Loop-seamless:** бесшовность всех лупов (кросс-фейд 5-10 мс + точка петли).  
+- **Вариативность:** нет "machine-gun effect" у повторяемых клипов.  
+- **Ducking/Снапшоты:** проверить переходы Calm<->Tense<->War без щелчков.  
+- **OC/LPF:** проверить поведение за стенами/офф-скрином.  
+- **Нагрузочные:** массовая стрельба + толпа + стройка - без треска/клиппинга; CPU/GC стабилен.
 
 ---
 
 ## 11) План интеграции (по шагам)
 1. Создать группы в **AudioMixer**, экспонировать `SFX_Tension`, `SFX_War`, `OcclusionLPF`.  
-2. Импортировать минимальный набор клипов (см. §9), применить пресет импортёра (§3).  
+2. Импортировать минимальный набор клипов (см.  - 9), применить пресет импортёра ( - 3).  
 3. Разложить по Addressables (labels).  
-4. Добавить `SfxManager` в сцену, связать MixerGroup’ы и банки клипов.  
+4. Добавить `SfxManager` в сцену, связать MixerGroup'ы и банки клипов.  
 5. Подписать `SfxManager` на EventBus (UI, Combat, World, Infection).  
-6. Настроить **снапшоты** Mixer и автоматизацию параметров от гейм‑состояния.  
-7. Прогнать чек‑листы (§10), зафиксировать уровни и кривые.  
-8. Задокументировать пути и идентификаторы в аудио‑каталоге (CSV/JSON).
+6. Настроить **снапшоты** Mixer и автоматизацию параметров от гейм-состояния.  
+7. Прогнать чек-листы ( - 10), зафиксировать уровни и кривые.  
+8. Задокументировать пути и идентификаторы в аудио-каталоге (CSV/JSON).
 
 ---
 
 ## 12) Приложение: пресеты генерации для @SoundEffect
-- UI Click/Hover: `short UI blip, 120ms, bandpassed 800–3kHz, slight radio grit, no reverb`  
-- Confirm/Success: `two-note chime, C–Eb, 250ms, subtle shimmer`  
+- UI Click/Hover: `short UI blip, 120ms, bandpassed 800-3kHz, slight radio grit, no reverb`  
+- Confirm/Success: `two-note chime, C-Eb, 250ms, subtle shimmer`  
 - Error: `ui error tone, descending minor second, 200ms, soft distortion`  
-- Panel Whoosh: `ui whoosh short, 180–220ms, air-noise, no low end`  
+- Panel Whoosh: `ui whoosh short, 180-220ms, air-noise, no low end`  
 - Research Start/Done: `subtle spark + relay 250ms` / `warm chime triad 400ms`  
-- Build Loop: `construction loop, light hammering 1.5s, band 200–4kHz`  
+- Build Loop: `construction loop, light hammering 1.5s, band 200-4kHz`  
 - Rifle Burst: `tactical rifle 3-round, dry, tight 180ms`  
 - Explosion S/M: `explosion small 350ms tight` / `explosion medium 600ms controlled tail`  
 - Crowd Safe/Panic: `crowd ambience loop 1.5s low band` / `crowd panic loop 1.5s lowpassed`  
@@ -320,4 +320,4 @@ public class SfxManager : MonoBehaviour
 
 ---
 
-**Готово.** Этот документ — «живой»: по мере внедрения фиксируем уровни, кривые, карты событий и адреса. Совместим с музыкальными снапшотами из `MUSIC_INTEGRATION.md`.
+**Готово.** Этот документ - "живой": по мере внедрения фиксируем уровни, кривые, карты событий и адреса. Совместим с музыкальными снапшотами из `MUSIC_INTEGRATION.md`.

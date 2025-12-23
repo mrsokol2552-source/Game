@@ -1,5 +1,6 @@
 using Game.Domain.Economy;
 using Game.Presentation.Bootstrap;
+using Game.Presentation.Performance;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -23,17 +24,17 @@ namespace Game.Presentation.Input
                     CompositionRoot.Game.Economy.Add(ResourceType.Food, 5);
                 if (kb[Key.B].wasPressedThisFrame)
                 {
-                    var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                    var root = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Bootstrap.CompositionRoot>();
                     root?.AttemptPlaceTestBuilding();
                 }
                 if (kb[Key.R].wasPressedThisFrame)
                 {
-                    var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                    var root = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Bootstrap.CompositionRoot>();
                     root?.AttemptStartTestResearch();
                 }
                 if (kb[Key.C].wasPressedThisFrame)
                 {
-                    var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                    var root = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Bootstrap.CompositionRoot>();
                     root?.AttemptCompleteTestResearch();
                 }
                 if (kb[Key.E].wasPressedThisFrame)
@@ -48,17 +49,17 @@ namespace Game.Presentation.Input
                 CompositionRoot.Game.Economy.Add(ResourceType.Food, 5);
             if (UnityEngine.Input.GetKeyDown(KeyCode.B))
             {
-                var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                var root = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Bootstrap.CompositionRoot>();
                 root?.AttemptPlaceTestBuilding();
             }
             if (UnityEngine.Input.GetKeyDown(KeyCode.R))
             {
-                var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                var root = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Bootstrap.CompositionRoot>();
                 root?.AttemptStartTestResearch();
             }
             if (UnityEngine.Input.GetKeyDown(KeyCode.C))
             {
-                var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                var root = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Bootstrap.CompositionRoot>();
                 root?.AttemptCompleteTestResearch();
             }
             if (UnityEngine.Input.GetKeyDown(KeyCode.E))
@@ -79,12 +80,13 @@ namespace Game.Presentation.Input
             var pos = UnityEngine.Input.mousePosition;
 #endif
             var world = cam.ScreenToWorldPoint(pos); world.z = 0f;
+            world = SnapToHex(world);
 
-            var spawner = FindObjectOfType<UnitSpawnerCommander>();
+            var spawner = UnityEngine.Object.FindAnyObjectByType<UnitSpawnerCommander>();
             var prefab = spawner != null ? spawner.UnitPrefab : null;
             if (prefab == null)
             {
-                var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                var root = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Bootstrap.CompositionRoot>();
                 if (root != null) prefab = root.DefaultUnitPrefab;
             }
             if (prefab == null) return;
@@ -98,10 +100,39 @@ namespace Game.Presentation.Input
             if (sr != null)
             {
                 sr.color = Color.red;
-                var root = FindObjectOfType<Game.Presentation.Bootstrap.CompositionRoot>();
+                var root = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Bootstrap.CompositionRoot>();
                 if (root != null && root.EnemySprite != null) sr.sprite = root.EnemySprite;
+                ApplyUnitSorting(sr, root);
             }
             if (enemy.GetComponent<Game.Presentation.View.UnitHpOverlay>() == null) enemy.gameObject.AddComponent<Game.Presentation.View.UnitHpOverlay>();
+            if (enemy.GetComponent<UnitVisualCulling>() == null) enemy.gameObject.AddComponent<UnitVisualCulling>();
+        }
+
+        private static Vector3 SnapToHex(Vector3 world)
+        {
+            var hex = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
+            if (hex == null) return world;
+            var cell = hex.WorldToGrid(world);
+            return hex.GridToWorld(cell.x, cell.y);
+        }
+
+        private static void ApplyUnitSorting(SpriteRenderer sr, Game.Presentation.Bootstrap.CompositionRoot root)
+        {
+            if (sr == null) return;
+            if (root != null && !string.IsNullOrEmpty(root.UnitSortingLayerName) && SortingLayerExists(root.UnitSortingLayerName))
+                sr.sortingLayerName = root.UnitSortingLayerName;
+            sr.sortingOrder = root != null ? root.UnitSortingOrder : sr.sortingOrder;
+        }
+
+        private static bool SortingLayerExists(string name)
+        {
+            foreach (var l in SortingLayer.layers)
+            {
+                if (l.name == name) return true;
+            }
+            return false;
         }
     }
 }
+
+
