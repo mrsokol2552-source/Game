@@ -31,6 +31,7 @@ namespace Game.Presentation.Pathfinding
         private bool[,] _walkable;
         private Unity.Collections.NativeArray<byte> _walkableNative;
         private bool _nativeDirty = true;
+        private int _walkableVersion = 1;
 
         private void Awake()
         {
@@ -55,6 +56,7 @@ namespace Game.Presentation.Pathfinding
         }
 
         public IGridPathfinder Pathfinder => _pathfinder;
+        public int WalkableVersion => _walkableVersion;
 
         public bool IsWalkable(int col, int row)
         {
@@ -110,7 +112,7 @@ namespace Game.Presentation.Pathfinding
             for (int r = 0; r < Height; r++)
                 for (int q = 0; q < Width; q++)
                     _walkable[r, q] = true;
-            _nativeDirty = true;
+            MarkWalkableDirty();
         }
 
         public void BakeFromPhysics()
@@ -136,7 +138,7 @@ namespace Game.Presentation.Pathfinding
                     if (!walk) blocked++;
                 }
             }
-            _nativeDirty = true;
+            MarkWalkableDirty();
             if (LogBake)
                 Debug.Log($"[HexPathfinding] BakeFromPhysics: blocked={blocked} / total={Width*Height}, mask=0x{maskVal:X}");
         }
@@ -163,7 +165,7 @@ namespace Game.Presentation.Pathfinding
                 if (c.y >= 0 && c.y < Height && c.x >= 0 && c.x < Width)
                     _walkable[c.y, c.x] = false;
             }
-            _nativeDirty = true;
+            MarkWalkableDirty();
         }
 
         public void FitToCamera()
@@ -173,13 +175,14 @@ namespace Game.Presentation.Pathfinding
             float h = HexHeight * Height * 0.5f;
             var center = cam.transform.position;
             Origin = new Vector2(center.x - w * 0.5f, center.y - h * 0.5f);
+            MarkWalkableDirty();
         }
 
         public void SetWalkable(int col, int row, bool walkable)
         {
             if (col < 0 || row < 0 || col >= Width || row >= Height) return;
             _walkable[row, col] = walkable;
-            _nativeDirty = true;
+            MarkWalkableDirty();
         }
 
         private static (int q, int r) AxialRound(float qf, float rf)
@@ -300,6 +303,12 @@ namespace Game.Presentation.Pathfinding
                 }
             }
             _nativeDirty = false;
+        }
+
+        private void MarkWalkableDirty()
+        {
+            _nativeDirty = true;
+            _walkableVersion++;
         }
 
         private void OnDestroy()

@@ -32,15 +32,16 @@ Presentation:
 - Input: `InputController`, `UnitSpawnerCommander`.
 - UI: `HudController`, `ActionsPanel`, `ResearchPanel`.
 - View: `UnitView`, `UnitCombat`, `UnitHpOverlay`, `MovementSettings`.
-- Performance: `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `UnitVisualCulling`.
-- Pathfinding: `PathManager`, `PathRequestQueue`, `HexPathfindingBootstrap`, `HexPathfinderJob`, `PathfindingBootstrap` (grid fallback), `CrowdingResolver`, `PathProfiler`, `PathDebugHUD`.
+- Performance: `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `UnitVisualCulling`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `LocalAvoidanceSystem` (legacy), `StuckResolver`.
+- Pathfinding: `PathManager`, `PathRequestQueue`, `HexPathfindingBootstrap`, `HexPathfinderJob`, `PathfindingBootstrap` (grid fallback), `FlowFieldManager`, `CrowdingResolver`, `PathProfiler`, `PathDebugHUD`.
 
 ## Bootstrap and singletons
 
 - `CompositionRoot` (`Presentation/Bootstrap/CompositionRoot.cs`):
   - Creates `GameStateService` and binds `SaveSystem` callbacks.
   - Optionally runs `StartNewGame` with `GameConfig.StartingResources`.
-  - Ensures `CameraZoom2D`, `HexPathfindingBootstrap`, `ProceduralObstacles`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `PathRequestQueue`.
+  - Ensures `CameraZoom2D`, `HexPathfindingBootstrap`, `ProceduralObstacles`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
+  - Disables `LocalAvoidanceSystem` when ORCA is enabled.
   - Applies `UnitVisualCulling` and sorting layer/order to existing units.
   - `Save()` and `Load()` wrap `SaveGame`/`LoadGame` use cases.
 
@@ -72,15 +73,18 @@ Presentation:
   - Clears expired forced targets and job targets.
   - `ResolveTarget`:
     - Uses job target (`UnitCombatJobScheduler`) if available.
-    - Falls back to `OccupancyHash` only when the job scheduler is disabled.
+    - Falls back to `OccupancyHash` when no job target is available.
     - Forced squad target is overridden if a local target is within `AttackRange * LocalThreatOverrideMultiplier`.
-  - If target is outside `AttackRange`, computes desired position, snaps to hex center if moving into a new cell, and requests a path.
+  - If target is outside `AttackRange`, computes desired position, snaps to hex center if moving into a new cell:
+    - In `FreeCombat` (or no squad): may request a path via `PathRequestQueue`.
+    - In squad modes: uses flow fields or direct destination steering (no per-unit path builds).
   - If in range, cancels combat path and attacks on cooldown.
+  - Flow fields can be used for far-distance chasing (`UseFlowFields`) to avoid frequent path builds.
 
 ### Path request pipeline
 - `PathRequestQueue.Update`:
   - Schedules at most `MaxPerFrame` requests; uses jobs when `UseJobs=true`.
-  - Builds an enemy-only occupancy hash for jobs.
+  - Uses a per-frame occupancy snapshot by faction for job scheduling.
   - Converts job path to world points, skipping the start cell to avoid snapping back.
   - Falls back to `PathManager.BuildPath` if the job yields no path.
 
@@ -137,10 +141,12 @@ UnitSpawnerCommander.Update (RMB)
 UnitCombat.Update (combat tick)
   -> ResolveTarget
      -> job target (UnitCombatJobScheduler)
-     -> OccupancyHash (only if scheduler disabled)
+     -> OccupancyHash (fallback if no job target)
      -> forced squad target (unless local threat overrides)
   -> If target:
-     - out of range -> compute desired -> path request
+     - out of range -> compute desired
+         - FreeCombat/None -> path request
+         - Squad modes -> flow field or direct destination
      - in range -> cancel combat path + attack
   -> If no target -> cancel combat steering
 ```
@@ -150,9 +156,8 @@ UnitCombat.Update (combat tick)
 UnitCombatJobScheduler.Update
   -> GatherUnits
   -> FillArrays + Build hash buckets
-  -> Schedule NearestEnemyJob
-  -> Complete job (same frame)
-  -> ApplyResults -> UnitCombat.SetJobNearest
+  -> Schedule NearestEnemyJob (frame N)
+  -> ApplyResults on next update when the job completes
 ```
 
 ### Path request pipeline (jobs)
@@ -161,12 +166,33 @@ PathRequestQueue.Update
   -> Dequeue request
   -> TryScheduleJob
      -> Get walkable native map from HexPathfindingBootstrap
-     -> Build enemy-only occupancy hash
+     -> Use per-frame occupancy snapshot by faction
      -> Schedule HexPathfinderJob
   -> FinishJob
      -> Convert cells to world points (skip start cell)
      -> Fallback to PathManager.BuildPath if needed
      -> Callback with world path
+```
+
+### Movement update (jobs + ORCA)
+```
+OrcaAvoidanceSystem.Update
+  -> Build spatial hash + ORCA constraints (jobs)
+  -> Output velocity overrides
+MovementJobSystem.Update
+  -> Apply ORCA velocity overrides (accel/decel-limited)
+  -> Fallback to steering or direct-to-destination
+  -> Apply facing
+```
+
+### Squad control (group-centric combat)
+```
+EnemySquadManager.Update
+  -> Build/refresh squads (size up to 12)
+  -> Grow gather radius until filled or max, then sleep/retry
+  -> Compute squad-to-squad distance in hexes
+  -> State machine: Gathering/Marching/Ready/FreeCombat
+  -> Assign forced targets (TTL) until FreeCombat release distance
 ```
 
 ### Save / Load
@@ -191,6 +217,7 @@ HudController -> Load button
 - `PathManager.BuildPath`:
   - Chooses hex bootstrap if available, else grid fallback.
   - Occupancy: blocks enemies and optionally recent friendly cells (`FriendlyReserveSeconds`).
+  - Per-frame occupied caches are reused across sync calls (including recent-friendly TTL by faction).
   - `EnableGroupPathReuse` caches paths by target cell for nearby allies.
   - Converts grid path to world points; skips start cell and smooths straight segments.
 
@@ -198,20 +225,31 @@ HudController -> Load button
   - Maintains a queue of world points and advances when within `WaypointEpsilon`.
   - Simplifies straight runs (`StraightDotThreshold`, `MinStraightRun`).
   - `Source` = `Manual` or `Combat` so combat logic avoids clobbering manual paths.
+- `FlowFieldManager`:
+  - Time-sliced flow fields (BFS) on hex grid with TTL/LRU eviction.
+  - Field expansion is capped by farthest requesting unit (distance limit + padding).
 
 ## Performance helpers
 
 - `UnitCombatJobScheduler`:
   - Collects unit positions/factions into `NativeArray`.
   - Builds a spatial hash with `NativeParallelMultiHashMap`.
-  - Runs `NearestEnemyJob` and writes indices back to units via `SetJobNearest`.
+  - Schedules `NearestEnemyJob` and applies results on the next update tick.
 
 - `EnemySquadManager`:
-  - Groups by radius and assigns a shared target for each squad.
-  - Optional path sharing for leader and members; can also drive player units when `DrivePlayers=true`.
+  - Forms squads for both factions (default size 12), with dynamic gather radius.
+  - Uses squad-to-squad distance (hexes) to drive states with hysteresis.
+  - Assigns forced targets via TTL; releases targets in `FreeCombat` only when close enough.
 
 - `OccupancyHash`:
-  - Rebuilt every frame; used for quick occupancy checks and nearest enemy lookup if job scheduler is disabled.
+  - Rebuilt every frame; used for quick occupancy checks and nearest enemy lookup when no job target is available.
+- `MovementJobSystem`:
+  - Jobified movement update for `UnitView` (enabled by default).
+- `OrcaAvoidanceSystem`:
+  - ORCA/RVO avoidance with spatial hash; feeds velocity overrides into movement jobs.
+  - Optional cohesion bias toward friendly centroid.
+- `StuckResolver`:
+  - Detects stuck movers and nudges them; can force combat repath.
 
 - `UnitVisualCulling`:
   - Disables `SpriteRenderer`, `Animator`, `UnitHpOverlay` when far from camera or outside frustum.

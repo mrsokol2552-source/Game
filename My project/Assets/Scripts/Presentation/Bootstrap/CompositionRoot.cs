@@ -84,7 +84,16 @@ namespace Game.Presentation.Bootstrap
             global::Game.Presentation.Performance.UnitCombatJobScheduler.EnsureExists();
             global::Game.Presentation.Performance.EnemySquadManager.EnsureExists();
             global::Game.Presentation.Performance.OccupancyHash.Ensure();
+            global::Game.Presentation.Performance.LocalAvoidanceSystem.EnsureExists();
+            global::Game.Presentation.Performance.OrcaAvoidanceSystem.EnsureExists();
+            global::Game.Presentation.Performance.MovementJobSystem.EnsureExists();
+            global::Game.Presentation.Performance.StuckResolver.EnsureExists();
             global::Game.Presentation.Pathfinding.PathRequestQueue.Ensure();
+            global::Game.Presentation.Pathfinding.FlowFieldManager.EnsureExists();
+
+            var legacyAvoid = global::Game.Presentation.Performance.LocalAvoidanceSystem.Instance;
+            if (legacyAvoid != null)
+                legacyAvoid.Enabled = false;
 
             // Ensure existing units in the scene also use visual culling
             var units = Object.FindObjectsByType<UnitView>(FindObjectsSortMode.None);

@@ -20,11 +20,11 @@ For a file-level map of the current implementation, see `docs/code_map.md`.
 
 
 
-In the current implementation, targeting is centralized through a jobified spatial hash. Every combat tick (default `CombatTickInterval` 0.04s + jitter), an agent resolves a target from the job scheduler (`\_jobNearest`), with forced squad targets as an override. If the scheduler is disabled, it falls back to `OccupancyHash` neighbor queries. The previous `FindNearestEnemy()` O(N^2) fallback is removed, eliminating the worst-case cost but making acquisition dependent on job cadence and hash coverage.
+In the current implementation, targeting is centralized through a jobified spatial hash. Every combat tick (default `CombatTickInterval` 0.04s + jitter), an agent resolves a target from the job scheduler (`\_jobNearest`), with forced squad targets as an override. When no job target is available, it falls back to `OccupancyHash` neighbor queries (even with the scheduler enabled). The previous `FindNearestEnemy()` O(N^2) fallback is removed, eliminating the worst-case cost but making acquisition dependent on job cadence and hash coverage.
 
 
 
-\*\*Status:\*\* The code now follows the CollectUnits -> BuildHash (Job) -> QueryHash (Job) -> CacheTarget (Main) chain using `NativeParallelMultiHashMap`. The remaining risk is latency gaps when the scheduler is disabled or hash rings are too small, so targets may appear only once squads assign a forced target or the next job tick completes.
+\*\*Status:\*\* The code now follows the CollectUnits -> BuildHash (Job) -> QueryHash (Job) -> CacheTarget (Main) chain using `NativeParallelMultiHashMap`, with double buffering (job scheduled in one tick, results applied on the next). The remaining risk is latency gaps when hash rings are too small, so targets may appear only once squads assign a forced target or the next job tick completes.
 
 
 
@@ -47,7 +47,7 @@ In the current implementation, targeting is centralized through a jobified spati
 The centralized path builder returns a `List<Vector3>`. In .NET and Unity, memory management is critical. Even with list pooling, working with reference types and heap-allocated collections puts pressure on the Garbage Collector (GC). The absence of a limit on path requests (`MaxBuildsPerFrame = 0`) is a critical risk. In a scenario where a player selects 200 units and issues a move command, the system will attempt to calculate 200 A\* paths in a single frame, leading to a performance spike.
 
 
-Current state notes: `PathRequestQueue` now limits throughput (`MaxPerFrame=32`, `MaxQueueSize=512`) and jobs are enabled by default. This reduces spikes when requests go through the queue. However, `PathManager.MaxBuildsPerFrame` still defaults to 0 (unbounded), so direct synchronous `BuildPath` bursts can still stall a frame.
+Current state notes: `PathRequestQueue` now limits throughput (`MaxPerFrame=32`, `MaxQueueSize=512`) and jobs are enabled by default. This reduces spikes when requests go through the queue, and synchronous `BuildPath` now reuses per-frame occupied caches to cut per-request scanning. However, `PathManager.MaxBuildsPerFrame` still defaults to 0 (unbounded), so direct synchronous `BuildPath` bursts can still stall a frame.
 
 
 
@@ -70,12 +70,20 @@ Current state notes: The resolver now runs in `LateUpdate`, groups units by hex 
 
 The current project already applies several of the architectural recommendations in code:
 
-- Jobified targeting: `UnitCombatJobScheduler` builds a spatial hash (`NativeParallelMultiHashMap`) and resolves nearest enemies in an `IJobParallelFor`.
-- Target resolution: `UnitCombat` uses job results with TTL and forced squad targets; the O(N^2) fallback scan was removed.
-- Squad coordination: `EnemySquadManager` groups enemies and can optionally drive player squads (`DrivePlayers=true`) with shared targets.
-- Path job pipeline: `PathRequestQueue` schedules `HexPathfinderJob` when native walkable data is available and falls back to `PathManager.BuildPath` when needed.
-- Occupancy fast path: `OccupancyHash` rebuilds each frame and provides fast occupancy checks for `PathManager`.
+- Jobified targeting: `UnitCombatJobScheduler` builds a spatial hash (`NativeParallelMultiHashMap`) and resolves nearest enemies in an `IJobParallelFor`, using double buffering to apply results on the next update tick.
+- Target resolution: `UnitCombat` uses job results with TTL and forced squad targets; falls back to `OccupancyHash` when no job target is available. The O(N^2) fallback scan was removed.
+- Squad coordination: `EnemySquadManager` forms squads for both factions (default size 12), grows a dynamic gather radius, and uses a state machine (`Gathering/Marching/Ready/FreeCombat/Sleeping`) driven by squad-to-squad hex distance with hysteresis. Forced targets are assigned by TTL and released only when units are close enough.
+- Path job pipeline: `PathRequestQueue` schedules `HexPathfinderJob` when native walkable data is available, using per-frame occupancy snapshots by faction, and falls back to `PathManager.BuildPath` when needed.
+- Occupancy fast path: `OccupancyHash` rebuilds each frame and provides fast occupancy checks; `PathManager` reuses per-frame occupied caches for sync builds.
 - Diagnostics: `PathProfiler` and optional reset/jitter logs are in place for chase and movement tuning.
+- Flow fields: `FlowFieldManager` runs time-sliced BFS with per-target caching, distance-limited expansion, and target-cell quantization.
+- Flow field smoothing: optional line-of-sight smoothing to skip zigzags on clear paths.
+- Movement jobs: `MovementJobSystem` updates `UnitView` motion in jobs and supports velocity overrides.
+- ORCA/RVO: `OrcaAvoidanceSystem` computes collision-free velocities via spatial hash and feeds overrides into movement jobs.
+- ORCA gating: combat can disable velocity overrides near attack range to ensure engagement.
+- Cohesion: ORCA preferred velocity can be biased toward friendly centroid to reduce group dispersion.
+- Stuck breaker: `StuckResolver` detects low-progress movers and nudges them, with optional combat repath.
+- Legacy steering: `LocalAvoidanceSystem` remains but is disabled by default when ORCA is enabled.
 
 
 
@@ -127,7 +135,7 @@ To avoid "robotic" 45 and 90-degree movement, the \*\*Eikonal equation\*\* ($\\|
 
 
 
-`UnitCombat.cs` no longer falls back to `FindNearestEnemy()`. The nearest target is provided by the job scheduler (or `OccupancyHash` if the scheduler is disabled), with forced squad targets as an override. This removes the $O(N^2)$ worst-case, but it also means target acquisition depends on the scheduler interval, hash cell size, and ring count.
+`UnitCombat.cs` no longer falls back to `FindNearestEnemy()`. The nearest target is provided by the job scheduler (or `OccupancyHash` when no job target is available), with forced squad targets as an override. This removes the $O(N^2)$ worst-case, but it also means target acquisition depends on the scheduler interval, hash cell size, and ring count.
 
 
 
@@ -193,7 +201,7 @@ To avoid "robotic" 45 and 90-degree movement, the \*\*Eikonal equation\*\* ($\\|
 
 | \*\*Group Pathfinding\*\* | Individual A\* ($O(U \\cdot N)$) | \*\*Flow Field\*\* ($O(N)$) | 10x-100x CPU reduction |
 
-| \*\*Targeting\*\* | Job + spatial hash + forced targets (OccupancyHash fallback only if job disabled) | \*\*Spatial Hashing\*\* | $O(1)$ neighbor access |
+| \*\*Targeting\*\* | Job + spatial hash + forced targets (OccupancyHash fallback when job target missing) | \*\*Spatial Hashing\*\* | $O(1)$ neighbor access |
 
 | \*\*Avoidance\*\* | Reactive Resolver | \*\*RVO2 (Burst)\*\* | Smooth movement |
 

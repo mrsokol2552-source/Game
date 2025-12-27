@@ -14,6 +14,16 @@ namespace Game.Presentation.View
         public static readonly HashSet<UnitCombat> All = new HashSet<UnitCombat>();
         public static bool DisableCombat = false; // Self-test or debug freeze
 
+        public enum SquadMode
+        {
+            None,
+            Gathering,
+            Marching,
+            Ready,
+            FreeCombat,
+            Sleeping
+        }
+
         [Header("Combat")]
         public Faction Faction = Faction.Player;
         public float AttackRange = 1.5f;
@@ -44,6 +54,15 @@ namespace Game.Presentation.View
         public bool InstantRepathOnTargetCellChange = true;
         [Tooltip("If unit is idle near enemy for longer than this, force an immediate repath to shake stall.")]
         public float StallRepathSeconds = 0.15f;
+        [Header("Flow Fields")]
+        [Tooltip("Use flow fields for far-distance combat movement.")]
+        public bool UseFlowFields = true;
+        [Tooltip("Minimum distance to target (world units) before flow field steering kicks in.")]
+        public float FlowFieldMinDistance = 6f;
+        [Tooltip("How often to advance to the next flow cell.")]
+        public float FlowFieldStepInterval = 0.12f;
+        [Tooltip("Random jitter added to flow field step interval.")]
+        public float FlowFieldStepJitter = 0.04f;
         [Header("Targeting")]
         [Tooltip("How often to refresh nearest enemy search.")]
         public float TargetRefreshInterval = 0.1f;
@@ -51,6 +70,8 @@ namespace Game.Presentation.View
         public float EngageStopMultiplier = 1.2f;
         [Tooltip("How long to trust a job-provided nearest target before falling back to forced/local search.")]
         public float JobTargetTtl = 0.6f;
+        [Tooltip("How long to keep moving toward last combat destination after losing a target.")]
+        public float LostTargetGraceSeconds = 0.2f;
         [Tooltip("If a forced target exists but a nearby enemy is within AttackRange * this multiplier, prefer the local enemy.")]
         public float LocalThreatOverrideMultiplier = 3f;
         [Header("Performance")]
@@ -58,11 +79,16 @@ namespace Game.Presentation.View
         public float CombatTickInterval = 0.04f;
         [Tooltip("Jitter added to combat tick to desync updates.")]
         public float CombatTickJitter = 0.02f;
+        [Header("Avoidance")]
+        [Tooltip("Disable ORCA velocity overrides when near attack range to allow engagement.")]
+        public bool DisableOrcaWhenInRange = true;
+        [Tooltip("Multiplier on AttackRange that disables ORCA (>= 1).")]
+        public float OrcaDisableRangeMultiplier = 1.1f;
         [Header("Budgets")]
         [Tooltip("Global cap per frame to spread expensive target searches across units. 0 or less = unlimited.")]
-        public static int TargetSearchBudgetPerFrame = 0;
+        public static int TargetSearchBudgetPerFrame = 10;
         [Tooltip("Global cap per frame to spread expensive repaths across units. 0 or less = unlimited.")]
-        public static int RepathBudgetPerFrame = 0;
+        public static int RepathBudgetPerFrame = 2;
         [Header("Diagnostics")]
         [Tooltip("Log combat-driven path/destination resets (throttled per frame).")]
         public bool LogCombatResets = false;
@@ -89,6 +115,11 @@ namespace Game.Presentation.View
         private float _pathPendingTimer;
         private int _pathRequestId;
         private float _stallTimer;
+        private float _lostTargetGraceTimer;
+        private Vector3 _lastTargetPos;
+        private bool _hasLastTargetPos;
+        private float _flowFieldTimer;
+        private bool _usingFlowField;
 
         private static int _budgetFrame = -1;
         private static int _repathsThisFrame;
@@ -98,18 +129,31 @@ namespace Game.Presentation.View
         private Game.Presentation.Performance.OccupancyHash _occ;
         private static int _resetLogFrame = -1;
         private static int _resetLogsThisFrame;
+        private static int _playerCount;
+        private static int _enemyCount;
+        private Game.Domain.Units.Faction _lastFaction;
+        [SerializeField] private int _squadId;
+        [SerializeField] private SquadMode _squadMode = SquadMode.None;
+
+        public bool IsInSquad => _squadId != 0;
+        public int SquadId => _squadId;
+        public SquadMode CurrentSquadMode => _squadMode;
 
         private void OnEnable()
         {
             All.Add(this);
+            RegisterFaction(Faction);
+            _lastFaction = Faction;
             _tr = transform;
             _view = GetComponent<UnitView>() ?? gameObject.AddComponent<UnitView>();
+            _follower = GetComponent<UnitPathFollower>();
             _currentHealth = Mathf.Max(1, _view.Stats.MaxHealth);
             _repathTimer = Random.Range(0f, RepathJitter);
             _pm = Game.Presentation.Pathfinding.PathManager.Ensure();
             _hex = SharedHex();
             _targetRefreshTimer = Random.Range(0f, TargetRefreshInterval);
             _combatTickTimer = Random.Range(0f, CombatTickInterval + CombatTickJitter);
+            _flowFieldTimer = Random.Range(0f, FlowFieldStepInterval + FlowFieldStepJitter);
             UnitCombatJobScheduler.EnsureExists();
             _occ = Game.Presentation.Performance.OccupancyHash.Instance;
         }
@@ -117,6 +161,9 @@ namespace Game.Presentation.View
         private void OnDisable()
         {
             All.Remove(this);
+            UnregisterFaction(_lastFaction);
+            _usingFlowField = false;
+            ClearSquad();
         }
 
         private void Update()
@@ -126,6 +173,12 @@ namespace Game.Presentation.View
             _combatTickTimer = CombatTickInterval + Random.Range(0f, CombatTickJitter);
 
             if (DisableCombat) return;
+            if (Faction != _lastFaction)
+            {
+                UnregisterFaction(_lastFaction);
+                RegisterFaction(Faction);
+                _lastFaction = Faction;
+            }
             if (_cooldown > 0f)
                 _cooldown = Mathf.Max(0f, _cooldown - (CombatTickInterval));
             if (_forcedTargetTimer > 0f)
@@ -150,6 +203,7 @@ namespace Game.Presentation.View
 
             EnsureCaches();
             bool pathActive = _follower != null && _follower.HasPath;
+            bool allowIndividualPaths = _squadMode == SquadMode.None || _squadMode == SquadMode.FreeCombat;
             if (_pathPendingTimer > 0f)
             {
                 _pathPendingTimer -= Time.deltaTime;
@@ -159,26 +213,38 @@ namespace Game.Presentation.View
                 }
             }
 
-            // If нет врагов вообще, прекращаем любое боевое движение
-            bool enemiesPresent = UnitCombat.All.Any(uc => uc != null && uc.isActiveAndEnabled && uc.Faction != Faction);
+            // If no enemies exist, stop combat movement and keep manual commands.
+            bool enemiesPresent = HasEnemyForFaction(Faction);
             if (!enemiesPresent && _forcedTarget == null)
             {
                 if (_follower != null && _follower.Source == UnitPathFollower.PathSource.Combat) _follower.Cancel();
                 if (_combatSteering) _view.ClearDestination("combat-no-enemies");
                 _combatSteering = false;
                 _pathPending = false;
+                _lostTargetGraceTimer = 0f;
+                InvalidatePendingPath();
+                if (_view != null && DisableOrcaWhenInRange)
+                    _view.UseOrcaVelocity = true;
                 return;
             }
 
             var target = ResolveTarget();
             if (target != null)
             {
+                _lostTargetGraceTimer = LostTargetGraceSeconds;
+                _lastTargetPos = target.transform.position;
+                _hasLastTargetPos = true;
                 Vector3 tp = target.transform.position;
                 Vector3 mp = _tr.position;
                 if (_hex == null) _hex = SharedHex();
                 var targetCell = _hex != null ? _hex.WorldToGrid(tp) : Vector2Int.zero;
                 float dist = (tp - mp).magnitude;
                 float stopDist = Mathf.Max(AttackRange * 0.9f, 0.1f);
+                if (_view != null && DisableOrcaWhenInRange)
+                {
+                    float orcaDisableDist = AttackRange * Mathf.Max(1f, OrcaDisableRangeMultiplier);
+                    _view.UseOrcaVelocity = dist > orcaDisableDist;
+                }
 
                 // If path follower is active, don't override its movement
                 float cancelDist = Mathf.Max(stopDist, AttackRange * 0.95f);
@@ -189,6 +255,7 @@ namespace Game.Presentation.View
                     LogReset("in-range-stop", target, dist);
                     pathActive = false;
                     _pathPending = false;
+                    InvalidatePendingPath();
                 }
 
                 if (dist > AttackRange)
@@ -220,6 +287,20 @@ namespace Game.Presentation.View
                     }
 
                     // Pathfinding is always enabled for combat steering
+                    bool forceFlowField = !allowIndividualPaths;
+                    if (TryFlowFieldMove(desired, dist, pathActive, forceFlowField))
+                    {
+                        goto SkipBuild;
+                    }
+                    if (!allowIndividualPaths)
+                    {
+                        InvalidatePendingPath();
+                        if (pathActive && _follower != null && _follower.Source == UnitPathFollower.PathSource.Combat)
+                            _follower.Cancel();
+                        _view.SetDestination(desired);
+                        _combatSteering = true;
+                        goto SkipBuild;
+                    }
                     if (_repathTimer > 0f) _repathTimer -= Time.deltaTime;
                     float delta2 = (desired - _lastDesired).sqrMagnitude;
                     bool targetMovedCell = _hex != null && targetCell != _lastTargetCell;
@@ -235,6 +316,7 @@ namespace Game.Presentation.View
                     }
                     if (_repathTimer <= 0f && (!_pathPending || _pathPendingTimer <= 0f) && (!pathActive || targetMovedCell || delta2 > 0.05f * 0.05f))
                     {
+                        _usingFlowField = false;
                         if (!TryConsumeRepathBudget())
                         {
                             _repathTimer = 0.05f + Random.Range(0f, RepathJitter);
@@ -292,6 +374,7 @@ namespace Game.Presentation.View
                                 }
                                 if (built)
                                 {
+                                    _usingFlowField = false;
                                     if (_follower == null) _follower = gameObject.AddComponent<UnitPathFollower>();
                                     _follower.SetWorldPath(worldPath, UnitPathFollower.PathSource.Combat);
                                     Game.Presentation.Pathfinding.PathManager.ReturnWorldList(worldPath);
@@ -324,6 +407,7 @@ namespace Game.Presentation.View
                                         allowed = false;
                                     if (!pathActiveLocal && allowed)
                                     {
+                                        _usingFlowField = false;
                                         _view.SetDestination(desiredLocal);
                                         _combatSteering = true;
                                     }
@@ -342,6 +426,7 @@ namespace Game.Presentation.View
                         pathActive = false;
                         _pathPending = false;
                     }
+                    _usingFlowField = false;
                     if (!pathActive && _combatSteering)
                         _view.ClearDestination("combat-in-range");
                     if (_cooldown <= 0f)
@@ -353,22 +438,53 @@ namespace Game.Presentation.View
             }
             else
             {
-                // No targets left: only cancel combat-driven movement, keep player's commands/path
-                if (pathActive && _follower.Source == UnitPathFollower.PathSource.Combat) _follower.Cancel();
-                if (_combatSteering)
+                if (_view != null && DisableOrcaWhenInRange)
+                    _view.UseOrcaVelocity = true;
+                if (enemiesPresent && _lostTargetGraceTimer > 0f)
                 {
-                    _view.ClearDestination("combat-no-enemies");
-                    LogReset("no-enemies", null, 0f);
-                    // Snap back to hex center to avoid drifting offsets after combat
-                    if (_hex == null) _hex = SharedHex();
-                    if (_hex != null)
+                    _lostTargetGraceTimer = Mathf.Max(0f, _lostTargetGraceTimer - Time.deltaTime);
+                    if (_hasLastTargetPos && _view != null && _view.TryGetDestination(out var dest))
                     {
-                        var cell = _hex.WorldToGrid(_tr.position);
-                        _tr.position = _hex.GridToWorld(cell.x, cell.y);
+                        var pos = _tr.position;
+                        var toDest = dest - pos; toDest.z = 0f;
+                        var toLast = _lastTargetPos - pos; toLast.z = 0f;
+                        if (toDest.sqrMagnitude > 0.0001f && toLast.sqrMagnitude > 0.0001f)
+                        {
+                            if (Vector3.Dot(toDest.normalized, toLast.normalized) < 0f)
+                            {
+                                if (pathActive && _follower != null && _follower.Source == UnitPathFollower.PathSource.Combat)
+                                    _follower.Cancel();
+                                if (_combatSteering)
+                                    _view.ClearDestination("combat-lost-target");
+                                _combatSteering = false;
+                                _pathPending = false;
+                                _lostTargetGraceTimer = 0f;
+                            }
+                        }
                     }
+                    _stallTimer = 0f;
                 }
-                _combatSteering = false;
-                _stallTimer = 0f;
+                else
+                {
+                    _lostTargetGraceTimer = 0f;
+                    // No targets left: only cancel combat-driven movement, keep player's commands/path
+                    if (pathActive && _follower.Source == UnitPathFollower.PathSource.Combat) _follower.Cancel();
+                    if (_combatSteering)
+                    {
+                        _view.ClearDestination("combat-no-enemies");
+                        LogReset("no-enemies", null, 0f);
+                        // Snap back to hex center to avoid drifting offsets after combat
+                        if (_hex == null) _hex = SharedHex();
+                        if (_hex != null)
+                        {
+                            var cell = _hex.WorldToGrid(_tr.position);
+                            _tr.position = _hex.GridToWorld(cell.x, cell.y);
+                        }
+                    }
+                    _combatSteering = false;
+                    _usingFlowField = false;
+                    _stallTimer = 0f;
+                }
             }
 
             // Stall breaker: if we are near an enemy but not moving/pathing, force a repath soon
@@ -422,6 +538,14 @@ namespace Game.Presentation.View
         public void NotifyManualMove()
         {
             _combatSteering = false;
+            _usingFlowField = false;
+        }
+
+        public void ForceRepath()
+        {
+            _repathTimer = 0f;
+            _pathPending = false;
+            _pathPendingTimer = 0f;
         }
 
         public void AssignSquadTarget(UnitCombat target, float ttl = 1.5f)
@@ -431,6 +555,29 @@ namespace Game.Presentation.View
             _forcedTarget = target;
             _forcedTargetTimer = Mathf.Max(0.1f, ttl);
             _cachedTarget = target;
+        }
+
+        public void ClearForcedTarget()
+        {
+            _forcedTarget = null;
+            _forcedTargetTimer = 0f;
+        }
+
+        public void SetSquad(int squadId, SquadMode mode)
+        {
+            _squadId = squadId;
+            _squadMode = mode;
+        }
+
+        public void SetSquadMode(SquadMode mode)
+        {
+            _squadMode = mode;
+        }
+
+        public void ClearSquad()
+        {
+            _squadId = 0;
+            _squadMode = SquadMode.None;
         }
 
         private UnitCombat FindNearestEnemy()
@@ -471,7 +618,6 @@ namespace Game.Presentation.View
         {
             if (_tr == null) _tr = transform;
             if (_view == null) _view = GetComponent<UnitView>() ?? gameObject.AddComponent<UnitView>();
-            if (_follower == null) _follower = GetComponent<UnitPathFollower>();
             if (_pm == null) _pm = Game.Presentation.Pathfinding.PathManager.Ensure();
             if (_hex == null) _hex = SharedHex();
         }
@@ -496,13 +642,11 @@ namespace Game.Presentation.View
             if (_targetRefreshTimer > 0f && _cachedTarget != null)
                 return _cachedTarget;
 
-            var scheduler = UnitCombatJobScheduler.Instance;
-            bool jobEnabled = scheduler == null || !scheduler.Disabled;
             UnitCombat jobTarget = null;
             TryGetJobTarget(out jobTarget);
 
             UnitCombat hashTarget = null;
-            if (jobTarget == null && !jobEnabled)
+            if (jobTarget == null)
                 TryGetHashTarget(out hashTarget);
 
             UnitCombat localTarget = jobTarget ?? hashTarget;
@@ -526,7 +670,7 @@ namespace Game.Presentation.View
             return _cachedTarget;
         }
 
-        private bool TryGetJobTarget(out UnitCombat target)
+        internal bool TryGetJobTarget(out UnitCombat target)
         {
             target = null;
             if (_jobNearestTimer <= 0f) return false;
@@ -585,6 +729,49 @@ namespace Game.Presentation.View
             return true;
         }
 
+        private void InvalidatePendingPath()
+        {
+            _pathRequestId++;
+            _pathPending = false;
+            _pathPendingTimer = 0f;
+        }
+
+        private bool TryFlowFieldMove(Vector3 desired, float targetDist, bool pathActive, bool ignoreMinDistance)
+        {
+            if (!UseFlowFields) return false;
+            if (!ignoreMinDistance && targetDist < FlowFieldMinDistance) return false;
+            var mgr = Game.Presentation.Pathfinding.FlowFieldManager.Instance;
+            if (mgr == null || !mgr.Enabled) return false;
+
+            if (_usingFlowField)
+            {
+                if (_flowFieldTimer > 0f)
+                {
+                    _flowFieldTimer -= Time.deltaTime;
+                    if (_flowFieldTimer > 0f && _view != null && _view.TryGetDestination(out _))
+                        return true;
+                }
+            }
+            else
+            {
+                if (_flowFieldTimer > 0f)
+                    _flowFieldTimer -= Time.deltaTime;
+            }
+
+            if (!mgr.TryGetNextPoint(_tr.position, desired, out var next))
+                return false;
+
+            InvalidatePendingPath();
+            if (pathActive && _follower != null && _follower.Source == UnitPathFollower.PathSource.Combat)
+                _follower.Cancel();
+            _pathPending = false;
+            _view.SetDestination(next);
+            _combatSteering = true;
+            _usingFlowField = true;
+            _flowFieldTimer = FlowFieldStepInterval + Random.Range(0f, FlowFieldStepJitter);
+            return true;
+        }
+
         private static void TouchBudgetFrame()
         {
             if (RepathBudgetPerFrame <= 0)
@@ -600,6 +787,31 @@ namespace Game.Presentation.View
             if (_sharedHex == null || !_sharedHex.isActiveAndEnabled)
                 _sharedHex = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
             return _sharedHex;
+        }
+
+        private static bool HasEnemyForFaction(Game.Domain.Units.Faction faction)
+        {
+            switch (faction)
+            {
+                case Game.Domain.Units.Faction.Player:
+                    return _enemyCount > 0;
+                case Game.Domain.Units.Faction.Enemy:
+                    return _playerCount > 0;
+                default:
+                    return _playerCount > 0 || _enemyCount > 0;
+            }
+        }
+
+        private static void RegisterFaction(Game.Domain.Units.Faction faction)
+        {
+            if (faction == Game.Domain.Units.Faction.Player) _playerCount++;
+            else if (faction == Game.Domain.Units.Faction.Enemy) _enemyCount++;
+        }
+
+        private static void UnregisterFaction(Game.Domain.Units.Faction faction)
+        {
+            if (faction == Game.Domain.Units.Faction.Player) _playerCount = Mathf.Max(0, _playerCount - 1);
+            else if (faction == Game.Domain.Units.Faction.Enemy) _enemyCount = Mathf.Max(0, _enemyCount - 1);
         }
     }
 }

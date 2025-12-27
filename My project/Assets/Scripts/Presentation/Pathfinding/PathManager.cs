@@ -47,7 +47,8 @@ namespace Game.Presentation.Pathfinding
         private readonly HashSet<int> _gridFittedOnce = new HashSet<int>();
         private int _builtThisFrame;
         private int _lastFrame;
-        private readonly Dictionary<int, float> _friendRecent = new Dictionary<int, float>();
+        private readonly Dictionary<int, float> _friendRecentPlayers = new Dictionary<int, float>();
+        private readonly Dictionary<int, float> _friendRecentEnemies = new Dictionary<int, float>();
         private static PathManager _instance;
         private HexPathfindingBootstrap _hexCached;
         private PathfindingBootstrap _gridCached;
@@ -58,6 +59,14 @@ namespace Game.Presentation.Pathfinding
         private Game.Presentation.Performance.OccupancyHash _occ;
         private int _logFrame = -1;
         private int _logsThisFrame;
+        private int _occupiedCacheFrame = -1;
+        private int _occupiedCacheGridId;
+        private readonly HashSet<int> _occupiedAllCache = new HashSet<int>();
+        private readonly HashSet<int> _occupiedPlayersCache = new HashSet<int>();
+        private readonly HashSet<int> _occupiedEnemiesCache = new HashSet<int>();
+        private readonly HashSet<int> _occupiedAllWithRecentPlayersCache = new HashSet<int>();
+        private readonly HashSet<int> _occupiedAllWithRecentEnemiesCache = new HashSet<int>();
+        private readonly List<int> _staleRecentKeys = new List<int>(128);
 
         public static bool BuildBudgetExhausted => _instance != null && _instance.IsBuildBudgetExhaustedInternal();
 
@@ -170,7 +179,7 @@ namespace Game.Presentation.Pathfinding
             if (newGrid != null && newGrid.Count > maxNodes)
             {
                 ReturnGridList(newGrid);
-                ReturnHashSet(occupied);
+                ReleaseOccupied(occupied);
                 if (worldPoints != null) ReturnWorldList(worldPoints);
                 PathProfiler.CountBuild(false);
                 LogFailure($"Path too long ({newGrid.Count} > {maxNodes})", unit, worldTarget);
@@ -180,6 +189,8 @@ namespace Game.Presentation.Pathfinding
             if (newGrid != null) PathProfiler.CountPath(newGrid.Count);
             if (newGrid == null || newGrid.Count == 0)
             {
+                if (newGrid != null) ReturnGridList(newGrid);
+                ReleaseOccupied(occupied);
                 LogFailure("Path empty/null", unit, worldTarget);
                 return false;
             }
@@ -187,7 +198,7 @@ namespace Game.Presentation.Pathfinding
             if (PathHitsOccupied(newGrid, occupied, from))
             {
                 ReturnGridList(newGrid);
-                ReturnHashSet(occupied);
+                ReleaseOccupied(occupied);
                 if (worldPoints != null) ReturnWorldList(worldPoints);
                 PathProfiler.CountBuild(false);
                 LogFailure("Path hits occupied", unit, worldTarget);
@@ -216,7 +227,7 @@ namespace Game.Presentation.Pathfinding
                 }
             }
             ReturnGridList(newGrid);
-            ReturnHashSet(occupied);
+            ReleaseOccupied(occupied);
             if (worldPoints.Count == 0)
             {
                 ReturnWorldList(worldPoints);
@@ -330,57 +341,107 @@ namespace Game.Presentation.Pathfinding
 
         private HashSet<int> BuildOccupied(System.Func<Vector3, Vector2Int> worldToCell, UnitView self, bool enemiesOnly, float friendTtl = 0f)
         {
-            var set = RentHashSet();
+            CacheBootstraps();
+            int gridId = _hexCached != null ? _hexCached.GetInstanceID() : (_gridCached != null ? _gridCached.GetInstanceID() : 0);
+            EnsureOccupiedCache(worldToCell, gridId, friendTtl);
+
             Game.Domain.Units.Faction? selfFaction = null;
             if (self != null) selfFaction = self.GetComponent<Game.Presentation.View.UnitCombat>()?.Faction;
 
-            // Fast path: use occupancy hash if available and not enemiesOnly
-            if (UseOccupancyHash && _occ != null && !enemiesOnly)
+            if (enemiesOnly)
             {
-                foreach (var uc in Game.Presentation.View.UnitCombat.All)
-                {
-                    if (uc == null) continue;
-                    if (self != null && uc.gameObject == self.gameObject) continue;
-                    var cell = worldToCell(uc.transform.position);
-                    set.Add(Key(cell.x, cell.y));
-                }
-                return set;
+                if (selfFaction == Game.Domain.Units.Faction.Player) return _occupiedEnemiesCache;
+                if (selfFaction == Game.Domain.Units.Faction.Enemy) return _occupiedPlayersCache;
+                return _occupiedAllCache;
             }
 
+            if (friendTtl > 0f)
+            {
+                if (selfFaction == Game.Domain.Units.Faction.Player) return _occupiedAllWithRecentPlayersCache;
+                if (selfFaction == Game.Domain.Units.Faction.Enemy) return _occupiedAllWithRecentEnemiesCache;
+            }
+
+            return _occupiedAllCache;
+        }
+
+        private void EnsureOccupiedCache(System.Func<Vector3, Vector2Int> worldToCell, int gridId, float friendTtl)
+        {
+            int frame = Time.frameCount;
+            if (frame == _occupiedCacheFrame && gridId == _occupiedCacheGridId) return;
+
+            _occupiedCacheFrame = frame;
+            _occupiedCacheGridId = gridId;
+            _occupiedAllCache.Clear();
+            _occupiedPlayersCache.Clear();
+            _occupiedEnemiesCache.Clear();
+
+            bool trackRecent = friendTtl > 0f;
+            if (trackRecent)
+            {
+                _occupiedAllWithRecentPlayersCache.Clear();
+                _occupiedAllWithRecentEnemiesCache.Clear();
+            }
+
+            float now = Time.time;
             foreach (var uc in Game.Presentation.View.UnitCombat.All)
             {
-                if (uc == null) continue;
-                if (self != null && uc.gameObject == self.gameObject) continue;
-                if (enemiesOnly)
-                {
-                    var ucFaction = uc.Faction;
-                    if (selfFaction.HasValue && ucFaction == selfFaction.Value)
-                        continue;
-                }
-                else
-                {
-                    // For friendlies, apply TTL so paths can pass through if cell was vacated recently
-                    if (selfFaction.HasValue && uc.Faction == selfFaction.Value && friendTtl > 0f)
-                    {
-                        var cellTmp = worldToCell(uc.transform.position);
-                        int k = Key(cellTmp.x, cellTmp.y);
-                        _friendRecent[k] = Time.time;
-                    }
-                }
+                if (uc == null || !uc.isActiveAndEnabled) continue;
                 var cell = worldToCell(uc.transform.position);
-                set.Add(Key(cell.x, cell.y));
+                int key = Key(cell.x, cell.y);
+                _occupiedAllCache.Add(key);
+
+                if (uc.Faction == Game.Domain.Units.Faction.Player)
+                {
+                    _occupiedPlayersCache.Add(key);
+                    if (trackRecent) _friendRecentPlayers[key] = now;
+                }
+                else if (uc.Faction == Game.Domain.Units.Faction.Enemy)
+                {
+                    _occupiedEnemiesCache.Add(key);
+                    if (trackRecent) _friendRecentEnemies[key] = now;
+                }
             }
 
-            if (!enemiesOnly && friendTtl > 0f)
+            if (trackRecent)
             {
-                float now = Time.time;
-                foreach (var kv in _friendRecent)
-                {
-                    if (now - kv.Value <= friendTtl)
-                        set.Add(kv.Key);
-                }
+                _occupiedAllWithRecentPlayersCache.UnionWith(_occupiedAllCache);
+                _occupiedAllWithRecentEnemiesCache.UnionWith(_occupiedAllCache);
+                AddRecent(_friendRecentPlayers, _occupiedAllWithRecentPlayersCache, now, friendTtl);
+                AddRecent(_friendRecentEnemies, _occupiedAllWithRecentEnemiesCache, now, friendTtl);
             }
-            return set;
+        }
+
+        private void AddRecent(Dictionary<int, float> recent, HashSet<int> output, float now, float ttl)
+        {
+            if (recent.Count == 0) return;
+            _staleRecentKeys.Clear();
+            float pruneAfter = ttl * 4f;
+            foreach (var kv in recent)
+            {
+                float age = now - kv.Value;
+                if (age <= ttl)
+                    output.Add(kv.Key);
+                else if (age > pruneAfter)
+                    _staleRecentKeys.Add(kv.Key);
+            }
+            for (int i = 0; i < _staleRecentKeys.Count; i++)
+                recent.Remove(_staleRecentKeys[i]);
+        }
+
+        private void ReleaseOccupied(HashSet<int> occupied)
+        {
+            if (occupied == null) return;
+            if (IsCachedOccupied(occupied)) return;
+            ReturnHashSet(occupied);
+        }
+
+        private bool IsCachedOccupied(HashSet<int> occupied)
+        {
+            return ReferenceEquals(occupied, _occupiedAllCache)
+                || ReferenceEquals(occupied, _occupiedPlayersCache)
+                || ReferenceEquals(occupied, _occupiedEnemiesCache)
+                || ReferenceEquals(occupied, _occupiedAllWithRecentPlayersCache)
+                || ReferenceEquals(occupied, _occupiedAllWithRecentEnemiesCache);
         }
 
         private bool PathHitsOccupied(List<GridPoint> path, HashSet<int> occupied, Vector2Int from)

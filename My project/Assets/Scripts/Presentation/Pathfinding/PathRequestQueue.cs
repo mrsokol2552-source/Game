@@ -5,7 +5,6 @@ using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using Game.Presentation.Performance;
 
 namespace Game.Presentation.Pathfinding
 {
@@ -34,7 +33,10 @@ namespace Game.Presentation.Pathfinding
         private JobHandle _jobHandle;
         private bool _jobActive;
         private Request _jobReq;
-        private NativeHashMap<int, byte> _occupiedTmp;
+        private NativeHashMap<int, byte> _occupiedPlayers;
+        private NativeHashMap<int, byte> _occupiedEnemies;
+        private int _occupiedFrame = -1;
+        private HexPathfindingBootstrap _hexCached;
         private static int _jobFrame = -1;
         private static int _jobScheduledThisFrame;
         private static int _jobCompletedThisFrame;
@@ -58,7 +60,8 @@ namespace Game.Presentation.Pathfinding
                 _jobActive = false;
             }
             if (_jobPath.IsCreated) { _jobPath.Dispose(); _jobPath = default; }
-            if (_occupiedTmp.IsCreated) { _occupiedTmp.Dispose(); _occupiedTmp = default; }
+            if (_occupiedPlayers.IsCreated) { _occupiedPlayers.Dispose(); _occupiedPlayers = default; }
+            if (_occupiedEnemies.IsCreated) { _occupiedEnemies.Dispose(); _occupiedEnemies = default; }
         }
 
         public void CompleteActiveJobAndClear()
@@ -70,7 +73,9 @@ namespace Game.Presentation.Pathfinding
             }
             _queue.Clear();
             if (_jobPath.IsCreated) _jobPath.Clear();
-            if (_occupiedTmp.IsCreated) _occupiedTmp.Clear();
+            if (_occupiedPlayers.IsCreated) _occupiedPlayers.Clear();
+            if (_occupiedEnemies.IsCreated) _occupiedEnemies.Clear();
+            _occupiedFrame = -1;
         }
 
         private void Update()
@@ -78,26 +83,44 @@ namespace Game.Presentation.Pathfinding
             TouchJobFrame();
             int budget = MaxPerFrame <= 0 ? int.MaxValue : MaxPerFrame;
 
-            if (_jobActive && _jobHandle.IsCompleted)
-            {
-                _jobHandle.Complete();
-                TouchJobFrame();
-                FinishJob();
-                _jobActive = false;
-            }
-
             while (budget-- > 0)
             {
-                if (_jobActive) break; // wait for job to finish; allow sync fallback only when job not active
-                if (_queue.Count == 0) break;
-                var req = _queue.Dequeue();
-                if (req.Unit == null || !req.Unit.isActiveAndEnabled)
+                if (_jobActive && _jobHandle.IsCompleted)
                 {
-                    req.Callback?.Invoke(false, null);
-                    continue;
+                    _jobHandle.Complete();
+                    TouchJobFrame();
+                    FinishJob();
+                    _jobActive = false;
                 }
-                if (!TryScheduleJob(req))
+
+                if (_queue.Count == 0) break;
+
+                // If job system is free and enabled, try to schedule the next request
+                if (!_jobActive && UseJobs)
+                {
+                    var peekReq = _queue.Peek();
+                    // Check validity before scheduling to avoid blocking the job slot with invalid reqs
+                    if (peekReq.Unit == null || !peekReq.Unit.isActiveAndEnabled)
+                    {
+                        if (_queue.Count > 0) _queue.Dequeue();
+                        peekReq.Callback?.Invoke(false, null);
+                        continue;
+                    }
+
+                    if (TryScheduleJob(peekReq))
+                    {
+                        if (_queue.Count > 0) _queue.Dequeue(); // Successfully moved to job
+                        continue;
+                    }
+                    // If scheduling failed (e.g. specific condition), fall through to immediate
+                }
+
+                // If job is busy OR UseJobs is false OR Schedule failed -> Process Immediate
+                if (_queue.Count > 0)
+                {
+                    var req = _queue.Dequeue();
                     ProcessImmediate(req);
+                }
             }
         }
 
@@ -162,7 +185,7 @@ namespace Game.Presentation.Pathfinding
             TouchJobFrame();
             if (req.Unit == null || !req.Unit.isActiveAndEnabled) return false;
             var pm = PathManager.Ensure();
-            var hex = UnityEngine.Object.FindAnyObjectByType<HexPathfindingBootstrap>();
+            var hex = GetHex();
             if (pm == null || hex == null) return false;
 
             var walkable = hex.GetWalkableNative();
@@ -176,28 +199,16 @@ namespace Game.Presentation.Pathfinding
             if (!_jobPath.IsCreated) _jobPath = new NativeList<int2>(Allocator.Persistent);
             else _jobPath.Clear();
 
-            // Build occupied from OccupancyHash if available
-            var occHash = UnityEngine.Object.FindAnyObjectByType<OccupancyHash>();
-            if (!_occupiedTmp.IsCreated)
-                _occupiedTmp = new NativeHashMap<int, byte>(math.max(64, UnitCombat.All.Count * 2), Allocator.Persistent);
-            else if (_occupiedTmp.Capacity < UnitCombat.All.Count * 2)
-                _occupiedTmp.Capacity = math.max(_occupiedTmp.Capacity * 2, UnitCombat.All.Count * 2);
-            _occupiedTmp.Clear();
-            if (occHash != null)
+            EnsureOccupancySnapshot(hex);
+            var selfCombat = req.Unit != null ? req.Unit.GetComponent<Game.Presentation.View.UnitCombat>() : null;
+            var selfFaction = selfCombat != null ? (Game.Domain.Units.Faction?)selfCombat.Faction : null;
+            NativeHashMap<int, byte> occupied = default;
+            if (selfFaction.HasValue)
             {
-                // OccupancyHash stores counts per hashed cell; here we just mark presence.
-                // Note: OccupancyHash is world-based; reuse its hash function for consistency.
-                var selfCombat = req.Unit != null ? req.Unit.GetComponent<Game.Presentation.View.UnitCombat>() : null;
-                var selfFaction = selfCombat != null ? (Game.Domain.Units.Faction?)selfCombat.Faction : null;
-                foreach (var uc in Game.Presentation.View.UnitCombat.All)
-                {
-                    if (uc == null || !uc.isActiveAndEnabled) continue;
-                    if (selfFaction.HasValue && uc.Faction == selfFaction.Value) continue; // block enemies only
-                    var cell = hex.WorldToGrid(uc.transform.position);
-                    int key = (cell.y << 16) ^ (cell.x & 0xFFFF);
-                    if (!_occupiedTmp.ContainsKey(key))
-                        _occupiedTmp.TryAdd(key, 1);
-                }
+                if (selfFaction.Value == Game.Domain.Units.Faction.Player)
+                    occupied = _occupiedEnemies;
+                else if (selfFaction.Value == Game.Domain.Units.Faction.Enemy)
+                    occupied = _occupiedPlayers;
             }
 
             var job = new HexPathfinderJob
@@ -209,7 +220,7 @@ namespace Game.Presentation.Pathfinding
                 StartRow = start.y,
                 GoalCol = goal.x,
                 GoalRow = goal.y,
-                Occupied = _occupiedTmp,
+                Occupied = occupied,
                 MaxNodes = pm.MaxPathNodes > 0 ? pm.MaxPathNodes : 2048,
                 Result = _jobPath
             };
@@ -224,7 +235,7 @@ namespace Game.Presentation.Pathfinding
         private void FinishJob()
         {
             var pm = PathManager.Ensure();
-            var hex = UnityEngine.Object.FindAnyObjectByType<HexPathfindingBootstrap>();
+            var hex = GetHex();
             if (pm == null || hex == null)
             {
                 PathProfiler.CountBuild(false);
@@ -316,6 +327,48 @@ namespace Game.Presentation.Pathfinding
             _jobCompletedThisFrame = 0;
             _jobFallbackThisFrame = 0;
             return s;
+        }
+
+        private HexPathfindingBootstrap GetHex()
+        {
+            if (_hexCached == null || !_hexCached.isActiveAndEnabled)
+                _hexCached = UnityEngine.Object.FindAnyObjectByType<HexPathfindingBootstrap>();
+            return _hexCached;
+        }
+
+        private void EnsureOccupancySnapshot(HexPathfindingBootstrap hex)
+        {
+            if (hex == null) return;
+            if (_jobActive) return;
+            int frame = Time.frameCount;
+            if (frame == _occupiedFrame && _occupiedPlayers.IsCreated && _occupiedEnemies.IsCreated) return;
+
+            int needed = Mathf.Max(64, UnitCombat.All.Count * 2);
+            EnsureMapCapacity(ref _occupiedPlayers, needed);
+            EnsureMapCapacity(ref _occupiedEnemies, needed);
+            _occupiedPlayers.Clear();
+            _occupiedEnemies.Clear();
+
+            foreach (var uc in UnitCombat.All)
+            {
+                if (uc == null || !uc.isActiveAndEnabled) continue;
+                var cell = hex.WorldToGrid(uc.transform.position);
+                int key = (cell.y << 16) ^ (cell.x & 0xFFFF);
+                if (uc.Faction == Game.Domain.Units.Faction.Player)
+                    _occupiedPlayers.TryAdd(key, 1);
+                else if (uc.Faction == Game.Domain.Units.Faction.Enemy)
+                    _occupiedEnemies.TryAdd(key, 1);
+            }
+
+            _occupiedFrame = frame;
+        }
+
+        private static void EnsureMapCapacity(ref NativeHashMap<int, byte> map, int capacity)
+        {
+            if (!map.IsCreated)
+                map = new NativeHashMap<int, byte>(capacity, Allocator.Persistent);
+            else if (map.Capacity < capacity)
+                map.Capacity = Mathf.Max(map.Capacity * 2, capacity);
         }
 
         private struct Request

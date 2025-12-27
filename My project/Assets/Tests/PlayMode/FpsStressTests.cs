@@ -5,6 +5,7 @@ using UnityEngine.TestTools;
 using Game.Presentation.View;
 using Game.Domain.Units;
 using Game.Presentation.Pathfinding;
+using Game.Presentation.Performance;
 
 namespace Tests.PlayMode
 {
@@ -50,16 +51,18 @@ namespace Tests.PlayMode
             PathProfiler.EnableAnomalyLog = false;
             HexPathfindingBootstrap hex = null;
             bool createdBootstrap = false;
+            EnemySquadManager squadMgr = null;
             try
             {
                 hex = EnsureBootstrap(ref createdBootstrap);
                 ConfigureBootstrap(hex);
+                squadMgr = EnsureSquadManager();
                 yield return MeasureScenario(allies, enemies, distance);
             }
             finally
             {
                 PathProfiler.EnableAnomalyLog = prevAnomalyLog;
-                Cleanup(createdBootstrap ? hex?.gameObject : null);
+                Cleanup(createdBootstrap ? hex?.gameObject : null, squadMgr);
             }
         }
 
@@ -71,10 +74,12 @@ namespace Tests.PlayMode
             PathProfiler.EnableAnomalyLog = false;
             HexPathfindingBootstrap hex = null;
             bool createdBootstrap = false;
+            EnemySquadManager squadMgr = null;
             try
             {
                 hex = EnsureBootstrap(ref createdBootstrap);
                 ConfigureBootstrap(hex);
+                squadMgr = EnsureSquadManager();
                 for (int i = 0; i < counts.Length; i++)
                 {
                     int count = counts[i];
@@ -84,7 +89,7 @@ namespace Tests.PlayMode
             finally
             {
                 PathProfiler.EnableAnomalyLog = prevAnomalyLog;
-                Cleanup(createdBootstrap ? hex?.gameObject : null);
+                Cleanup(createdBootstrap ? hex?.gameObject : null, squadMgr);
             }
         }
 
@@ -132,6 +137,17 @@ namespace Tests.PlayMode
             return hex;
         }
 
+        private static EnemySquadManager EnsureSquadManager()
+        {
+            var mgr = UnityEngine.Object.FindAnyObjectByType<EnemySquadManager>();
+            if (mgr == null)
+            {
+                var go = new GameObject("EnemySquadManager (Test)");
+                mgr = go.AddComponent<EnemySquadManager>();
+            }
+            return mgr;
+        }
+
         private static void ConfigureBootstrap(HexPathfindingBootstrap hex)
         {
             if (hex == null) return;
@@ -155,11 +171,13 @@ namespace Tests.PlayMode
             }
         }
 
-        private static void Cleanup(GameObject bootstrap = null)
+        private static void Cleanup(GameObject bootstrap, EnemySquadManager squadMgr)
         {
             CleanupUnits();
             if (bootstrap != null)
                 Object.DestroyImmediate(bootstrap);
+            if (squadMgr != null)
+                Object.DestroyImmediate(squadMgr.gameObject);
         }
 
         private static void CleanupUnits()

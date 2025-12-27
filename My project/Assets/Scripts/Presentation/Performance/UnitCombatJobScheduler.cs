@@ -24,15 +24,28 @@ namespace Game.Presentation.Performance
         public bool Disabled = false;
 
         private float _timer;
-        private readonly List<UnitCombat> _units = new List<UnitCombat>(128);
+        private readonly List<UnitCombat>[] _unitBuffers =
+        {
+            new List<UnitCombat>(128),
+            new List<UnitCombat>(128)
+        };
 
-        private NativeArray<Vector3> _positions;
-        private NativeArray<int> _factions;
-        private NativeArray<int> _nearest;
-        private NativeArray<int2> _cells;
-        private NativeParallelMultiHashMap<int, int> _buckets;
-        private int _bucketCapacity;
-        private int _capacity;
+        private struct Buffer
+        {
+            public NativeArray<Vector3> Positions;
+            public NativeArray<int> Factions;
+            public NativeArray<int> Nearest;
+            public NativeArray<int2> Cells;
+            public NativeParallelMultiHashMap<int, int> Buckets;
+            public int Capacity;
+            public int BucketCapacity;
+            public int Count;
+        }
+
+        private readonly Buffer[] _buffers = new Buffer[2];
+        private int _activeBuffer = -1;
+        private JobHandle _jobHandle;
+        private bool _jobActive;
 
         private void Awake()
         {
@@ -47,103 +60,134 @@ namespace Game.Presentation.Performance
 
         private void OnDestroy()
         {
-            DisposeArrays();
+            if (_jobActive)
+            {
+                _jobHandle.Complete();
+                _jobActive = false;
+            }
+            DisposeBuffers();
             if (Instance == this) Instance = null;
         }
 
         private void Update()
         {
+            if (_jobActive && _jobHandle.IsCompleted)
+            {
+                _jobHandle.Complete();
+                ApplyResults(_activeBuffer);
+                _jobActive = false;
+            }
+
             _timer -= Time.deltaTime;
+            if (_jobActive) return;
             if (_timer > 0f) return;
             _timer = Interval;
             if (Disabled) return;
 
-            int count = GatherUnits();
+            int nextBuffer = _activeBuffer == 0 ? 1 : 0;
+            var units = _unitBuffers[nextBuffer];
+            int count = GatherUnits(units);
             if (count <= 1) return;
 
-            EnsureCapacity(count);
-            if (!FillArrays(count)) return;
+            ref var buf = ref _buffers[nextBuffer];
+            EnsureCapacity(ref buf, count);
+            if (!FillArrays(ref buf, units, count)) return;
 
             var job = new NearestEnemyJob
             {
-                Positions = _positions,
-                Factions = _factions,
-                Nearest = _nearest,
-                Cells = _cells,
-                Buckets = _buckets.AsReadOnly(),
+                Positions = buf.Positions,
+                Factions = buf.Factions,
+                Nearest = buf.Nearest,
+                Cells = buf.Cells,
+                Buckets = buf.Buckets.AsReadOnly(),
                 Rings = Mathf.Max(0, HashRings)
             };
 
-            var handle = job.Schedule(count, 32);
-            handle.Complete();
-
-            ApplyResults(count);
+            _jobHandle = job.Schedule(count, 32);
+            _jobActive = true;
+            _activeBuffer = nextBuffer;
+            buf.Count = count;
         }
 
-        private int GatherUnits()
+        private int GatherUnits(List<UnitCombat> target)
         {
-            _units.Clear();
+            target.Clear();
             foreach (var uc in UnitCombat.All)
             {
                 if (uc == null || !uc.isActiveAndEnabled) continue;
-                // Optionally skip if occupancy hash will handle nearest; keep for target selection only
-                _units.Add(uc);
+                target.Add(uc);
             }
-            return _units.Count;
+            return target.Count;
         }
 
-        private void EnsureCapacity(int count)
+        private void EnsureCapacity(ref Buffer buf, int count)
         {
-            if (count <= _capacity && _buckets.IsCreated && _bucketCapacity >= count * 2) return;
-            DisposeArrays();
-            _capacity = Mathf.NextPowerOfTwo(count);
-            _positions = new NativeArray<Vector3>(_capacity, Allocator.Persistent);
-            _factions = new NativeArray<int>(_capacity, Allocator.Persistent);
-            _nearest = new NativeArray<int>(_capacity, Allocator.Persistent);
-            _cells = new NativeArray<int2>(_capacity, Allocator.Persistent);
-            _bucketCapacity = Mathf.NextPowerOfTwo(Mathf.Max(16, count * 2));
-            _buckets = new NativeParallelMultiHashMap<int, int>(_bucketCapacity, Allocator.Persistent);
+            if (count <= buf.Capacity && buf.Buckets.IsCreated && buf.BucketCapacity >= count * 2) return;
+            DisposeBuffer(ref buf);
+            buf.Capacity = Mathf.NextPowerOfTwo(count);
+            buf.Positions = new NativeArray<Vector3>(buf.Capacity, Allocator.Persistent);
+            buf.Factions = new NativeArray<int>(buf.Capacity, Allocator.Persistent);
+            buf.Nearest = new NativeArray<int>(buf.Capacity, Allocator.Persistent);
+            buf.Cells = new NativeArray<int2>(buf.Capacity, Allocator.Persistent);
+            buf.BucketCapacity = Mathf.NextPowerOfTwo(Mathf.Max(16, count * 2));
+            buf.Buckets = new NativeParallelMultiHashMap<int, int>(buf.BucketCapacity, Allocator.Persistent);
         }
 
-        private bool FillArrays(int count)
+        private bool FillArrays(ref Buffer buf, List<UnitCombat> units, int count)
         {
-            if (!_positions.IsCreated || !_factions.IsCreated || !_nearest.IsCreated || !_cells.IsCreated || !_buckets.IsCreated) return false;
-            _buckets.Clear();
+            if (!buf.Positions.IsCreated || !buf.Factions.IsCreated || !buf.Nearest.IsCreated || !buf.Cells.IsCreated || !buf.Buckets.IsCreated)
+                return false;
+            buf.Buckets.Clear();
             for (int i = 0; i < count; i++)
             {
-                var uc = _units[i];
+                var uc = units[i];
                 var pos = uc != null ? uc.transform.position : Vector3.zero;
-                _positions[i] = pos;
-                _factions[i] = uc != null ? (int)uc.Faction : -1;
-                _nearest[i] = -1;
+                buf.Positions[i] = pos;
+                buf.Factions[i] = uc != null ? (int)uc.Faction : -1;
+                buf.Nearest[i] = -1;
                 var cell = ToCell(pos, HashCellSize);
-                _cells[i] = cell;
-                _buckets.Add(HashKey(cell.x, cell.y), i);
+                buf.Cells[i] = cell;
+                buf.Buckets.Add(HashKey(cell.x, cell.y), i);
             }
             return true;
         }
 
-        private void ApplyResults(int count)
+        private void ApplyResults(int bufferIndex)
         {
+            if (bufferIndex < 0 || bufferIndex >= _buffers.Length) return;
+            ref var buf = ref _buffers[bufferIndex];
+            int count = buf.Count;
+            if (count <= 0) return;
+            var units = _unitBuffers[bufferIndex];
             for (int i = 0; i < count; i++)
             {
-                var uc = _units[i];
+                var uc = units[i];
                 if (uc == null) continue;
-                int idx = _nearest[i];
-                UnitCombat target = (idx >= 0 && idx < count) ? _units[idx] : null;
+                int idx = buf.Nearest[i];
+                UnitCombat target = (idx >= 0 && idx < count) ? units[idx] : null;
                 uc.SetJobNearest(target);
+            }
+            units.Clear();
+        }
+
+        private void DisposeBuffers()
+        {
+            for (int i = 0; i < _buffers.Length; i++)
+            {
+                DisposeBuffer(ref _buffers[i]);
             }
         }
 
-        private void DisposeArrays()
+        private static void DisposeBuffer(ref Buffer buf)
         {
-            if (_positions.IsCreated) { _positions.Dispose(); _positions = default; }
-            if (_factions.IsCreated) { _factions.Dispose(); _factions = default; }
-            if (_nearest.IsCreated) { _nearest.Dispose(); _nearest = default; }
-            if (_cells.IsCreated) { _cells.Dispose(); _cells = default; }
-            if (_buckets.IsCreated) { _buckets.Dispose(); _buckets = default; }
-            _capacity = 0;
-            _bucketCapacity = 0;
+            if (buf.Positions.IsCreated) { buf.Positions.Dispose(); buf.Positions = default; }
+            if (buf.Factions.IsCreated) { buf.Factions.Dispose(); buf.Factions = default; }
+            if (buf.Nearest.IsCreated) { buf.Nearest.Dispose(); buf.Nearest = default; }
+            if (buf.Cells.IsCreated) { buf.Cells.Dispose(); buf.Cells = default; }
+            if (buf.Buckets.IsCreated) { buf.Buckets.Dispose(); buf.Buckets = default; }
+            buf.Capacity = 0;
+            buf.BucketCapacity = 0;
+            buf.Count = 0;
         }
 
         private struct NearestEnemyJob : IJobParallelFor

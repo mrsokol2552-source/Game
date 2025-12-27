@@ -1,6 +1,7 @@
 using System;
 using Game.Domain.Economy;
 using Game.Presentation.Bootstrap;
+using Game.Presentation.View;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -73,6 +74,7 @@ namespace Game.Presentation.UI
             var area = new Rect(10, 10, 300, 230);
             AddUiRect(area);
             GUILayout.BeginArea(area, GUI.skin.box);
+            GUILayout.Label($"Units: {UnitCombat.All.Count}");
             GUILayout.Label("Resources:");
             foreach (ResourceType type in Enum.GetValues(typeof(ResourceType)))
             {
