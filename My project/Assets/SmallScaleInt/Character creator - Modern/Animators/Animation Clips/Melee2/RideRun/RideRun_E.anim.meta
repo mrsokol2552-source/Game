@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 4053f9110b4c96b4eb5276487cf67fad
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Melee2/RideRun/RideRun_E.anim
+  uploadId: 752914

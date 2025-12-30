@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 4706c9a2202332445b5c7a6b41576060
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/MachineGun1/CrouchIdle/CrouchIdle_S.anim
+  uploadId: 752914

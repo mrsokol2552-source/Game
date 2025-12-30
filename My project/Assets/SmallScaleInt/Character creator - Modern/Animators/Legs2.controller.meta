@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2f9968dd4405ba34eab354b716c71a05
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Legs2.controller
+  uploadId: 752914

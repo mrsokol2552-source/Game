@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 1f26037332d7e784f9477d63b1dd2140
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Pistol4/RunBackwards/RunBackwards_E.anim
+  uploadId: 752914

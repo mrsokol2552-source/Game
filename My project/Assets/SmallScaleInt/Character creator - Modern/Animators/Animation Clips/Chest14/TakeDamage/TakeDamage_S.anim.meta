@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 09b31a387f50afc45be9664023868ff4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Chest14/TakeDamage/TakeDamage_S.anim
+  uploadId: 752914

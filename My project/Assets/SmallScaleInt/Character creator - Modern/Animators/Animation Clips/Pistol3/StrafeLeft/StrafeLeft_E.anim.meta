@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 0b088e4cf2d5c6e4fa008f3ce2fa84d6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Pistol3/StrafeLeft/StrafeLeft_E.anim
+  uploadId: 752914

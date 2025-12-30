@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 627e9e81909c00f459090415f24ca7bf
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Chest10/Die/Die_W.anim
+  uploadId: 752914

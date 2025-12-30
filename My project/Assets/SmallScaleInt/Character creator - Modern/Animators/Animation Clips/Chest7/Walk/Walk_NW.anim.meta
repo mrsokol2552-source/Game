@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: b7ad1b8af536d5447958c3fd50c51e8f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Chest7/Walk/Walk_NW.anim
+  uploadId: 752914

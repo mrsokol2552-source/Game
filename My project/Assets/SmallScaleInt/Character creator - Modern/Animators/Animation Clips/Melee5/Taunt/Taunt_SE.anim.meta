@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 710a37945f7c4dd47b02cf43eb8a277d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Melee5/Taunt/Taunt_SE.anim
+  uploadId: 752914

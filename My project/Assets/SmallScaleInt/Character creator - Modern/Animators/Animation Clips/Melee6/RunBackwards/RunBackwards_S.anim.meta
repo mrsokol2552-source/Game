@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: eba8545b5f14d574a8bcea3f8cb8ff8c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Melee6/RunBackwards/RunBackwards_S.anim
+  uploadId: 752914

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: d2f49087e40114a44ba8840af7728432
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Sniper2/RunBackwards/RunBackwards_NW.anim
+  uploadId: 752914

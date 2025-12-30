@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 1611996f17a6fd04b857c5ec45a38d0a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Special2/Walk/Walk_SW.anim
+  uploadId: 752914

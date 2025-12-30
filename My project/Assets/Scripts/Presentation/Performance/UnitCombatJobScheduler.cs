@@ -22,12 +22,19 @@ namespace Game.Presentation.Performance
         public int HashRings = 1;
         [Tooltip("Disable job search (falls back to direct search in combat).")]
         public bool Disabled = false;
+        [Tooltip("Use UnitSoARegistry snapshot for input data when available.")]
+        public bool UseSoARegistry = true;
 
         private float _timer;
         private readonly List<UnitCombat>[] _unitBuffers =
         {
             new List<UnitCombat>(128),
             new List<UnitCombat>(128)
+        };
+        private readonly List<int>[] _indexBuffers =
+        {
+            new List<int>(128),
+            new List<int>(128)
         };
 
         private struct Buffer
@@ -86,12 +93,56 @@ namespace Game.Presentation.Performance
 
             int nextBuffer = _activeBuffer == 0 ? 1 : 0;
             var units = _unitBuffers[nextBuffer];
-            int count = GatherUnits(units);
+            var indices = _indexBuffers[nextBuffer];
+            int count;
+            UnitSoARegistry.CombatSnapshot snapshot = default;
+            bool usingSnapshot = false;
+            var registry = UnitSoARegistry.Instance;
+            if (UseSoARegistry && registry != null && registry.TryGetCombatSnapshot(out snapshot))
+            {
+                units.Clear();
+                indices.Clear();
+                int total = snapshot.Count;
+                if (units.Capacity < total) units.Capacity = total;
+                if (indices.Capacity < total) indices.Capacity = total;
+
+                if (!snapshot.Positions.IsCreated || !snapshot.Factions.IsCreated ||
+                    !snapshot.HasCombat.IsCreated || !snapshot.IsInSquad.IsCreated)
+                {
+                    count = GatherUnits(units);
+                }
+                else
+                {
+                    for (int i = 0; i < total; i++)
+                    {
+                        if (snapshot.HasCombat[i] == 0) continue;
+                        if (snapshot.IsInSquad[i] != 0) continue;
+                        var uc = snapshot.Units[i];
+                        if (uc == null || !uc.isActiveAndEnabled) continue;
+                        units.Add(uc);
+                        indices.Add(i);
+                    }
+                    count = units.Count;
+                    usingSnapshot = count > 0;
+                }
+            }
+            else
+            {
+                indices.Clear();
+                count = GatherUnits(units);
+            }
             if (count <= 1) return;
 
             ref var buf = ref _buffers[nextBuffer];
             EnsureCapacity(ref buf, count);
-            if (!FillArrays(ref buf, units, count)) return;
+            if (usingSnapshot)
+            {
+                if (!FillArraysFromSnapshot(ref buf, snapshot, indices, count)) return;
+            }
+            else
+            {
+                if (!FillArrays(ref buf, units, count)) return;
+            }
 
             var job = new NearestEnemyJob
             {
@@ -115,6 +166,7 @@ namespace Game.Presentation.Performance
             foreach (var uc in UnitCombat.All)
             {
                 if (uc == null || !uc.isActiveAndEnabled) continue;
+                if (uc.IsInSquad) continue;
                 target.Add(uc);
             }
             return target.Count;
@@ -152,6 +204,29 @@ namespace Game.Presentation.Performance
             return true;
         }
 
+        private bool FillArraysFromSnapshot(ref Buffer buf, UnitSoARegistry.CombatSnapshot snap, List<int> indices, int count)
+        {
+            if (!buf.Positions.IsCreated || !buf.Factions.IsCreated || !buf.Nearest.IsCreated || !buf.Cells.IsCreated || !buf.Buckets.IsCreated)
+                return false;
+            if (!snap.Positions.IsCreated || !snap.Factions.IsCreated) return false;
+            if (indices == null || indices.Count < count) return false;
+
+            buf.Buckets.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                int snapIndex = indices[i];
+                var pos2 = snap.Positions[snapIndex];
+                var pos = new Vector3(pos2.x, pos2.y, 0f);
+                buf.Positions[i] = pos;
+                buf.Factions[i] = snap.Factions[snapIndex];
+                buf.Nearest[i] = -1;
+                var cell = ToCell(pos, HashCellSize);
+                buf.Cells[i] = cell;
+                buf.Buckets.Add(HashKey(cell.x, cell.y), i);
+            }
+            return true;
+        }
+
         private void ApplyResults(int bufferIndex)
         {
             if (bufferIndex < 0 || bufferIndex >= _buffers.Length) return;
@@ -168,6 +243,7 @@ namespace Game.Presentation.Performance
                 uc.SetJobNearest(target);
             }
             units.Clear();
+            _indexBuffers[bufferIndex].Clear();
         }
 
         private void DisposeBuffers()

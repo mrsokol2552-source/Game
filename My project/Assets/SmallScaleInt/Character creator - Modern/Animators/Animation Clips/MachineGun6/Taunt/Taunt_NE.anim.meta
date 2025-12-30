@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 2e3e3eee7fb12cc49ac2a9e5ed7eb6ee
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/MachineGun6/Taunt/Taunt_NE.anim
+  uploadId: 752914

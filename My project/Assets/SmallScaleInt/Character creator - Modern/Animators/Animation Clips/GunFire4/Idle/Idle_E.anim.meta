@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 5128c5e0fa0986f4c848112c12be2fd6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/GunFire4/Idle/Idle_E.anim
+  uploadId: 752914

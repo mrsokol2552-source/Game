@@ -52,6 +52,11 @@ namespace Game.Presentation.Performance
         public float SquadTargetTTL = 1.0f;
         [Tooltip("Assign forced targets even while gathering.")]
         public bool AssignTargetsWhileGathering = true;
+        [Header("Squad Flow")]
+        [Tooltip("Use flow fields to advance squad center toward targets.")]
+        public bool UseSquadFlow = true;
+        [Tooltip("Minimum distance before squad flow applies (world units).")]
+        public float SquadFlowMinDistance = 6f;
 
         private float _timer;
         private int _nextSquadId = 1;
@@ -63,6 +68,7 @@ namespace Game.Presentation.Performance
         private readonly List<Squad> _playerSquads = new List<Squad>(32);
         private readonly List<Squad> _enemySquads = new List<Squad>(32);
         private readonly HashSet<int> _activeSquadIds = new HashSet<int>();
+        private readonly Dictionary<int, Squad> _squadById = new Dictionary<int, Squad>(64);
 
         private class Squad
         {
@@ -72,6 +78,9 @@ namespace Game.Presentation.Performance
             public readonly List<UnitCombat> Members = new List<UnitCombat>(12);
             public Vector3 Center;
             public Vector2Int CenterCell;
+            public Vector3 MoveAnchor;
+            public Vector3 TargetPos;
+            public bool HasTarget;
             public int GatherRadiusHex;
             public float NextRadiusGrowTime;
             public float SleepUntil;
@@ -117,6 +126,7 @@ namespace Game.Presentation.Performance
             UpdateSquadStates(_enemySquads, _playerSquads);
             ApplyOrders(_playerSquads, _enemySquads);
             ApplyOrders(_enemySquads, _playerSquads);
+            RebuildSquadLookup();
         }
 
         private void EnsureRefs()
@@ -362,6 +372,18 @@ namespace Game.Presentation.Performance
                 {
                     target = FindNearestEnemyUnit(squad.Center, squad.Faction, enemies);
                 }
+                if (target != null)
+                {
+                    squad.HasTarget = true;
+                    squad.TargetPos = target.transform.position;
+                    squad.MoveAnchor = ComputeSquadAnchor(squad, squad.TargetPos);
+                }
+                else
+                {
+                    squad.HasTarget = false;
+                    squad.TargetPos = squad.Center;
+                    squad.MoveAnchor = squad.Center;
+                }
 
                 for (int m = squad.Members.Count - 1; m >= 0; m--)
                 {
@@ -375,6 +397,7 @@ namespace Game.Presentation.Performance
                         uc.SetSquad(squad.Id, squad.Mode);
                     else
                         uc.SetSquadMode(squad.Mode);
+                    uc.SetFormationIndex(m);
 
                     if (assignTargets && target != null)
                         uc.AssignSquadTarget(target, ttl);
@@ -463,6 +486,52 @@ namespace Game.Presentation.Performance
             }
             if (count == 0) return Vector3.zero;
             return sum / count;
+        }
+
+        private Vector3 ComputeSquadAnchor(Squad squad, Vector3 targetPos)
+        {
+            if (squad == null) return targetPos;
+            if (!UseSquadFlow) return targetPos;
+            var flow = FlowFieldManager.Instance;
+            if (flow == null || !flow.Enabled) return targetPos;
+            float dist = (targetPos - squad.Center).magnitude;
+            if (dist <= Mathf.Max(0.1f, SquadFlowMinDistance)) return targetPos;
+            if (flow.TryGetNextPoint(squad.Center, targetPos, squad.Faction, out var next))
+                return next;
+            return targetPos;
+        }
+
+        private void RebuildSquadLookup()
+        {
+            _squadById.Clear();
+            for (int i = 0; i < _playerSquads.Count; i++)
+            {
+                var squad = _playerSquads[i];
+                if (squad == null) continue;
+                _squadById[squad.Id] = squad;
+            }
+            for (int i = 0; i < _enemySquads.Count; i++)
+            {
+                var squad = _enemySquads[i];
+                if (squad == null) continue;
+                _squadById[squad.Id] = squad;
+            }
+        }
+
+        public bool TryGetSquadAnchor(int squadId, out Vector3 anchor, out Vector3 targetPos, out UnitCombat.SquadMode mode)
+        {
+            anchor = default;
+            targetPos = default;
+            mode = UnitCombat.SquadMode.None;
+            if (squadId == 0) return false;
+            if (_squadById.TryGetValue(squadId, out var squad) && squad != null)
+            {
+                anchor = squad.MoveAnchor;
+                targetPos = squad.TargetPos;
+                mode = squad.Mode;
+                return true;
+            }
+            return false;
         }
 
         private Vector2Int WorldToCell(Vector3 world)

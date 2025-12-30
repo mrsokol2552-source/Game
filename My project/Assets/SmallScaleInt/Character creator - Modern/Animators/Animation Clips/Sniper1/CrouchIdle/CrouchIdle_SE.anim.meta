@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: d51b779c327ab7b40a1ef17bf967c355
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Sniper1/CrouchIdle/CrouchIdle_SE.anim
+  uploadId: 752914

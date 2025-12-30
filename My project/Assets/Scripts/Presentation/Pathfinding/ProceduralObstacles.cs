@@ -37,6 +37,10 @@ namespace Game.Presentation.Pathfinding
             int totalHex = _hex.Width * _hex.Height;
             int targetCount = CoveragePercent > 0f ? Mathf.RoundToInt(totalHex * Mathf.Clamp01(CoveragePercent)) : Count;
             var picked = new List<Vector2Int>(targetCount);
+            int minCol = _hex.Width;
+            int minRow = _hex.Height;
+            int maxCol = -1;
+            int maxRow = -1;
 
             int attempts = 0;
             // Resolve target obstacle layer: prefer explicit name, then hex mask, else Default
@@ -72,6 +76,10 @@ namespace Game.Presentation.Pathfinding
                 }
                 if (!ok) continue;
                 picked.Add(cell);
+                if (q < minCol) minCol = q;
+                if (r < minRow) minRow = r;
+                if (q > maxCol) maxCol = q;
+                if (r > maxRow) maxRow = r;
 
                 // Spawn rock instance
                 var pos = _hex.GridToWorld(q, r);
@@ -94,8 +102,11 @@ namespace Game.Presentation.Pathfinding
                 }
             }
 
-            // Re-bake walkable map from physics
-            _hex.BakeFromPhysics();
+            // Re-bake walkable map from physics (partial when possible)
+            if (maxCol >= 0 && maxRow >= 0)
+                _hex.BakeFromPhysicsRectCells(minCol, minRow, maxCol, maxRow, paddingCells: 1);
+            else
+                _hex.BakeFromPhysics();
         }
 
         private static int HexDistance(Vector2Int a, Vector2Int b)

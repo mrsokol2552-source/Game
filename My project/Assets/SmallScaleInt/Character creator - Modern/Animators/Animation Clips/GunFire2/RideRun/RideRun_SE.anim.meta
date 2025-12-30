@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ecf507fb98c26b54b930a7a69aefe002
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/GunFire2/RideRun/RideRun_SE.anim
+  uploadId: 752914

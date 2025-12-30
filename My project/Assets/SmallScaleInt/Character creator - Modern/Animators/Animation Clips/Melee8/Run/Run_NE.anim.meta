@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: d898ca608bf455b448ead72c511ffbb1
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Melee8/Run/Run_NE.anim
+  uploadId: 752914

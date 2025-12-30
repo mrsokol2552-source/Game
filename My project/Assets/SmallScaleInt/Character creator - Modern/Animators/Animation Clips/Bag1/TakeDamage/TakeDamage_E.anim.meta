@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 3cef6b73dcd9c5b41947fd623a051980
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Bag1/TakeDamage/TakeDamage_E.anim
+  uploadId: 752914

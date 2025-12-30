@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3d0c2cff7d24a29409f4d5eeb3d1bf1b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Melee4.controller
+  uploadId: 752914

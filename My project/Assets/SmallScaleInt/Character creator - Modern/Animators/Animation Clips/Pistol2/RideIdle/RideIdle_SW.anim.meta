@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 779c2fbea7977a940be8d1c5d06eaa8c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Pistol2/RideIdle/RideIdle_SW.anim
+  uploadId: 752914

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 854adc8c3a111c34c8d65dc8bcd2ade8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/MachineGun5/Walk/Walk_NE.anim
+  uploadId: 752914

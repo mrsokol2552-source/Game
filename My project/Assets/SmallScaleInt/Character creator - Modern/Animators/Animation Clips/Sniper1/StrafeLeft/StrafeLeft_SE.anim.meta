@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: f3fbfe0ff5d31554a8da6b5e9cd0df51
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Sniper1/StrafeLeft/StrafeLeft_SE.anim
+  uploadId: 752914

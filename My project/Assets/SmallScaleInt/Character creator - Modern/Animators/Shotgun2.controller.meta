@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 55d26a666cf0e8d49af2aeac4a611542
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Shotgun2.controller
+  uploadId: 752914

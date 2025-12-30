@@ -11,6 +11,7 @@ namespace Game.Presentation.Performance
     /// ORCA/RVO local avoidance system using a spatial hash + job.
     /// Produces per-unit velocity overrides for the next frame.
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     public class OrcaAvoidanceSystem : MonoBehaviour
     {
         public static OrcaAvoidanceSystem Instance { get; private set; }
@@ -20,6 +21,8 @@ namespace Game.Presentation.Performance
         public bool Enabled = true;
         [Tooltip("How often to recompute ORCA (seconds). 0 = every frame.")]
         public float Interval = 0f;
+        [Tooltip("If true, updates are driven externally.")]
+        public bool ExternalUpdate = false;
         [Tooltip("World cell size for spatial hash.")]
         public float CellSize = 1.5f;
         [Tooltip("Neighbor search radius in world units.")]
@@ -45,6 +48,10 @@ namespace Game.Presentation.Performance
         public bool SkipWithoutDestination = true;
         [Tooltip("Job batch size.")]
         public int BatchSize = 32;
+        [Tooltip("Minimum responsibility weight for avoidance (prevents zero-weight agents).")]
+        public float MinResponsibility = 0.05f;
+        [Tooltip("Use UnitSoARegistry for input data when available.")]
+        public bool UseSoARegistry = true;
 
         private readonly List<UnitView>[] _unitBuffers =
         {
@@ -65,6 +72,8 @@ namespace Game.Presentation.Performance
             public NativeArray<float2> Preferred;
             public NativeArray<float> MaxSpeed;
             public NativeArray<byte> HasDestination;
+            public NativeArray<byte> UseOrca;
+            public NativeArray<float> Responsibility;
             public NativeArray<int> Factions;
             public NativeArray<float2> OutputVelocity;
             public NativeArray<int2> Cells;
@@ -108,6 +117,12 @@ namespace Game.Presentation.Performance
 
         private void Update()
         {
+            if (ExternalUpdate) return;
+            Tick(Time.deltaTime);
+        }
+
+        public void Tick(float deltaTime)
+        {
             if (_jobActive && _jobHandle.IsCompleted)
             {
                 _jobHandle.Complete();
@@ -120,21 +135,44 @@ namespace Game.Presentation.Performance
 
             if (Interval > 0f)
             {
-                _timer -= Time.deltaTime;
+                _timer -= deltaTime;
                 if (_timer > 0f) return;
                 _timer = Interval;
             }
 
             int nextBuffer = _activeBuffer == 0 ? 1 : 0;
             var units = _unitBuffers[nextBuffer];
-            int count = GatherUnits(units);
+            int count;
+            UnitSoARegistry.OrcaSnapshot snapshot = default;
+            bool usingSnapshot = false;
+            var registry = UnitSoARegistry.Instance;
+            if (UseSoARegistry && registry != null && registry.TryGetOrcaSnapshot(out snapshot))
+            {
+                units.Clear();
+                if (units.Capacity < snapshot.Count) units.Capacity = snapshot.Count;
+                units.AddRange(snapshot.Units);
+                count = snapshot.Count;
+                usingSnapshot = count > 0;
+            }
+            else
+            {
+                count = GatherUnits(units);
+            }
             if (count <= 0) return;
 
             int effectiveMaxNeighbors = Mathf.Max(1, MaxNeighbors);
             ref var buf = ref _buffers[nextBuffer];
             EnsureCapacity(ref buf, count, effectiveMaxNeighbors);
-            if (!FillArrays(ref buf, units, count))
-                return;
+            if (usingSnapshot)
+            {
+                if (!FillArraysFromSnapshot(ref buf, snapshot, count))
+                    return;
+            }
+            else
+            {
+                if (!FillArrays(ref buf, units, count))
+                    return;
+            }
 
             int rings = Mathf.Max(1, Mathf.CeilToInt(NeighborDist / Mathf.Max(0.0001f, CellSize)));
             var job = new OrcaJob
@@ -144,6 +182,8 @@ namespace Game.Presentation.Performance
                 Preferred = buf.Preferred,
                 MaxSpeed = buf.MaxSpeed,
                 HasDestination = buf.HasDestination,
+                UseOrca = buf.UseOrca,
+                Responsibility = buf.Responsibility,
                 Factions = buf.Factions,
                 OutputVelocity = buf.OutputVelocity,
                 Cells = buf.Cells,
@@ -154,7 +194,7 @@ namespace Game.Presentation.Performance
                 NeighborDistSq = NeighborDist * NeighborDist,
                 AgentRadius = Mathf.Max(0.01f, AgentRadius),
                 TimeHorizon = Mathf.Max(0.05f, TimeHorizon),
-                DeltaTime = Time.deltaTime,
+                DeltaTime = deltaTime,
                 Rings = rings,
                 UseCohesion = UseCohesion && CohesionWeight > 0f && CohesionRadius > 0f,
                 CohesionRadiusSq = CohesionRadius * CohesionRadius,
@@ -195,6 +235,8 @@ namespace Game.Presentation.Performance
             buf.Preferred = new NativeArray<float2>(buf.Capacity, Allocator.Persistent);
             buf.MaxSpeed = new NativeArray<float>(buf.Capacity, Allocator.Persistent);
             buf.HasDestination = new NativeArray<byte>(buf.Capacity, Allocator.Persistent);
+            buf.UseOrca = new NativeArray<byte>(buf.Capacity, Allocator.Persistent);
+            buf.Responsibility = new NativeArray<float>(buf.Capacity, Allocator.Persistent);
             buf.Factions = new NativeArray<int>(buf.Capacity, Allocator.Persistent);
             buf.OutputVelocity = new NativeArray<float2>(buf.Capacity, Allocator.Persistent);
             buf.Cells = new NativeArray<int2>(buf.Capacity, Allocator.Persistent);
@@ -208,7 +250,7 @@ namespace Game.Presentation.Performance
         private bool FillArrays(ref Buffer buf, List<UnitView> units, int count)
         {
             if (!buf.Positions.IsCreated || !buf.Velocities.IsCreated || !buf.Preferred.IsCreated ||
-                !buf.MaxSpeed.IsCreated || !buf.HasDestination.IsCreated || !buf.Factions.IsCreated ||
+                !buf.MaxSpeed.IsCreated || !buf.HasDestination.IsCreated || !buf.UseOrca.IsCreated || !buf.Responsibility.IsCreated || !buf.Factions.IsCreated ||
                 !buf.OutputVelocity.IsCreated || !buf.Cells.IsCreated || !buf.Buckets.IsCreated ||
                 !buf.Lines.IsCreated || !buf.ScratchLines.IsCreated)
                 return false;
@@ -243,11 +285,49 @@ namespace Game.Presentation.Performance
                     buf.Preferred[i] = default;
                 }
 
+                buf.UseOrca[i] = uv.UseOrcaVelocity ? (byte)1 : (byte)0;
+                float priority = Mathf.Clamp01(uv.OrcaPriority);
+                float resp = Mathf.Max(0f, 1f - priority);
+                float minResp = Mathf.Max(0f, MinResponsibility);
+                buf.Responsibility[i] = Mathf.Max(minResp, resp);
+
                 var combat = uv.GetComponent<UnitCombat>();
                 buf.Factions[i] = combat != null ? (int)combat.Faction : 0;
 
                 var cell = ToCell(pos3, CellSize);
                 buf.Cells[i] = cell;
+                buf.Buckets.Add(HashKey(cell.x, cell.y), i);
+            }
+            return true;
+        }
+
+        private bool FillArraysFromSnapshot(ref Buffer buf, UnitSoARegistry.OrcaSnapshot snap, int count)
+        {
+            if (!buf.Positions.IsCreated || !buf.Velocities.IsCreated || !buf.Preferred.IsCreated ||
+                !buf.MaxSpeed.IsCreated || !buf.HasDestination.IsCreated || !buf.UseOrca.IsCreated || !buf.Responsibility.IsCreated || !buf.Factions.IsCreated ||
+                !buf.OutputVelocity.IsCreated || !buf.Cells.IsCreated || !buf.Buckets.IsCreated ||
+                !buf.Lines.IsCreated || !buf.ScratchLines.IsCreated)
+                return false;
+
+            if (!snap.Positions.IsCreated || !snap.Velocities.IsCreated || !snap.Preferred.IsCreated ||
+                !snap.MaxSpeed.IsCreated || !snap.HasDestination.IsCreated || !snap.UseOrca.IsCreated || !snap.Responsibility.IsCreated || !snap.Factions.IsCreated ||
+                !snap.Cells.IsCreated)
+                return false;
+
+            NativeArray<float2>.Copy(snap.Positions, buf.Positions, count);
+            NativeArray<float2>.Copy(snap.Velocities, buf.Velocities, count);
+            NativeArray<float2>.Copy(snap.Preferred, buf.Preferred, count);
+            NativeArray<float>.Copy(snap.MaxSpeed, buf.MaxSpeed, count);
+            NativeArray<byte>.Copy(snap.HasDestination, buf.HasDestination, count);
+            NativeArray<byte>.Copy(snap.UseOrca, buf.UseOrca, count);
+            NativeArray<float>.Copy(snap.Responsibility, buf.Responsibility, count);
+            NativeArray<int>.Copy(snap.Factions, buf.Factions, count);
+            NativeArray<int2>.Copy(snap.Cells, buf.Cells, count);
+
+            buf.Buckets.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                var cell = buf.Cells[i];
                 buf.Buckets.Add(HashKey(cell.x, cell.y), i);
             }
             return true;
@@ -263,7 +343,7 @@ namespace Game.Presentation.Performance
             int applyFrame = Time.frameCount + 1;
             for (int i = 0; i < count; i++)
             {
-                if (buf.HasDestination[i] == 0) continue;
+                if (buf.HasDestination[i] == 0 || buf.UseOrca[i] == 0) continue;
                 var uv = units[i];
                 if (uv == null) continue;
                 var vel = buf.OutputVelocity[i];
@@ -285,6 +365,8 @@ namespace Game.Presentation.Performance
             if (buf.Preferred.IsCreated) { buf.Preferred.Dispose(); buf.Preferred = default; }
             if (buf.MaxSpeed.IsCreated) { buf.MaxSpeed.Dispose(); buf.MaxSpeed = default; }
             if (buf.HasDestination.IsCreated) { buf.HasDestination.Dispose(); buf.HasDestination = default; }
+            if (buf.UseOrca.IsCreated) { buf.UseOrca.Dispose(); buf.UseOrca = default; }
+            if (buf.Responsibility.IsCreated) { buf.Responsibility.Dispose(); buf.Responsibility = default; }
             if (buf.Factions.IsCreated) { buf.Factions.Dispose(); buf.Factions = default; }
             if (buf.OutputVelocity.IsCreated) { buf.OutputVelocity.Dispose(); buf.OutputVelocity = default; }
             if (buf.Cells.IsCreated) { buf.Cells.Dispose(); buf.Cells = default; }
@@ -305,6 +387,8 @@ namespace Game.Presentation.Performance
             [ReadOnly] public NativeArray<float2> Preferred;
             [ReadOnly] public NativeArray<float> MaxSpeed;
             [ReadOnly] public NativeArray<byte> HasDestination;
+            [ReadOnly] public NativeArray<byte> UseOrca;
+            [ReadOnly] public NativeArray<float> Responsibility;
             [ReadOnly] public NativeArray<int> Factions;
             [WriteOnly] public NativeArray<float2> OutputVelocity;
             [ReadOnly] public NativeArray<int2> Cells;
@@ -326,6 +410,11 @@ namespace Game.Presentation.Performance
 
             public void Execute(int index)
             {
+                if (UseOrca[index] == 0)
+                {
+                    OutputVelocity[index] = default;
+                    return;
+                }
                 if (SkipWithoutDestination && HasDestination[index] == 0)
                 {
                     OutputVelocity[index] = default;
@@ -337,6 +426,7 @@ namespace Game.Presentation.Performance
                 float2 prefVelocity = Preferred[index];
                 float maxSpeed = MaxSpeed[index];
                 int faction = Factions[index];
+                float respSelf = Responsibility[index];
 
                 int lineBase = index * MaxNeighbors;
                 int lineCount = 0;
@@ -376,6 +466,9 @@ namespace Game.Presentation.Performance
                             float2 relVel = velocity - otherVel;
                             Line line;
                             float2 u;
+                            float respOther = Responsibility[otherIdx];
+                            float denom = math.max(0.0001f, respSelf + respOther);
+                            float weight = respSelf / denom;
 
                             if (distSq > combinedRadiusSq)
                             {
@@ -414,7 +507,7 @@ namespace Game.Presentation.Performance
                                 u = (combinedRadius * invTimeStep - wLength) * unitW;
                             }
 
-                            line.point = velocity + 0.5f * u;
+                            line.point = velocity + weight * u;
                             if (lineCount < MaxNeighbors)
                             {
                                 Lines[lineBase + lineCount] = line;

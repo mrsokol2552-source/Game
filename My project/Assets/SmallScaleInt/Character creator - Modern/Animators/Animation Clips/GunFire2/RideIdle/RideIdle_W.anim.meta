@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 47fd39e17457abf47be08fd4c5ba5d50
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/GunFire2/RideIdle/RideIdle_W.anim
+  uploadId: 752914

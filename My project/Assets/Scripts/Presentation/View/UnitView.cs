@@ -22,6 +22,11 @@ namespace Game.Presentation.View
         [Header("ORCA/RVO")]
         [Tooltip("Accept velocity overrides from ORCA/RVO avoidance.")]
         public bool UseOrcaVelocity = true;
+        [Tooltip("Allow using ORCA velocity overrides from recent frames (0 = current frame only).")]
+        public int VelocityOverrideMaxAgeFrames = 1;
+        [Range(0f, 1f)]
+        [Tooltip("Priority (0=normal, 1=highest) reduces avoidance responsibility.")]
+        public float OrcaPriority = 0f;
         [Header("Facing")]
         [Tooltip("Flip sprite on X when moving left/right instead of rotating the transform.")]
         public bool MirrorSpriteX = true;
@@ -141,7 +146,8 @@ namespace Game.Presentation.View
 
         public bool TryGetVelocityOverride(out Vector3 velocity)
         {
-            if (UseOrcaVelocity && _velocityOverrideFrame == Time.frameCount)
+            int maxAge = Mathf.Max(0, VelocityOverrideMaxAgeFrames);
+            if (UseOrcaVelocity && _velocityOverrideFrame >= 0 && (Time.frameCount - _velocityOverrideFrame) <= maxAge)
             {
                 velocity = _velocityOverride;
                 return true;

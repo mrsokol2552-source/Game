@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 388e50613f3584145819db9b0092a1e1
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Head1/RunBackwards/RunBackwards_SE.anim
+  uploadId: 752914

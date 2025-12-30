@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 5ab60ea1ff9f0cb40bb1a4b103dc0588
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Melee10/StrafeLeft/StrafeLeft_W.anim
+  uploadId: 752914

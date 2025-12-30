@@ -10,6 +10,7 @@ namespace Game.Presentation.Performance
     /// <summary>
     /// Job-based movement update for UnitView to reduce per-unit Update overhead.
     /// </summary>
+    [DefaultExecutionOrder(100)]
     public class MovementJobSystem : MonoBehaviour
     {
         public static MovementJobSystem Instance { get; private set; }
@@ -21,6 +22,8 @@ namespace Game.Presentation.Performance
         public float Interval = 0f;
         [Tooltip("Job batch size.")]
         public int BatchSize = 32;
+        [Tooltip("If true, updates are driven externally.")]
+        public bool ExternalUpdate = false;
 
         private readonly List<UnitView> _units = new List<UnitView>(512);
         private Buffer _buffer;
@@ -74,6 +77,12 @@ namespace Game.Presentation.Performance
 
         private void Update()
         {
+            if (ExternalUpdate) return;
+            Tick(Time.deltaTime);
+        }
+
+        public void Tick(float deltaTime)
+        {
             if (!Enabled)
             {
                 if (_jobActive)
@@ -95,7 +104,7 @@ namespace Game.Presentation.Performance
 
             if (Interval > 0f)
             {
-                _timer -= Time.deltaTime;
+                _timer -= deltaTime;
                 if (_timer > 0f) return;
                 _timer = Interval;
             }
@@ -124,10 +133,10 @@ namespace Game.Presentation.Performance
                 LastDirs = _buffer.LastDirs,
                 Directions = _buffer.Directions,
                 Arrived = _buffer.Arrived,
-                DeltaTime = Time.deltaTime
+                DeltaTime = deltaTime
             };
 
-            _lastDeltaTime = Time.deltaTime;
+            _lastDeltaTime = deltaTime;
             _jobHandle = job.Schedule(count, Mathf.Max(1, BatchSize));
             _jobActive = true;
             _buffer.Count = count;

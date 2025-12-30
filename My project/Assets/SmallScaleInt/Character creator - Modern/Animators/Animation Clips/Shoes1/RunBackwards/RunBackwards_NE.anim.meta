@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: c29363bf5687e00439b608a1b3bd8f7e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Shoes1/RunBackwards/RunBackwards_NE.anim
+  uploadId: 752914

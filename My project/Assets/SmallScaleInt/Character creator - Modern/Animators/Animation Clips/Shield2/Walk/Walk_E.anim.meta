@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ba75da8f1a88809459ac0f1b1a45582c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Shield2/Walk/Walk_E.anim
+  uploadId: 752914

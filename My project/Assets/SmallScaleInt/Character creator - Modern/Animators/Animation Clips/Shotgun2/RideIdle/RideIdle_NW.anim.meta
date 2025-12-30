@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 4f86bd8f2d598ad459b16a52d7be9dc6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Shotgun2/RideIdle/RideIdle_NW.anim
+  uploadId: 752914

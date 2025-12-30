@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2d5416d160235a24d96970cbcb3ae6f0
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Shadow.controller
+  uploadId: 752914

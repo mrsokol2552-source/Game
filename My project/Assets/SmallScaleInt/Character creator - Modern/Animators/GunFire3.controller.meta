@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f83e63a96f1fb0c4198ff7c5d0a6a3c5
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/GunFire3.controller
+  uploadId: 752914

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: dc6c83cd200ddd146a3e7567f5398d22
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Head5/RideIdle/RideIdle_SW.anim
+  uploadId: 752914

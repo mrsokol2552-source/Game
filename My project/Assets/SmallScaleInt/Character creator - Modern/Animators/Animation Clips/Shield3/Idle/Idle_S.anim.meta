@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 9bee4e833f03a614f88b8bfb411867ea
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Shield3/Idle/Idle_S.anim
+  uploadId: 752914

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ff8f1a505c3528443b556b82897c5b49
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Shoes2/TakeDamage/TakeDamage_NW.anim
+  uploadId: 752914

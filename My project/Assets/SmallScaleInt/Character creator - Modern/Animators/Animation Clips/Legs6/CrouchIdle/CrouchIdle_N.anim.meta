@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 7b70ec920f3a0604c909b1ffc091cdb2
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Legs6/CrouchIdle/CrouchIdle_N.anim
+  uploadId: 752914

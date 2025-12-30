@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 0440e17db96ed3b4ab51576f6ef46eb6
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Example Scene/Scripts/GearPresetManager.cs
+  uploadId: 752914

@@ -42,6 +42,8 @@ namespace Game.Presentation.Pathfinding
         [Header("Occupancy")]
         [Tooltip("Use OccupancyHash (if available) for fast occupied checks.")]
         public bool UseOccupancyHash = true;
+        [Tooltip("Use StaticObstacleHash (if available) for blocked-cell checks.")]
+        public bool UseStaticObstacleHash = true;
 
         private readonly HashSet<int> _hexFittedOnce = new HashSet<int>();
         private readonly HashSet<int> _gridFittedOnce = new HashSet<int>();
@@ -57,6 +59,7 @@ namespace Game.Presentation.Pathfinding
         private static readonly Stack<List<Vector3>> _worldPool = new Stack<List<Vector3>>();
         private static readonly Stack<HashSet<int>> _hashPool = new Stack<HashSet<int>>();
         private Game.Presentation.Performance.OccupancyHash _occ;
+        private StaticObstacleHash _staticHash;
         private int _logFrame = -1;
         private int _logsThisFrame;
         private int _occupiedCacheFrame = -1;
@@ -536,6 +539,8 @@ namespace Game.Presentation.Pathfinding
         public bool IsWorldOccupied(Vector3 world, UnitView except = null, bool enemiesOnly = false)
         {
             CacheBootstraps();
+            if (UseStaticObstacleHash && _staticHash != null && _staticHash.IsBlockedWorld(world))
+                return true;
             if (UseOccupancyHash && _occ != null)
                 return _occ.IsOccupied(world, except, enemiesOnly);
             var hex = _hexCached;
@@ -550,6 +555,8 @@ namespace Game.Presentation.Pathfinding
             if (except != null)
                 selfFaction = except.GetComponent<Game.Presentation.View.UnitCombat>()?.Faction;
             CacheBootstraps();
+            if (UseStaticObstacleHash && _staticHash != null && _staticHash.IsBlockedCell(cell))
+                return true;
             var hex = _hexCached;
             foreach (var uc in Game.Presentation.View.UnitCombat.All)
             {
@@ -700,6 +707,8 @@ namespace Game.Presentation.Pathfinding
                 _gridCached = UnityEngine.Object.FindAnyObjectByType<PathfindingBootstrap>();
             if (_occ == null && UseOccupancyHash)
                 _occ = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Performance.OccupancyHash>();
+            if (_staticHash == null && UseStaticObstacleHash)
+                _staticHash = UnityEngine.Object.FindAnyObjectByType<StaticObstacleHash>();
         }
 
         private static List<GridPoint> RentGridList()

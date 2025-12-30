@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: d63dce280f23f644dafb784c5369fdff
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Head13/CrouchRun/CrouchRun_E.anim
+  uploadId: 752914

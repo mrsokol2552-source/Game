@@ -87,6 +87,15 @@ namespace Game.Presentation.Performance
 
         private void Update()
         {
+            if (OrcaAvoidanceSystem.IsActive)
+            {
+                if (_jobActive)
+                {
+                    _jobHandle.Complete();
+                    _jobActive = false;
+                }
+                return;
+            }
             if (!Enabled || AvoidRadius <= 0.0001f || CellSize <= 0.0001f)
             {
                 if (_jobActive)

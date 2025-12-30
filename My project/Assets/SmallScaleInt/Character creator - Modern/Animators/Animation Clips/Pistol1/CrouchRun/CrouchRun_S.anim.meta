@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 2f8d0cda36ca0df4e8f7e5fae003a2c2
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Pistol1/CrouchRun/CrouchRun_S.anim
+  uploadId: 752914

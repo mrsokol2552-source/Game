@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 5a78917a05fd4904cb215a5166b78d5e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Melee9/StrafeRight/StrafeRight_NW.anim
+  uploadId: 752914

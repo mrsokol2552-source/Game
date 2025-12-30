@@ -92,6 +92,20 @@ namespace Game.Presentation.Performance
                     ResetState(uv, frame);
                     continue;
                 }
+                var uc = uv.GetComponent<UnitCombat>();
+                if (uc != null)
+                {
+                    if (uc.IsUsingFlowField)
+                    {
+                        ResetState(uv, frame);
+                        continue;
+                    }
+                    if (uc.IsInSquad && uc.CurrentSquadMode != UnitCombat.SquadMode.FreeCombat)
+                    {
+                        ResetState(uv, frame);
+                        continue;
+                    }
+                }
 
                 int id = uv.GetInstanceID();
                 if (!_states.TryGetValue(id, out var state))
@@ -127,7 +141,7 @@ namespace Game.Presentation.Performance
                     {
                         if (Time.time - state.LastResolveTime >= ResolveCooldown)
                         {
-                            ResolveStuck(uv, pm);
+                            ResolveStuck(uv, pm, uc);
                             state.LastResolveTime = Time.time;
                         }
                     }
@@ -141,10 +155,9 @@ namespace Game.Presentation.Performance
             CleanupStale(frame);
         }
 
-        private void ResolveStuck(UnitView uv, PathManager pm)
+        private void ResolveStuck(UnitView uv, PathManager pm, UnitCombat uc)
         {
             if (uv == null || pm == null) return;
-            var uc = uv.GetComponent<UnitCombat>();
             if (ForceCombatRepath && uc != null)
             {
                 uc.ForceRepath();

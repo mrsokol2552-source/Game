@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 75df5d3bc8befbe4ab06e9780706952a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/MachineGun3/RideIdle/RideIdle_NE.anim
+  uploadId: 752914

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: b375d39fcc105f2468b7462205a76c3a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Melee5/TakeDamage/TakeDamage_N.anim
+  uploadId: 752914

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 691ae2f00a254df4cb4c4b9fd312195f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/MachineGun4/StrafeLeft/StrafeLeft_S.anim
+  uploadId: 752914

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 73de35aceaac7e04594f399018e7a9eb
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/MachineGun3/TakeDamage/TakeDamage_W.anim
+  uploadId: 752914

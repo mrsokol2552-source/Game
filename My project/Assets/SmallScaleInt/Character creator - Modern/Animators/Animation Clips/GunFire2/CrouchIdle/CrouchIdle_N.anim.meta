@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: d374f4a3421ee3346b8b3d8b5a702171
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/GunFire2/CrouchIdle/CrouchIdle_N.anim
+  uploadId: 752914

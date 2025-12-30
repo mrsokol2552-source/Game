@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: d4347ce02ab02434a8c6c0e7e45ce9d6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Pistol3/Run/Run_SE.anim
+  uploadId: 752914

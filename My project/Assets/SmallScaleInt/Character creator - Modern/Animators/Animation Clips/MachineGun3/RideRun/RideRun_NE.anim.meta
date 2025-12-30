@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 81bbb625ba296cc4daa0e8db8193dedc
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/MachineGun3/RideRun/RideRun_NE.anim
+  uploadId: 752914

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: cb91eed0b9ccc7144a3bb972c0449b26
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Pistol4/Walk/Walk_SW.anim
+  uploadId: 752914

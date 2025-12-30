@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d16c39f4dc984ba4195edd70f0e05b98
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Head10.controller
+  uploadId: 752914

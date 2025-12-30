@@ -87,9 +87,13 @@ namespace Game.Presentation.Bootstrap
             global::Game.Presentation.Performance.LocalAvoidanceSystem.EnsureExists();
             global::Game.Presentation.Performance.OrcaAvoidanceSystem.EnsureExists();
             global::Game.Presentation.Performance.MovementJobSystem.EnsureExists();
+            global::Game.Presentation.Performance.JobPipelineCoordinator.EnsureExists();
+            global::Game.Presentation.Performance.UnitSoARegistry.EnsureExists();
             global::Game.Presentation.Performance.StuckResolver.EnsureExists();
             global::Game.Presentation.Pathfinding.PathRequestQueue.Ensure();
             global::Game.Presentation.Pathfinding.FlowFieldManager.EnsureExists();
+            global::Game.Presentation.Pathfinding.StaticObstacleHash.EnsureExists();
+            global::Game.Presentation.Pathfinding.CoverSlotHash.EnsureExists();
 
             var legacyAvoid = global::Game.Presentation.Performance.LocalAvoidanceSystem.Instance;
             if (legacyAvoid != null)

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 01d2b4c1619321e41b4041d482393507
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Example Scene/Environment/Tiles/Ground
+    TestRoom.asset
+  uploadId: 752914

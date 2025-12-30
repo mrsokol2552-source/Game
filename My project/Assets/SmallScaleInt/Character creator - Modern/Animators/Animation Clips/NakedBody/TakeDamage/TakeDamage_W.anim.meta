@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: e4029fdee2e5cb54e9fdc6a96d022668
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/NakedBody/TakeDamage/TakeDamage_W.anim
+  uploadId: 752914

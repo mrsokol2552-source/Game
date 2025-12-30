@@ -31,6 +31,11 @@ namespace Game.Presentation.Pathfinding
         private bool[,] _walkable;
         private Unity.Collections.NativeArray<byte> _walkableNative;
         private bool _nativeDirty = true;
+        private bool _dirtyHasRect;
+        private int _dirtyMinCol;
+        private int _dirtyMaxCol;
+        private int _dirtyMinRow;
+        private int _dirtyMaxRow;
         private int _walkableVersion = 1;
 
         private void Awake()
@@ -106,6 +111,14 @@ namespace Game.Presentation.Pathfinding
             SetWalkable(cell.x, cell.y, !blocked);
         }
 
+        public void BakeFromPhysicsRect(Bounds worldBounds, int paddingCells = 1)
+        {
+            if (_walkable == null) return;
+            var minCell = WorldToGrid(worldBounds.min);
+            var maxCell = WorldToGrid(worldBounds.max);
+            BakeFromPhysicsRectCells(minCell.x, minCell.y, maxCell.x, maxCell.y, paddingCells);
+        }
+
         public void ClearAllBlocks()
         {
             if (_walkable == null) return;
@@ -141,6 +154,50 @@ namespace Game.Presentation.Pathfinding
             MarkWalkableDirty();
             if (LogBake)
                 Debug.Log($"[HexPathfinding] BakeFromPhysics: blocked={blocked} / total={Width*Height}, mask=0x{maskVal:X}");
+        }
+
+        public void BakeFromPhysicsRectCells(int minCol, int minRow, int maxCol, int maxRow, int paddingCells = 1)
+        {
+            if (_walkable == null) return;
+            if (Width <= 0 || Height <= 0) return;
+            int pad = Mathf.Max(0, paddingCells);
+            int c0 = Mathf.Clamp(Mathf.Min(minCol, maxCol) - pad, 0, Width - 1);
+            int c1 = Mathf.Clamp(Mathf.Max(minCol, maxCol) + pad, 0, Width - 1);
+            int r0 = Mathf.Clamp(Mathf.Min(minRow, maxRow) - pad, 0, Height - 1);
+            int r1 = Mathf.Clamp(Mathf.Max(minRow, maxRow) + pad, 0, Height - 1);
+            if (c0 > c1 || r0 > r1) return;
+
+            float radius = SampleRadius > 0f ? SampleRadius : (HexSize * 0.45f);
+            int maskVal = ObstacleMask.value;
+            if (maskVal == 0)
+            {
+                int obst = LayerMask.NameToLayer("Obstacles");
+                maskVal = obst >= 0 ? (1 << obst) : ~0;
+            }
+
+            bool anyChange = false;
+            int blocked = 0;
+            int total = 0;
+            for (int r = r0; r <= r1; r++)
+            {
+                for (int q = c0; q <= c1; q++)
+                {
+                    var w = GridToWorld(q, r);
+                    var hit = Physics2D.OverlapCircle(w, radius, maskVal);
+                    bool walk = (hit == null);
+                    if (_walkable[r, q] != walk)
+                        anyChange = true;
+                    _walkable[r, q] = walk;
+                    if (!walk) blocked++;
+                    total++;
+                }
+            }
+            if (anyChange)
+            {
+                MarkWalkableDirtyRect(c0, r0, c1, r1);
+            }
+            if (LogBake)
+                Debug.Log($"[HexPathfinding] BakeFromPhysicsRect: blocked={blocked} / total={total}, rect=({c0},{r0})-({c1},{r1}), mask=0x{maskVal:X}");
         }
 
         [ContextMenu("Rebake Obstacles")]
@@ -181,8 +238,9 @@ namespace Game.Presentation.Pathfinding
         public void SetWalkable(int col, int row, bool walkable)
         {
             if (col < 0 || row < 0 || col >= Width || row >= Height) return;
+            if (_walkable[row, col] == walkable) return;
             _walkable[row, col] = walkable;
-            MarkWalkableDirty();
+            MarkWalkableDirtyRect(col, row, col, row);
         }
 
         private static (int q, int r) AxialRound(float qf, float rf)
@@ -294,21 +352,60 @@ namespace Game.Presentation.Pathfinding
                 _walkableNative = new Unity.Collections.NativeArray<byte>(len, Unity.Collections.Allocator.Persistent);
             }
 
-            int idx = 0;
-            for (int r = 0; r < Height; r++)
+            if (_dirtyHasRect && _walkableNative.Length == len)
             {
-                for (int q = 0; q < Width; q++)
+                int c0 = Mathf.Clamp(_dirtyMinCol, 0, Width - 1);
+                int c1 = Mathf.Clamp(_dirtyMaxCol, 0, Width - 1);
+                int r0 = Mathf.Clamp(_dirtyMinRow, 0, Height - 1);
+                int r1 = Mathf.Clamp(_dirtyMaxRow, 0, Height - 1);
+                for (int r = r0; r <= r1; r++)
                 {
-                    _walkableNative[idx++] = (byte)(_walkable[r, q] ? 1 : 0);
+                    int baseIdx = r * Width;
+                    for (int q = c0; q <= c1; q++)
+                    {
+                        _walkableNative[baseIdx + q] = (byte)(_walkable[r, q] ? 1 : 0);
+                    }
+                }
+            }
+            else
+            {
+                int idx = 0;
+                for (int r = 0; r < Height; r++)
+                {
+                    for (int q = 0; q < Width; q++)
+                    {
+                        _walkableNative[idx++] = (byte)(_walkable[r, q] ? 1 : 0);
+                    }
                 }
             }
             _nativeDirty = false;
+            _dirtyHasRect = false;
         }
 
         private void MarkWalkableDirty()
         {
             _nativeDirty = true;
+            _dirtyHasRect = false;
             _walkableVersion++;
+        }
+
+        private void MarkWalkableDirtyRect(int minCol, int minRow, int maxCol, int maxRow)
+        {
+            _nativeDirty = true;
+            _walkableVersion++;
+            if (!_dirtyHasRect)
+            {
+                _dirtyMinCol = minCol;
+                _dirtyMaxCol = maxCol;
+                _dirtyMinRow = minRow;
+                _dirtyMaxRow = maxRow;
+                _dirtyHasRect = true;
+                return;
+            }
+            _dirtyMinCol = Mathf.Min(_dirtyMinCol, minCol);
+            _dirtyMaxCol = Mathf.Max(_dirtyMaxCol, maxCol);
+            _dirtyMinRow = Mathf.Min(_dirtyMinRow, minRow);
+            _dirtyMaxRow = Mathf.Max(_dirtyMaxRow, maxRow);
         }
 
         private void OnDestroy()

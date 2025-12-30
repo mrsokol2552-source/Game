@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 98f599f809f3ab442bf7fc4f644ff99c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Pistol3/CrouchIdle/CrouchIdle_E.anim
+  uploadId: 752914

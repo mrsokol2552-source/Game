@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: aa7ec2caf79f14a4b82c81b7c43227a5
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Example Scene/Scripts/AnimatorGearSwitcher.cs
+  uploadId: 752914

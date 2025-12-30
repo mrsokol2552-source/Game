@@ -80,6 +80,11 @@ namespace Game.Presentation.Pathfinding
 
         private void LateUpdate()
         {
+            if (Game.Presentation.Performance.OrcaAvoidanceSystem.IsActive)
+                return;
+            var legacyAvoid = Game.Presentation.Performance.LocalAvoidanceSystem.Instance;
+            if (legacyAvoid != null && legacyAvoid.isActiveAndEnabled && legacyAvoid.Enabled)
+                return;
             _timer -= Time.deltaTime;
             if (_timer > 0f) return;
             _timer = Interval;
@@ -113,14 +118,18 @@ namespace Game.Presentation.Pathfinding
             // group units by cell
             foreach (var uc in UnitCombat.All)
             {
-                if (uc == null) continue;
+                if (uc == null || !uc.isActiveAndEnabled) continue;
+                if (uc.IsInSquad) continue;
+                if (uc.IsUsingFlowField) continue;
+                var view = uc.GetComponent<UnitView>();
+                if (view == null) continue;
                 var cell = _hex.WorldToGrid(uc.transform.position);
                 if (!_groups.TryGetValue(cell, out var list))
                 {
                     list = RentList();
                     _groups[cell] = list;
                 }
-                list.Add(uc.GetComponent<UnitView>());
+                list.Add(view);
             }
 
             // bail out if no stacks beyond allowed stay count

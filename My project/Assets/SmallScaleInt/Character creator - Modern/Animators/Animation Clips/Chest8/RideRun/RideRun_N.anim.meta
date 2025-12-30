@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: c07f1fd465905124ca24e3929126391f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Chest8/RideRun/RideRun_N.anim
+  uploadId: 752914

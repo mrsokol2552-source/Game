@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: bd8f765e7d78e8e4cb4f4d1aba50b4c4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Shoes2/StrafeLeft/StrafeLeft_N.anim
+  uploadId: 752914

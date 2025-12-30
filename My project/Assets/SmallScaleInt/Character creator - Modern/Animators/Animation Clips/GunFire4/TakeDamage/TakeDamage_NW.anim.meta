@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: fc69f8ea4ddf8454a8e7ea49ed06edd5
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/GunFire4/TakeDamage/TakeDamage_NW.anim
+  uploadId: 752914

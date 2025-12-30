@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: bb05d4d0adf34c344b1cf9eb19ce3b4f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Sniper2/RideRun/RideRun_SW.anim
+  uploadId: 752914

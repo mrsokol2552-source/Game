@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 7bb42ad1a61e6544294dfd8782d0c315
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/MachineGun2/Idle/Idle_SW.anim
+  uploadId: 752914

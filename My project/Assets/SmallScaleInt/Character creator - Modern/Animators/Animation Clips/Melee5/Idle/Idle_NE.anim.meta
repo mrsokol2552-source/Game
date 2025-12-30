@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: cfb6387427949fd459a0610b4de47c91
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Melee5/Idle/Idle_NE.anim
+  uploadId: 752914

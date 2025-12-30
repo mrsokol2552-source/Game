@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 69b15c859c254fc41a639f73f83b1ad8
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Example Scene/Scripts/AnimationController.cs
+  uploadId: 752914

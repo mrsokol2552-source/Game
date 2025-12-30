@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: b1492c3f12edae74e986f9fa2e872e2c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Example Scene/Environment/Tiles/BLACK
+    TILE.asset
+  uploadId: 752914

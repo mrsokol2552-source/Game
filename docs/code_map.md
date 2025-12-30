@@ -24,7 +24,7 @@ Application:
 - Use cases: `StartNewGame`, `PlaceBuilding`, `StartResearch`, `CompleteResearch`, `SaveGame`, `LoadGame`.
 
 Infrastructure:
-- Configs: `GameConfig`, `BuildingConfig`, `ResearchConfig`, `UnitConfig`.
+- Configs: `GameConfig`, `BuildingConfig`, `ResearchConfig`, `UnitConfig`, `UnitCombatProfile`, `UnitBehaviorProfile`.
 - Persistence: `SaveSystem` (JSON to `Application.persistentDataPath/save.json`).
 
 Presentation:
@@ -32,15 +32,17 @@ Presentation:
 - Input: `InputController`, `UnitSpawnerCommander`.
 - UI: `HudController`, `ActionsPanel`, `ResearchPanel`.
 - View: `UnitView`, `UnitCombat`, `UnitHpOverlay`, `MovementSettings`.
-- Performance: `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `UnitVisualCulling`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `LocalAvoidanceSystem` (legacy), `StuckResolver`.
+- Performance: `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `UnitVisualCulling`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `UnitSoARegistry`, `LocalAvoidanceSystem` (legacy), `StuckResolver`.
+- Performance: `JobPipelineCoordinator` (fixed update order for ORCA + Movement).
 - Pathfinding: `PathManager`, `PathRequestQueue`, `HexPathfindingBootstrap`, `HexPathfinderJob`, `PathfindingBootstrap` (grid fallback), `FlowFieldManager`, `CrowdingResolver`, `PathProfiler`, `PathDebugHUD`.
+- Pathfinding: `StaticObstacleHash` (blocked-cell hash for fast static queries), `CoverSlotHash` (pre-baked cover slots).
 
 ## Bootstrap and singletons
 
 - `CompositionRoot` (`Presentation/Bootstrap/CompositionRoot.cs`):
   - Creates `GameStateService` and binds `SaveSystem` callbacks.
   - Optionally runs `StartNewGame` with `GameConfig.StartingResources`.
-  - Ensures `CameraZoom2D`, `HexPathfindingBootstrap`, `ProceduralObstacles`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
+- Ensures `CameraZoom2D`, `HexPathfindingBootstrap`, `ProceduralObstacles`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `StaticObstacleHash`, `CoverSlotHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
   - Disables `LocalAvoidanceSystem` when ORCA is enabled.
   - Applies `UnitVisualCulling` and sorting layer/order to existing units.
   - `Save()` and `Load()` wrap `SaveGame`/`LoadGame` use cases.
@@ -70,14 +72,17 @@ Presentation:
 
 ### Combat tick and targeting
 - `UnitCombat.Update` (gated by `CombatTickInterval + CombatTickJitter`):
+  - Optional `UnitCombatProfile` applies data-driven settings on enable.
+  - Optional `UnitBehaviorProfile` applies hold/aggro/leash rules and target preference.
   - Clears expired forced targets and job targets.
   - `ResolveTarget`:
     - Uses job target (`UnitCombatJobScheduler`) if available.
     - Falls back to `OccupancyHash` when no job target is available.
     - Forced squad target is overridden if a local target is within `AttackRange * LocalThreatOverrideMultiplier`.
   - If target is outside `AttackRange`, computes desired position, snaps to hex center if moving into a new cell:
-    - In `FreeCombat` (or no squad): may request a path via `PathRequestQueue`.
-    - In squad modes: uses flow fields or direct destination steering (no per-unit path builds).
+    - Non-squad units: may request a path via `PathRequestQueue`.
+    - Squad units (including `FreeCombat`): use flow fields or direct destination steering (no per-unit path builds).
+    - Optional formation offsets near target for squad units.
   - If in range, cancels combat path and attacks on cooldown.
   - Flow fields can be used for far-distance chasing (`UseFlowFields`) to avoid frequent path builds.
 
@@ -154,7 +159,7 @@ UnitCombat.Update (combat tick)
 ### Jobified targeting (UnitCombatJobScheduler)
 ```
 UnitCombatJobScheduler.Update
-  -> GatherUnits
+  -> GatherUnits (non-squad units only)
   -> FillArrays + Build hash buckets
   -> Schedule NearestEnemyJob (frame N)
   -> ApplyResults on next update when the job completes
@@ -213,10 +218,12 @@ HudController -> Load button
   - `BakeFromPhysics` uses `Physics2D.OverlapCircle` with `ObstacleMask` or "Obstacles" layer.
   - Maintains `NativeArray<byte>` walkable map for jobs.
   - Calls `PathRequestQueue.CompleteActiveJobAndClear` before rebuilding or disposing native arrays.
+  - Supports partial rebakes via `BakeFromPhysicsRect` / `BakeFromPhysicsRectCells`.
 
 - `PathManager.BuildPath`:
   - Chooses hex bootstrap if available, else grid fallback.
   - Occupancy: blocks enemies and optionally recent friendly cells (`FriendlyReserveSeconds`).
+  - Uses `StaticObstacleHash` (static blocks) + `OccupancyHash` (dynamic units) when enabled.
   - Per-frame occupied caches are reused across sync calls (including recent-friendly TTL by faction).
   - `EnableGroupPathReuse` caches paths by target cell for nearby allies.
   - Converts grid path to world points; skips start cell and smooths straight segments.
@@ -228,6 +235,14 @@ HudController -> Load button
 - `FlowFieldManager`:
   - Time-sliced flow fields (BFS) on hex grid with TTL/LRU eviction.
   - Field expansion is capped by farthest requesting unit (distance limit + padding).
+  - Optional tiled mode restricts expansion to a coarse tile path (`TileSize` + `TilePadding`).
+  - Optional crowd cost mode biases next-step selection away from dense clusters.
+  - Optional deterministic direction bias keeps flow steps aligned with the target direction.
+  - Optional vector sampling blends downhill neighbors to smooth movement.
+  - Optional influence costs use per-faction threat maps (enemy units) to steer around danger.
+  - Optional LoS flags cache per-cell visibility to the target to reduce repeated line checks.
+- `CoverSlotHash`:
+  - Pre-bakes cover slots around blocked cells and stores them in a spatial hash for fast lookup.
 
 ## Performance helpers
 
@@ -235,21 +250,36 @@ HudController -> Load button
   - Collects unit positions/factions into `NativeArray`.
   - Builds a spatial hash with `NativeParallelMultiHashMap`.
   - Schedules `NearestEnemyJob` and applies results on the next update tick.
+  - Skips squad-controlled units (squad targeting handled elsewhere).
+  - Can reuse `UnitSoARegistry` snapshots when enabled to reduce per-unit transform reads.
 
 - `EnemySquadManager`:
   - Forms squads for both factions (default size 12), with dynamic gather radius.
   - Uses squad-to-squad distance (hexes) to drive states with hysteresis.
   - Assigns forced targets via TTL; releases targets in `FreeCombat` only when close enough.
+  - Assigns per-unit formation indices for arrival offsets when enabled.
+  - Computes a flow-based squad move anchor; non-free-combat units follow formation slots around it.
 
 - `OccupancyHash`:
   - Rebuilt every frame; used for quick occupancy checks and nearest enemy lookup when no job target is available.
 - `MovementJobSystem`:
   - Jobified movement update for `UnitView` (enabled by default).
+  - ORCA overrides can be reused for a short frame window to decouple job timing.
+- `JobPipelineCoordinator`:
+  - Drives ORCA + Movement in a fixed order and disables their internal Update loops when enabled.
+- `UnitSoARegistry`:
+  - Builds a centralized SoA snapshot for ORCA inputs to reduce redundant per-unit collection.
+  - Also exposes combat snapshots for targeting systems when enabled.
 - `OrcaAvoidanceSystem`:
   - ORCA/RVO avoidance with spatial hash; feeds velocity overrides into movement jobs.
   - Optional cohesion bias toward friendly centroid.
+  - Respects `UnitView.UseOrcaVelocity` (units can opt out of overrides but remain obstacles).
+  - Per-unit priority (`UnitView.OrcaPriority`) reduces avoidance responsibility (see `MinResponsibility`).
+- `CrowdingResolver`:
+  - LateUpdate stack resolver for non-squad, non-flow-field units; no-ops while ORCA or legacy local avoidance is active.
 - `StuckResolver`:
   - Detects stuck movers and nudges them; can force combat repath.
+  - Skips squad-controlled units outside `FreeCombat` and units currently following flow fields.
 
 - `UnitVisualCulling`:
   - Disables `SpriteRenderer`, `Animator`, `UnitHpOverlay` when far from camera or outside frustum.

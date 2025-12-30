@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ac5f2359fbffc674a8c3cb566ce87d83
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Pistol1/Idle2/Idle2_NE.anim
+  uploadId: 752914

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: beecc0a501857f84b92dd81c26783315
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Melee2/Attack2/Attack2_S.anim
+  uploadId: 752914

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 9c17e73d80394a44985bd5f43ef6504a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Chest12/StrafeLeft/StrafeLeft_S.anim
+  uploadId: 752914

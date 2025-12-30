@@ -65,7 +65,7 @@ Config assets live in `Assets/ScriptableObjects/Configs` and can be created via 
 ## Docs and tests
 
 - `docs/gameplay_current_state.md` for the detailed systems overview.
-- `docs/Architecture of High-Performance Navigation and Targeting Systems in 2D RTS Strategies.md` for design notes.
+- `docs/navigation_optimization_ideas.md` for consolidated navigation/avoidance ideas.
 - `docs/code_map.md` for a file-by-file map and runtime flows.
 - Unity Test Runner: EditMode and PlayMode tests under `Assets/Tests`.
 

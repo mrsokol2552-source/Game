@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: b2ff872a05425bb4fa59267200928f0b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Chest1/Idle2/Idle2_E.anim
+  uploadId: 752914

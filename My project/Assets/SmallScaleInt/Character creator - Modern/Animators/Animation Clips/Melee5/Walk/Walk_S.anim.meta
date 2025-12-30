@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 24dd320586e6bdf489caf6c8d8453f6d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Melee5/Walk/Walk_S.anim
+  uploadId: 752914

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6329bc80d6d6c3d4088877edd413b7dc
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Chest14.controller
+  uploadId: 752914

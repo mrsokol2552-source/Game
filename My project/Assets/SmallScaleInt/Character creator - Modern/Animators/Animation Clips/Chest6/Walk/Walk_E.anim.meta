@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 6bd06fe229a41e14a98edcb0e9598443
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Chest6/Walk/Walk_E.anim
+  uploadId: 752914

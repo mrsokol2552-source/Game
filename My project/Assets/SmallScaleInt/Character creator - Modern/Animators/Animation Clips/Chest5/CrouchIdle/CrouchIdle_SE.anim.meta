@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ebf59a354c7d1894da09dc0acaac4fd0
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Chest5/CrouchIdle/CrouchIdle_SE.anim
+  uploadId: 752914

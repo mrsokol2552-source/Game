@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 6e441707f9ac8d346ad6d6266300804b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Head13/Walk/Walk_NE.anim
+  uploadId: 752914

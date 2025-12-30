@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: e844d401713a0ea4a9bd53679bc8adeb
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/MachineGun3/StrafeRight/StrafeRight_NE.anim
+  uploadId: 752914

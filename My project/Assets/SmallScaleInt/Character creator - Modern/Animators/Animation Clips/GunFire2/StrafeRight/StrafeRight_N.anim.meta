@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 91d0923b135eb35498e54b9bdf1b6941
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/GunFire2/StrafeRight/StrafeRight_N.anim
+  uploadId: 752914

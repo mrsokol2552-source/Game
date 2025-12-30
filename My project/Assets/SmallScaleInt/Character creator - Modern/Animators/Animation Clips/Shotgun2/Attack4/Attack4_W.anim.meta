@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ac79f612f95b1b84fb4ca50ea03d695a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Shotgun2/Attack4/Attack4_W.anim
+  uploadId: 752914

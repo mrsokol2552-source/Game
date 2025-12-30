@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 403bcc9bd8bc6bf4aa955eda619949aa
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Shield3/Run/Run_NE.anim
+  uploadId: 752914

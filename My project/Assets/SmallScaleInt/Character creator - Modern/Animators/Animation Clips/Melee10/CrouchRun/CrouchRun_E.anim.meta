@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: b724bd2e3696f4144ae7b9920d3791de
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Melee10/CrouchRun/CrouchRun_E.anim
+  uploadId: 752914

@@ -4,6 +4,7 @@ using UnityEngine;
 using Game.Presentation.Pathfinding;
 using Game.Presentation.Performance;
 using System.Linq;
+using Game.Infrastructure.Configs;
 
 namespace Game.Presentation.View
 {
@@ -29,6 +30,12 @@ namespace Game.Presentation.View
         public float AttackRange = 1.5f;
         public int AttackDamage = 10;
         public float AttackCooldown = 0.75f;
+        [Header("Profile")]
+        public bool UseCombatProfile = false;
+        public UnitCombatProfile CombatProfile;
+        [Header("Behavior Profile")]
+        public bool UseBehaviorProfile = false;
+        public UnitBehaviorProfile BehaviorProfile;
         [Header("Pathfinding")]
         [Tooltip("How often (seconds) to recompute combat path when target is moving (nearby clusters).")]
         public float RepathInterval = 0.25f;
@@ -74,6 +81,19 @@ namespace Game.Presentation.View
         public float LostTargetGraceSeconds = 0.2f;
         [Tooltip("If a forced target exists but a nearby enemy is within AttackRange * this multiplier, prefer the local enemy.")]
         public float LocalThreatOverrideMultiplier = 3f;
+        [Header("Behavior")]
+        [Tooltip("If true, do not chase targets outside AttackRange.")]
+        public bool HoldPosition = false;
+        [Tooltip("If true, ignore non-forced targets beyond AggroRange.")]
+        public bool UseAggroRange = false;
+        [Tooltip("Max distance to consider non-forced targets (world units).")]
+        public float AggroRange = 12f;
+        [Tooltip("If true, ignore non-forced targets when far from home.")]
+        public bool UseLeash = false;
+        [Tooltip("Max distance from home before ignoring targets (world units).")]
+        public float LeashRange = 20f;
+        [Tooltip("Prefer forced targets even when a local threat exists.")]
+        public bool PreferForcedTarget = false;
         [Header("Performance")]
         [Tooltip("Run combat logic no more often than this interval.")]
         public float CombatTickInterval = 0.04f;
@@ -84,6 +104,15 @@ namespace Game.Presentation.View
         public bool DisableOrcaWhenInRange = true;
         [Tooltip("Multiplier on AttackRange that disables ORCA (>= 1).")]
         public float OrcaDisableRangeMultiplier = 1.1f;
+        [Header("Formation Offsets")]
+        [Tooltip("Apply per-unit formation offsets near the target to reduce stacking.")]
+        public bool UseFormationOffsets = true;
+        [Tooltip("Start applying formation offsets within this distance to target (world units).")]
+        public float FormationOffsetStartDistance = 8f;
+        [Tooltip("Spacing between formation slots in hex cells.")]
+        public int FormationSpacingHex = 1;
+        [Tooltip("Max ring radius in hex cells for formation slots (0 = unlimited).")]
+        public int FormationMaxRadiusHex = 0;
         [Header("Budgets")]
         [Tooltip("Global cap per frame to spread expensive target searches across units. 0 or less = unlimited.")]
         public static int TargetSearchBudgetPerFrame = 10;
@@ -120,6 +149,7 @@ namespace Game.Presentation.View
         private bool _hasLastTargetPos;
         private float _flowFieldTimer;
         private bool _usingFlowField;
+        private Vector3 _homePosition;
 
         private static int _budgetFrame = -1;
         private static int _repathsThisFrame;
@@ -134,10 +164,13 @@ namespace Game.Presentation.View
         private Game.Domain.Units.Faction _lastFaction;
         [SerializeField] private int _squadId;
         [SerializeField] private SquadMode _squadMode = SquadMode.None;
+        [SerializeField] private int _formationIndex = -1;
 
         public bool IsInSquad => _squadId != 0;
         public int SquadId => _squadId;
         public SquadMode CurrentSquadMode => _squadMode;
+        public int FormationIndex => _formationIndex;
+        public bool IsUsingFlowField => _usingFlowField;
 
         private void OnEnable()
         {
@@ -148,6 +181,9 @@ namespace Game.Presentation.View
             _view = GetComponent<UnitView>() ?? gameObject.AddComponent<UnitView>();
             _follower = GetComponent<UnitPathFollower>();
             _currentHealth = Mathf.Max(1, _view.Stats.MaxHealth);
+            _homePosition = _tr.position;
+            ApplyCombatProfile();
+            ApplyBehaviorProfile();
             _repathTimer = Random.Range(0f, RepathJitter);
             _pm = Game.Presentation.Pathfinding.PathManager.Ensure();
             _hex = SharedHex();
@@ -204,6 +240,9 @@ namespace Game.Presentation.View
             EnsureCaches();
             bool pathActive = _follower != null && _follower.HasPath;
             bool allowIndividualPaths = _squadMode == SquadMode.None || _squadMode == SquadMode.FreeCombat;
+            bool allowPerUnitPaths = _squadMode == SquadMode.None;
+            if (!allowPerUnitPaths && _pathPending)
+                InvalidatePendingPath();
             if (_pathPendingTimer > 0f)
             {
                 _pathPendingTimer -= Time.deltaTime;
@@ -229,6 +268,16 @@ namespace Game.Presentation.View
             }
 
             var target = ResolveTarget();
+            if (target != null)
+            {
+                bool isForced = _forcedTarget != null && target == _forcedTarget;
+                float distCheck = (_tr.position - target.transform.position).magnitude;
+                if (ShouldIgnoreTarget(distCheck, isForced))
+                {
+                    _cachedTarget = null;
+                    target = null;
+                }
+            }
             if (target != null)
             {
                 _lostTargetGraceTimer = LostTargetGraceSeconds;
@@ -260,17 +309,59 @@ namespace Game.Presentation.View
 
                 if (dist > AttackRange)
                 {
+                    if (HoldPosition)
+                    {
+                        if (pathActive && _follower != null && _follower.Source == UnitPathFollower.PathSource.Combat)
+                            _follower.Cancel();
+                        if (_combatSteering)
+                            _view.ClearDestination("combat-hold-position");
+                        _combatSteering = false;
+                        _usingFlowField = false;
+                        goto SkipBuild;
+                    }
                     // Move to a point at stopDist from the target
                     Vector3 dirToTarget = (tp - mp);
                     if (dirToTarget.sqrMagnitude < 0.0001f) dirToTarget = Vector3.right;
                     Vector3 desired = tp - dirToTarget.normalized * stopDist;
-                    // small per-unit jitter perpendicular to target direction to avoid piling into same hex
-                    float jitterScale = dist <= AttackRange * 2f ? 0.2f : 0.35f;
-                    float jitter = AttackRange * jitterScale;
-                    int hash = GetInstanceID();
-                    float r = (Mathf.Sin(hash * 12.9898f) * 43758.5453f) % 1f; // deterministic 0..1
-                    Vector3 perp = new Vector3(-dirToTarget.normalized.y, dirToTarget.normalized.x, 0f);
-                    desired += perp * ((r - 0.5f) * jitter);
+                    bool useSquadAnchor = false;
+                    var squadMgr = EnemySquadManager.Instance;
+                    if (IsInSquad && _squadMode != SquadMode.FreeCombat && squadMgr != null)
+                    {
+                        if (squadMgr.TryGetSquadAnchor(_squadId, out var anchor, out _, out var squadMode) &&
+                            squadMode != SquadMode.FreeCombat)
+                        {
+                            desired = anchor;
+                            useSquadAnchor = true;
+                        }
+                    }
+                    bool formationApplied = false;
+                    if (UseFormationOffsets && _formationIndex >= 0 && IsInSquad && _squadMode != SquadMode.FreeCombat &&
+                        (useSquadAnchor || dist <= FormationOffsetStartDistance))
+                    {
+                        if (_hex == null) _hex = SharedHex();
+                        if (_hex != null)
+                        {
+                            var anchorCell = _hex.WorldToGrid(desired);
+                            var anchorAxial = OddRToAxial(anchorCell);
+                            var offsetAxial = FormationAxialOffset(_formationIndex, Mathf.Max(1, FormationSpacingHex), FormationMaxRadiusHex);
+                            var targetAxial = new Axial(anchorAxial.q + offsetAxial.q, anchorAxial.r + offsetAxial.r);
+                            var offsetCell = AxialToOddR(targetAxial);
+                            offsetCell.x = Mathf.Clamp(offsetCell.x, 0, _hex.Width - 1);
+                            offsetCell.y = Mathf.Clamp(offsetCell.y, 0, _hex.Height - 1);
+                            desired = _hex.GridToWorld(offsetCell.x, offsetCell.y);
+                            formationApplied = true;
+                        }
+                    }
+                    if (!formationApplied)
+                    {
+                        // small per-unit jitter perpendicular to target direction to avoid piling into same hex
+                        float jitterScale = dist <= AttackRange * 2f ? 0.2f : 0.35f;
+                        float jitter = AttackRange * jitterScale;
+                        int hash = GetInstanceID();
+                        float r = (Mathf.Sin(hash * 12.9898f) * 43758.5453f) % 1f; // deterministic 0..1
+                        Vector3 perp = new Vector3(-dirToTarget.normalized.y, dirToTarget.normalized.x, 0f);
+                        desired += perp * ((r - 0.5f) * jitter);
+                    }
                     // Snap to hex center only when moving into a different cell to avoid "return to center" jitter.
                     if (_hex == null) _hex = SharedHex();
                     if (_hex != null)
@@ -314,7 +405,7 @@ namespace Game.Presentation.View
                         _view.SetDestination(desired);
                         _combatSteering = true;
                     }
-                    if (_repathTimer <= 0f && (!_pathPending || _pathPendingTimer <= 0f) && (!pathActive || targetMovedCell || delta2 > 0.05f * 0.05f))
+                    if (allowPerUnitPaths && _repathTimer <= 0f && (!_pathPending || _pathPendingTimer <= 0f) && (!pathActive || targetMovedCell || delta2 > 0.05f * 0.05f))
                     {
                         _usingFlowField = false;
                         if (!TryConsumeRepathBudget())
@@ -563,6 +654,68 @@ namespace Game.Presentation.View
             _forcedTargetTimer = 0f;
         }
 
+        public void ApplyBehaviorProfile()
+        {
+            if (!UseBehaviorProfile || BehaviorProfile == null) return;
+            ApplyBehaviorProfile(BehaviorProfile);
+        }
+
+        public void ApplyBehaviorProfile(UnitBehaviorProfile profile)
+        {
+            if (profile == null) return;
+            HoldPosition = profile.HoldPosition;
+            UseAggroRange = profile.UseAggroRange;
+            AggroRange = profile.AggroRange;
+            UseLeash = profile.UseLeash;
+            LeashRange = profile.LeashRange;
+            PreferForcedTarget = profile.PreferForcedTarget;
+        }
+
+        public void ApplyCombatProfile()
+        {
+            if (!UseCombatProfile || CombatProfile == null) return;
+            ApplyCombatProfile(CombatProfile);
+        }
+
+        public void ApplyCombatProfile(UnitCombatProfile profile)
+        {
+            if (profile == null) return;
+            AttackRange = profile.AttackRange;
+            AttackDamage = profile.AttackDamage;
+            AttackCooldown = profile.AttackCooldown;
+            RepathInterval = profile.RepathInterval;
+            RepathIntervalFar = profile.RepathIntervalFar;
+            RepathIntervalVeryFar = profile.RepathIntervalVeryFar;
+            RepathFailCooldown = profile.RepathFailCooldown;
+            ClusterSizeForRepath = profile.ClusterSizeForRepath;
+            FarClusterDistance = profile.FarClusterDistance;
+            ClusterSizeForRepath2 = profile.ClusterSizeForRepath2;
+            FarClusterDistance2 = profile.FarClusterDistance2;
+            UseClusterStepping = profile.UseClusterStepping;
+            RepathJitter = profile.RepathJitter;
+            InstantRepathOnTargetCellChange = profile.InstantRepathOnTargetCellChange;
+            StallRepathSeconds = profile.StallRepathSeconds;
+            UseFlowFields = profile.UseFlowFields;
+            FlowFieldMinDistance = profile.FlowFieldMinDistance;
+            FlowFieldStepInterval = profile.FlowFieldStepInterval;
+            FlowFieldStepJitter = profile.FlowFieldStepJitter;
+            TargetRefreshInterval = profile.TargetRefreshInterval;
+            EngageStopMultiplier = profile.EngageStopMultiplier;
+            JobTargetTtl = profile.JobTargetTtl;
+            LostTargetGraceSeconds = profile.LostTargetGraceSeconds;
+            LocalThreatOverrideMultiplier = profile.LocalThreatOverrideMultiplier;
+            CombatTickInterval = profile.CombatTickInterval;
+            CombatTickJitter = profile.CombatTickJitter;
+            DisableOrcaWhenInRange = profile.DisableOrcaWhenInRange;
+            OrcaDisableRangeMultiplier = profile.OrcaDisableRangeMultiplier;
+            UseFormationOffsets = profile.UseFormationOffsets;
+            FormationOffsetStartDistance = profile.FormationOffsetStartDistance;
+            FormationSpacingHex = profile.FormationSpacingHex;
+            FormationMaxRadiusHex = profile.FormationMaxRadiusHex;
+            LogCombatResets = profile.LogCombatResets;
+            MaxCombatResetLogsPerFrame = profile.MaxCombatResetLogsPerFrame;
+        }
+
         public void SetSquad(int squadId, SquadMode mode)
         {
             _squadId = squadId;
@@ -574,10 +727,16 @@ namespace Game.Presentation.View
             _squadMode = mode;
         }
 
+        public void SetFormationIndex(int index)
+        {
+            _formationIndex = index;
+        }
+
         public void ClearSquad()
         {
             _squadId = 0;
             _squadMode = SquadMode.None;
+            _formationIndex = -1;
         }
 
         private UnitCombat FindNearestEnemy()
@@ -653,7 +812,10 @@ namespace Game.Presentation.View
 
             if (TryGetForcedTarget(out var forced))
             {
-                _cachedTarget = IsLocalThreat(localTarget) ? localTarget : forced;
+                if (PreferForcedTarget || localTarget == null)
+                    _cachedTarget = forced;
+                else
+                    _cachedTarget = IsLocalThreat(localTarget) ? localTarget : forced;
                 _targetRefreshTimer = TargetRefreshInterval;
                 return _cachedTarget;
             }
@@ -668,6 +830,21 @@ namespace Game.Presentation.View
             _cachedTarget = null;
             _targetRefreshTimer = TargetRefreshInterval;
             return _cachedTarget;
+        }
+
+        private bool ShouldIgnoreTarget(float targetDist, bool isForced)
+        {
+            if (HoldPosition && targetDist > AttackRange)
+                return true;
+            if (!isForced && UseAggroRange && AggroRange > 0f && targetDist > AggroRange)
+                return true;
+            if (!isForced && UseLeash && LeashRange > 0f)
+            {
+                float homeDist = (_tr.position - _homePosition).magnitude;
+                if (homeDist > LeashRange)
+                    return true;
+            }
+            return false;
         }
 
         internal bool TryGetJobTarget(out UnitCombat target)
@@ -758,7 +935,7 @@ namespace Game.Presentation.View
                     _flowFieldTimer -= Time.deltaTime;
             }
 
-            if (!mgr.TryGetNextPoint(_tr.position, desired, out var next))
+            if (!mgr.TryGetNextPoint(_tr.position, desired, Faction, out var next))
                 return false;
 
             InvalidatePendingPath();
@@ -787,6 +964,67 @@ namespace Game.Presentation.View
             if (_sharedHex == null || !_sharedHex.isActiveAndEnabled)
                 _sharedHex = UnityEngine.Object.FindAnyObjectByType<Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
             return _sharedHex;
+        }
+
+        private struct Axial
+        {
+            public int q;
+            public int r;
+            public Axial(int q, int r)
+            {
+                this.q = q;
+                this.r = r;
+            }
+        }
+
+        private static Axial OddRToAxial(Vector2Int cell)
+        {
+            int q = cell.x - (cell.y - (cell.y & 1)) / 2;
+            int r = cell.y;
+            return new Axial(q, r);
+        }
+
+        private static Vector2Int AxialToOddR(Axial axial)
+        {
+            int col = axial.q + (axial.r - (axial.r & 1)) / 2;
+            int row = axial.r;
+            return new Vector2Int(col, row);
+        }
+
+        private static Axial FormationAxialOffset(int index, int spacing, int maxRadius)
+        {
+            if (index <= 0) return new Axial(0, 0);
+            int n = index - 1;
+            int ring = 1;
+            while (n >= 6 * ring)
+            {
+                n -= 6 * ring;
+                ring++;
+            }
+            if (maxRadius > 0)
+                ring = Mathf.Min(ring, maxRadius);
+            int side = ring > 0 ? n / ring : 0;
+            int offset = ring > 0 ? n % ring : 0;
+            var dirs = new Axial[]
+            {
+                new Axial(1, 0),
+                new Axial(1, -1),
+                new Axial(0, -1),
+                new Axial(-1, 0),
+                new Axial(-1, 1),
+                new Axial(0, 1)
+            };
+            Axial pos = new Axial(ring, 0);
+            for (int i = 0; i < side; i++)
+            {
+                pos.q += dirs[i].q * ring;
+                pos.r += dirs[i].r * ring;
+            }
+            pos.q += dirs[side].q * offset;
+            pos.r += dirs[side].r * offset;
+            pos.q *= spacing;
+            pos.r *= spacing;
+            return pos;
         }
 
         private static bool HasEnemyForFaction(Game.Domain.Units.Faction faction)

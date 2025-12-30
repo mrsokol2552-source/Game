@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: f03b77bbe5fec974b9d26468a7b40c10
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Shield3/Taunt/Taunt_W.anim
+  uploadId: 752914

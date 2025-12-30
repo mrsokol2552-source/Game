@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 73610a0cb14d18b4688b59b2f257ea1b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 315269
+  packageName: Character Creator - Modern 2D
+  packageVersion: 2.0
+  assetPath: Assets/SmallScaleInt/Character creator - Modern/Animators/Animation
+    Clips/Shield3/StrafeRight/StrafeRight_SW.anim
+  uploadId: 752914

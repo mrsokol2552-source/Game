@@ -23,7 +23,7 @@
 - `CompositionRoot` (`Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs`)
   - Creates `GameStateService` and binds SaveSystem capture/restore callbacks.
   - Auto-starts a new game when `AutoStart=true`, using `GameConfig.StartingResources` or zeroing stocks.
-  - Ensures helpers: `CameraZoom2D`, `HexPathfindingBootstrap` ("HexPathfinding (Auto)"), `ProceduralObstacles`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
+  - Ensures helpers: `CameraZoom2D`, `HexPathfindingBootstrap` ("HexPathfinding (Auto)"), `ProceduralObstacles`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `StaticObstacleHash`, `CoverSlotHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
   - Disables `LocalAvoidanceSystem` when ORCA is enabled (legacy steering).
   - Applies `UnitVisualCulling` and sorting layer/order to existing `UnitView` objects.
   - Ticks `EconomyManager` every frame (currently no passive income).
@@ -44,6 +44,7 @@
 - `BuildingConfig`: `Id`, `Cost`.
 - `ResearchConfig`: `ResearchDef` entries (`Id`, `Cost`).
 - `UnitConfig`: `Id`, `Speed`, `MaxHealth`, `Cost` (not wired to runtime yet).
+- `UnitBehaviorProfile`: hold/aggro/leash rules and forced-target preference.
 - `MovementSettings`: movement tuning for `UnitView` (`MaxSpeed`, accel/decel, slowdown, stop distance, rotate to velocity).
 
 ## Input, Camera, and UI
@@ -94,21 +95,30 @@
   - Jobified movement update for all `UnitView` with `UseMovementJobs=true`.
   - Applies ORCA velocity overrides, then falls back to steering or direct-to-destination motion.
   - Updates facing based on the resulting direction.
+  - ORCA overrides can be reused for a short frame window to decouple job timing.
+- `JobPipelineCoordinator`:
+  - Drives ORCA + Movement in a fixed order and disables their internal Update loops when enabled.
+- `UnitSoARegistry`:
+  - Builds a centralized SoA snapshot for ORCA inputs and is driven by the job coordinator.
+  - Also exposes combat snapshots for targeting systems when enabled.
 - `CrowdingResolver`:
   - Runs in `LateUpdate` every `Interval`.
   - Groups units by hex cell; nudges units beyond `AllowStayCountPerCell`.
   - Uses adaptive throttling (`FrameTimeSoftLimit/HardLimit`) and population scaling.
+  - Skips squad-controlled units and units currently following flow fields; no-ops while ORCA is active or legacy local avoidance is enabled.
   - Skips work when path builder budget is exhausted and uses `MoveCooldown` to prevent ping-pong.
   - Can resolve stacks for a limited window after enemies disappear (`ResolveWithoutEnemies`).
 - `StuckResolver`:
   - Tracks movement progress over a time window; if moving but not progressing, nudges to nearby free hex.
   - Can force a combat repath on stuck units; respects a per-unit cooldown.
+  - Ignores squad-controlled units outside `FreeCombat` and units currently following flow fields.
 
 ## Pathfinding and Navigation
 - `PathManager` (singleton):
   - Prefers `HexPathfindingBootstrap`, falls back to `PathfindingBootstrap`.
   - Budget: `MaxBuildsPerFrame` (0 = unlimited), `MaxPathNodes`.
   - Occupancy: enemies always block; friendlies are reserved for `FriendlyReserveSeconds`.
+  - Uses `StaticObstacleHash` (blocked cells) plus `OccupancyHash` (dynamic units) for fast occupied checks.
   - Per-frame occupied caches are reused across synchronous `BuildPath` calls (including recent-friendly TTL by faction).
   - Optional `EnableGroupPathReuse` with `GroupReuseMaxStartDist2` and `GroupReuseFrames`.
   - Uses pools for grid points, world points, and hash sets.
@@ -122,6 +132,7 @@
   - Odd-r hex grid, pointy-top. Defaults: `Width/Height=1024`, `HexSize=0.4`.
   - `AutoClampSize` limits grid if `Width*Height` exceeds `MaxCells`.
   - `BakeFromPhysics` uses `ObstacleMask` (or "Obstacles" layer) and `SampleRadius`.
+  - `BakeFromPhysicsRect` / `BakeFromPhysicsRectCells` update only a grid region and patch native walkable data for that rect.
   - Maintains `NativeArray<byte>` walkable map; `UpdateNativeWalkable` completes jobs before rebuild.
   - `CaptureBlocked`/`RestoreBlocked` for persistence.
 - `HexPathfinderJob`:
@@ -132,16 +143,30 @@
   - Fields expand only to the farthest requesting unit (distance limit + padding), not the full map.
   - Quantizes target cells to reduce field count; evicts fields by TTL/LRU.
   - Optional line-of-sight smoothing to skip zigzags on clear paths (`UseLoSSmoothing`, `LoSMaxRange`, `LoSMinImprovement`).
+  - Tiled mode (`UseTiledFields`) builds a coarse tile graph (`TileSize`) and limits expansion to tiles along the coarse path plus `TilePadding`.
+  - If a tile path cannot be found, it falls back to ungated expansion for that field.
+  - Crowd cost mode (`UseCrowdCosts`) builds a per-hex occupancy map each frame and biases flow steps away from dense clusters.
+  - Deterministic flow selection (`UseDeterministicDirections`) biases neighbor order toward the target direction for more stable results.
+  - Vector sampling (`UseVectorSampling`) blends downhill neighbors and steps a fraction of a hex for smoother motion.
+  - Influence cost mode (`UseInfluenceCosts`) builds per-faction threat maps from enemy units and biases flow steps away from danger.
+  - LoS flags cache per-cell visibility to the target and reduce repeated line checks during smoothing.
 - `PathfindingBootstrap` (square grid fallback):
   - Uses `CellSize`, `AllowDiagonals`, `AutoFitToCamera`. `SmoothWorldPath` is present but not wired.
+- `StaticObstacleHash`:
+  - Caches blocked hex cells into a static hash and rebuilds on walkable version changes.
+- `CoverSlotHash`:
+  - Pre-bakes cover slots around blocked cells and stores them in a spatial hash for fast lookup.
 - `HexPathfinderJobBurst.md` documents job usage and expectations.
 
 ## Combat and Targeting
 - `UnitCombat`:
   - Static `UnitCombat.All` holds all active combat units.
   - Global switch `DisableCombat` freezes combat logic (used by tests/self-test).
+  - Supports `UnitCombatProfile` to apply data-driven combat settings at spawn time.
+  - Supports `UnitBehaviorProfile` to apply hold/aggro/leash rules and forced-target preference.
   - Squad membership: units carry `SquadId` and `SquadMode` (`None`, `Gathering`, `Marching`, `Ready`, `FreeCombat`, `Sleeping`).
-  - Squad gating: individual path builds are allowed only in `FreeCombat` (or `None`); other modes use flow fields or direct destination steering.
+  - Squad gating: individual combat path builds are allowed only for non-squad units; squads use flow fields or direct destination steering.
+  - Squad units now skip per-unit combat path requests entirely; flow fields and direct steering handle movement.
   - Timers: `CombatTickInterval` + `CombatTickJitter`, `TargetRefreshInterval`, `JobTargetTtl`, `Repath*` timers.
   - `LostTargetGraceSeconds` keeps combat steering briefly after losing a target; cancels early if moving away from the last target position.
   - Budgets: `RepathBudgetPerFrame` enforced; `TargetSearchBudgetPerFrame` declared but not currently enforced.
@@ -153,6 +178,7 @@
   - Enemy presence check uses cached faction counts to avoid scanning all units each tick.
   - Movement steering:
     - Desired point at stop distance; optional perpendicular jitter to avoid stacking.
+    - Optional formation offsets near target for squad units (per-unit slot index).
     - Snaps to hex center only when moving into a different cell.
     - Cluster stepping (`UseClusterStepping`) uses `PathManager.TryGetClusterEdgeTarget`.
     - Flow fields (`UseFlowFields`) can advance toward target using `FlowFieldManager` when far away; can be forced when squad mode disallows individual paths.
@@ -174,24 +200,30 @@
   - If still underfilled at max radius, squad sleeps and retries recruitment every `SleepRetrySeconds`.
   - Uses squad-to-squad distance in hexes to drive states (`Gathering`, `Marching`, `Ready`, `FreeCombat`, `Sleeping`) with hysteresis (`Ready/Combat` entry and exit distances).
   - Assigns forced squad targets by TTL; in `FreeCombat` targets are released only when a unit is close enough (world distance based on `AttackRange`, optional hex override).
+  - Assigns per-unit formation slot indices for arrival offsets when enabled.
+  - Computes a squad move anchor via flow fields; non-free-combat units follow formation slots around the anchor (macro->micro split).
 - `UnitCombatJobScheduler`:
   - Jobified spatial hash (`NativeParallelMultiHashMap`) for nearest enemy search.
   - `Interval`, `HashCellSize`, `HashRings` control cadence and coverage.
   - Uses double buffering: schedule in one tick, apply results on the next update.
+  - Skips squad-controlled units (squad targeting handled by `EnemySquadManager` + `OccupancyHash`).
+  - Can reuse `UnitSoARegistry` snapshots when enabled to reduce per-unit transform reads.
 - `OccupancyHash`:
   - Rebuilt every frame; native hash for occupancy counts and a managed bucket map for nearest lookup.
 - `OrcaAvoidanceSystem`:
   - ORCA/RVO local avoidance in jobs, using a spatial hash and per-unit velocity override.
   - Supports cohesion toward friendly centroid to keep groups together.
+  - Per-unit priority (`UnitView.OrcaPriority`) shifts avoidance responsibility; `MinResponsibility` clamps zero-weight agents.
+  - Respects per-unit `UseOrcaVelocity` (units can opt out of overrides but remain avoidance obstacles).
 - `LocalAvoidanceSystem`:
-  - Legacy steering avoidance (disabled by default when ORCA is enabled).
+  - Legacy steering avoidance (disabled by default when ORCA is enabled; no-ops while ORCA is active).
 
 ## Environment and Obstacles
 - `ProceduralObstacles`:
   - Spawns rocks by `Count` or `CoveragePercent`.
   - `UseRandomSeed=true` uses time-based randomness; `false` uses `Seed`.
   - Ensures obstacle layer is included in `HexPathfindingBootstrap.ObstacleMask`.
-  - Re-bakes walkability after spawn.
+  - Re-bakes walkability after spawn using a bounded rect when possible.
 
 ## Save / Load
 - `SaveSystem`:
