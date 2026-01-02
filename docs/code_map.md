@@ -34,7 +34,7 @@ Presentation:
 - View: `UnitView`, `UnitCombat`, `UnitHpOverlay`, `MovementSettings`.
 - Performance: `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `UnitVisualCulling`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `UnitSoARegistry`, `LocalAvoidanceSystem` (legacy), `StuckResolver`.
 - Performance: `JobPipelineCoordinator` (fixed update order for ORCA + Movement).
-- Pathfinding: `PathManager`, `PathRequestQueue`, `HexPathfindingBootstrap`, `HexPathfinderJob`, `PathfindingBootstrap` (grid fallback), `FlowFieldManager`, `CrowdingResolver`, `PathProfiler`, `PathDebugHUD`.
+- Pathfinding: `PathManager`, `PathRequestQueue`, `HexPathfindingBootstrap`, `HexPathfinderJob`, `PathfindingBootstrap` (grid fallback), `FlowFieldManager`, `CrowdingResolver`, `ProceduralEnvironment`, `PathProfiler`, `PathDebugHUD`.
 - Pathfinding: `StaticObstacleHash` (blocked-cell hash for fast static queries), `CoverSlotHash` (pre-baked cover slots).
 
 ## Bootstrap and singletons
@@ -42,7 +42,7 @@ Presentation:
 - `CompositionRoot` (`Presentation/Bootstrap/CompositionRoot.cs`):
   - Creates `GameStateService` and binds `SaveSystem` callbacks.
   - Optionally runs `StartNewGame` with `GameConfig.StartingResources`.
-- Ensures `CameraZoom2D`, `HexPathfindingBootstrap`, `ProceduralObstacles`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `StaticObstacleHash`, `CoverSlotHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
+- Ensures `CameraZoom2D`, `HexPathfindingBootstrap`, `ProceduralObstacles`, `ProceduralEnvironment`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `StaticObstacleHash`, `CoverSlotHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
   - Disables `LocalAvoidanceSystem` when ORCA is enabled.
   - Applies `UnitVisualCulling` and sorting layer/order to existing units.
   - `Save()` and `Load()` wrap `SaveGame`/`LoadGame` use cases.
@@ -243,6 +243,12 @@ HudController -> Load button
   - Optional LoS flags cache per-cell visibility to the target to reduce repeated line checks.
 - `CoverSlotHash`:
   - Pre-bakes cover slots around blocked cells and stores them in a spatial hash for fast lookup.
+- `ProceduralEnvironment`:
+  - Builds tilemap ground/prop layers from `TileBase` palettes.
+  - Supports blocking props that can be baked into walkability when enabled.
+  - Can auto-split blocking props by tile name keywords when enabled.
+  - Supports async, chunked generation to avoid editor freezes on large maps.
+  - Can update walkability directly for blocking tiles to avoid physics rebake.
 
 ## Performance helpers
 

@@ -23,7 +23,7 @@
 - `CompositionRoot` (`Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs`)
   - Creates `GameStateService` and binds SaveSystem capture/restore callbacks.
   - Auto-starts a new game when `AutoStart=true`, using `GameConfig.StartingResources` or zeroing stocks.
-  - Ensures helpers: `CameraZoom2D`, `HexPathfindingBootstrap` ("HexPathfinding (Auto)"), `ProceduralObstacles`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `StaticObstacleHash`, `CoverSlotHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
+  - Ensures helpers: `CameraZoom2D`, `HexPathfindingBootstrap` ("HexPathfinding (Auto)"), `ProceduralObstacles`, `ProceduralEnvironment`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `StaticObstacleHash`, `CoverSlotHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
   - Disables `LocalAvoidanceSystem` when ORCA is enabled (legacy steering).
   - Applies `UnitVisualCulling` and sorting layer/order to existing `UnitView` objects.
   - Ticks `EconomyManager` every frame (currently no passive income).
@@ -224,6 +224,13 @@
   - `UseRandomSeed=true` uses time-based randomness; `false` uses `Seed`.
   - Ensures obstacle layer is included in `HexPathfindingBootstrap.ObstacleMask`.
   - Re-bakes walkability after spawn using a bounded rect when possible.
+- `ProceduralEnvironment`:
+  - Builds a ground tilemap layer and optional prop layer from `TileBase` arrays.
+  - Aligns grid cell size to `HexPathfindingBootstrap.HexSize` when hex layout is used.
+  - Supports blocking props (separate tile list) that can be baked into walkability.
+  - Can auto-split blocking props by tile name keywords when enabled.
+  - Supports async, chunked generation to avoid editor freezes on large maps.
+  - Can update walkability directly for blocking tiles (no physics rebake) via `UseDirectWalkableUpdates`.
 
 ## Save / Load
 - `SaveSystem`:

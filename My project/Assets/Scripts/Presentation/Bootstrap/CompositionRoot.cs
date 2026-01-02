@@ -71,13 +71,27 @@ namespace Game.Presentation.Bootstrap
                 saveSystem.BindObstacles(hex.CaptureBlocked, hex.RestoreBlocked);
             }
 
-            // Ensure procedural obstacles spawner exists (optional)
-            var proc = UnityEngine.Object.FindAnyObjectByType<global::Game.Presentation.Pathfinding.ProceduralObstacles>();
+            // Ensure procedural obstacles spawner exists (optional).
+            // Respect inactive objects so disabling in the scene doesn't auto-spawn a new one.
+            var procs = UnityEngine.Object.FindObjectsByType<global::Game.Presentation.Pathfinding.ProceduralObstacles>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var proc = procs.Length > 0 ? procs[0] : null;
             if (proc == null)
             {
                 var goProc = new GameObject("ProceduralObstacles (Auto)");
                 proc = goProc.AddComponent<global::Game.Presentation.Pathfinding.ProceduralObstacles>();
                 // Optional: try to assign a default rock sprite if present via inspector later
+            }
+
+            // Ensure procedural environment exists (optional).
+            // Respect inactive objects so disabling in the scene doesn't auto-spawn a new one.
+            var envs = UnityEngine.Object.FindObjectsByType<global::Game.Presentation.Pathfinding.ProceduralEnvironment>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var env = envs.Length > 0 ? envs[0] : null;
+            if (env == null)
+            {
+                var goEnv = new GameObject("ProceduralEnvironment (Auto)");
+                env = goEnv.AddComponent<global::Game.Presentation.Pathfinding.ProceduralEnvironment>();
             }
 
             // Ensure performance helpers

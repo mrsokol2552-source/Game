@@ -16,6 +16,7 @@ namespace Game.Presentation.Input
         public float RmbCoalesceSeconds = 0.08f;
         private Coroutine _rmbApplyRoutine;
         private Vector3 _rmbPendingWorld;
+        private int _rmbPendingSquadId;
         private float _lastRmbTime;
         private Vector3 _lastRmbWorld;
 
@@ -51,7 +52,7 @@ namespace Game.Presentation.Input
                         ApplyUnitSorting(sr, root);
                     }
                 }
-                if (mouse.rightButton.wasPressedThisFrame && lastUnit != null)
+                if (mouse.rightButton.wasPressedThisFrame)
                 {
                     var world = SnapToHex(ScreenToWorld(cam, mouse.position.ReadValue()));
                     EnqueueRmb(world);
@@ -75,7 +76,7 @@ namespace Game.Presentation.Input
                     ApplyUnitSorting(sr, root);
                 }
             }
-            if (UnityEngine.Input.GetMouseButtonDown(1) && lastUnit != null)
+            if (UnityEngine.Input.GetMouseButtonDown(1))
             {
                 var world = SnapToHex(ScreenToWorld(cam, UnityEngine.Input.mousePosition));
                 EnqueueRmb(world);
@@ -158,6 +159,8 @@ namespace Game.Presentation.Input
 
         private void EnqueueRmb(Vector3 world)
         {
+            if (!HudController.TryGetSelectedSquadId(out _rmbPendingSquadId) && lastUnit == null)
+                return;
             _rmbPendingWorld = world;
             if (_rmbApplyRoutine == null)
                 _rmbApplyRoutine = StartCoroutine(ApplyRmbAfterCoalesce());
@@ -167,12 +170,29 @@ namespace Game.Presentation.Input
         {
             yield return new WaitForSeconds(RmbCoalesceSeconds);
             var target = _rmbPendingWorld;
+            bool issued = false;
+            if (_rmbPendingSquadId > 0)
+                issued = TrySetPathForSquad(_rmbPendingSquadId, target);
             var unit = lastUnit;
-            if (unit != null)
-            {
+            if (!issued && unit != null)
                 TrySetPath(unit, target);
-            }
             _rmbApplyRoutine = null;
+        }
+
+        private bool TrySetPathForSquad(int squadId, Vector3 worldTarget)
+        {
+            bool issued = false;
+            foreach (var uc in UnitCombat.All)
+            {
+                if (uc == null || !uc.isActiveAndEnabled) continue;
+                if (uc.Faction != Game.Domain.Units.Faction.Player) continue;
+                if (!uc.IsInSquad || uc.SquadId != squadId) continue;
+                var unit = uc.GetComponent<UnitView>();
+                if (unit == null) continue;
+                TrySetPath(unit, worldTarget);
+                issued = true;
+            }
+            return issued;
         }
 
         private bool ShouldIgnoreRmb(Vector3 world)

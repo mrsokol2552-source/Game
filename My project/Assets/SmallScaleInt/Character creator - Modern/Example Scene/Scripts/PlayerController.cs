@@ -590,7 +590,7 @@ float SnapAngleToEightDirections(float angle)
             Rigidbody2D rbProjectile = projectileInstance.GetComponent<Rigidbody2D>();
             if (rbProjectile != null)
             {
-                rbProjectile.velocity = direction * projectileSpeed;
+                rbProjectile.linearVelocity = direction * projectileSpeed;
             }
             // Destroy the instantiated prefab after another 1.5 seconds
             Destroy(projectileInstance, 1.5f);

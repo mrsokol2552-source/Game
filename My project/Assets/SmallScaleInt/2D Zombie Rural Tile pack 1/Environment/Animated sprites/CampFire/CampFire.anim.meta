@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 7ff215065009ad742817e0ad1ef4c7f6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 312874
+  packageName: Zombie Rural - HD Isometric Tileset
+  packageVersion: 1.1
+  assetPath: Assets/SmallScaleInt/2D Zombie Rural Tile pack 1/Environment/Animated
+    sprites/CampFire/CampFire.anim
+  uploadId: 742232
