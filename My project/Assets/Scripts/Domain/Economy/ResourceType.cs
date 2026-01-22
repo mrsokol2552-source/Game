@@ -1,3 +1,6 @@
+// [CODE-ID: SCRIPTS-DOMAIN-ECONOMY-RESOURCETYPE]
+// Logical block: Scripts/Domain/Economy/ResourceType.
+
 namespace Game.Domain.Economy
 {
     public enum ResourceType
@@ -8,4 +11,3 @@ namespace Game.Domain.Economy
         Food = 3
     }
 }
-

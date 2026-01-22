@@ -1,5 +1,8 @@
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-INFRASTRUCTURE-CONFIGS-RESOURCECONFIG]
+// Logical block: Scripts/Infrastructure/Configs/ResourceConfig.
+
 namespace Game.Infrastructure.Configs
 {
     [CreateAssetMenu(fileName = "ResourceConfig", menuName = "Configs/Resource Config")]
@@ -9,4 +12,3 @@ namespace Game.Infrastructure.Configs
         public Color Color = Color.white;
     }
 }
-

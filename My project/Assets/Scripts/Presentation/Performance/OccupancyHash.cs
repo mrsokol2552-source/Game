@@ -3,6 +3,9 @@ using Unity.Collections;
 using UnityEngine;
 using Game.Presentation.View;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PERFORMANCE-OCCUPANCYHASH]
+// Logical block: Scripts/Presentation/Performance/OccupancyHash.
+
 namespace Game.Presentation.Performance
 {
     /// <summary>

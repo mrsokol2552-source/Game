@@ -5,6 +5,9 @@ using Game.Domain.Units;
 using Game.Presentation.View;
 using Game.Presentation.Performance;
 
+// [CODE-ID: TESTS-EDITMODE-UNITCOMBATTARGETINGTESTS]
+// Logical block: Tests/EditMode/UnitCombatTargetingTests.
+
 namespace Tests.EditMode
 {
     public class UnitCombatTargetingTests

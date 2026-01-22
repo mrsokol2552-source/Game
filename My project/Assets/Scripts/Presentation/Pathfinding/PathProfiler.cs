@@ -1,5 +1,8 @@
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-PATHPROFILER]
+// Logical block: Scripts/Presentation/Pathfinding/PathProfiler.
+
 namespace Game.Presentation.Pathfinding
 {
     public static class PathProfiler

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
@@ -6,6 +6,9 @@ using Game.Application.Services;
 using Game.Application.Ports;
 using Game.Domain.Economy;
 using UnityEngine;
+
+// [CODE-ID: SCRIPTS-INFRASTRUCTURE-PERSISTENCE-SAVESYSTEM]
+// Logical block: Scripts/Infrastructure/Persistence/SaveSystem.
 
 namespace Game.Infrastructure.Persistence
 {
@@ -195,4 +198,3 @@ namespace Game.Infrastructure.Persistence
         }
     }
 }
-

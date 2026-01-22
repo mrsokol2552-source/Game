@@ -1,15 +1,48 @@
 # Code Map (Unity RTS Prototype)
 
-This document is a code-level map for quick navigation. It complements `docs/gameplay_current_state.md` and focuses on where behavior lives in the codebase.
+This document is a code-level map for quick navigation. It complements [gameplay_current_state.md](./gameplay_current_state.md) and focuses on where behavior lives in the codebase.
+For direct `CODE-ID` lookup, use [code_id_index.md](./code_id_index.md).
+For symptom-first debugging, use [debug_playbooks.md](./debug_playbooks.md).
+For high-value runtime/inspector parameters, use [runtime_switches.md](./runtime_switches.md).
+For machine-readable system lookup, use [code_index.json](./code_index.json).
+For a practical performance reference, use [unity_csharp_performance_optimization_reference.md](./unity_csharp_performance_optimization_reference.md).
+For available Unity MCP capabilities and when to use them, use [unity_mcp_tools.md](./unity_mcp_tools.md).
+For the repo-navigation architecture reference behind the current documentation model, use [deep-research-report.md](./deep-research-report.md).
+For a compact repo overview, use [repo_map.md](../maps/repo_map.md).
+For a machine-readable top-level repo map, use [repo_map.json](../maps/repo_map.json).
+For the agent header/comment convention, use [agent_comment_standard.md](./agent_comment_standard.md).
+
+## Code ID scheme
+
+All project scripts now contain a file-level comment in this format:
+
+- `// [CODE-ID: ...]`
+- `// Logical block: ...`
+
+These IDs are path-based and unique inside the project codebase. They are intended as stable anchors for discussion and future refactors.
+
+Large/high-risk systems also contain shorter internal section IDs:
+
+- `PENV-*` - `ProceduralEnvironment`
+- `UCOM-*` - `UnitCombat`
+- `FFLD-*` - `FlowFieldManager`
+- `PMGR-*` - `PathManager`
+- `ORCA-*` - `OrcaAvoidanceSystem`
+- `ESQD-*` - `EnemySquadManager`
+- `HPFB-*` - `HexPathfindingBootstrap`
+- `MJOB-*` - `MovementJobSystem`
+- `PQUE-*` - `PathRequestQueue`
+
+Use these IDs when referencing a logical block instead of describing it indirectly.
 
 ## Repository layout
 
-- `My project/Assets/Scripts/Domain` - core data and rules (economy, research, unit stats).
-- `My project/Assets/Scripts/Application` - use cases that orchestrate domain actions.
-- `My project/Assets/Scripts/Infrastructure` - configs (ScriptableObjects) and persistence.
-- `My project/Assets/Scripts/Presentation` - Unity MonoBehaviours for input, UI, view, pathfinding, performance.
-- `My project/Assets/Tests` - EditMode/PlayMode tests and perf stress harness.
-- `docs/` - system notes and architecture references.
+- [Assets/Scripts/Domain](../My%20project/Assets/Scripts/Domain) - core data and rules (economy, research, unit stats).
+- [Assets/Scripts/Application](../My%20project/Assets/Scripts/Application) - use cases that orchestrate domain actions.
+- [Assets/Scripts/Infrastructure](../My%20project/Assets/Scripts/Infrastructure) - configs (ScriptableObjects) and persistence.
+- [Assets/Scripts/Presentation](../My%20project/Assets/Scripts/Presentation) - Unity MonoBehaviours for input, UI, view, pathfinding, performance.
+- [Assets/Tests](../My%20project/Assets/Tests) - EditMode/PlayMode tests and perf stress harness.
+- [docs](./) - system notes and architecture references.
 
 ## Layer map (Domain / Application / Infrastructure / Presentation)
 
@@ -37,9 +70,59 @@ Presentation:
 - Pathfinding: `PathManager`, `PathRequestQueue`, `HexPathfindingBootstrap`, `HexPathfinderJob`, `PathfindingBootstrap` (grid fallback), `FlowFieldManager`, `CrowdingResolver`, `ProceduralEnvironment`, `PathProfiler`, `PathDebugHUD`.
 - Pathfinding: `StaticObstacleHash` (blocked-cell hash for fast static queries), `CoverSlotHash` (pre-baked cover slots).
 
+## ProceduralEnvironment ground conversion preset (isometric -> square)
+
+The current default preset is tuned for `Zombie Rural - HD Isometric Tileset` ground tiles (128x256). Defaults live in [ProceduralEnvironment.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.cs) and are mirrored in [SampleScene.unity](../My%20project/Assets/Scenes/SampleScene.unity).
+
+Key settings:
+- Manual diamond cutout: `UseGroundTileManualDiamond=true`, `GroundTileDiamondNormalized=false`, `GroundTileDiamondYFromTop=true`.
+- Diamond points (pixels): top `(63.5,175)`, right `(127,207.5)`, bottom `(63.5,240)`, left `(0,208.5)`.
+- Edge cleanup: `GroundTileDiamondInsetPixels=3`, `GroundTileMaskOutsideDiamond=true`, `GroundTileEdgeDilatePixels=2`, `GroundTileEdgeTrimPixels=1`, `GroundTileEdgeBlackThreshold=0.09`, `GroundTileEdgeChromaThreshold=0.09`.
+- Sampling: `GroundTileAlphaThreshold=0.2`, `GroundTileFilterMode=Point`, `UseGroundTileAutoCrop=false`.
+- Packed sprites: if a sprite is atlas-rotated (`sprite.packed`), it is unrotated before the manual diamond cut.
+- Background: `UseBackgroundTilemap=true`, `BackgroundCellOverlapPixels=0`.
+
+If you switch to another tileset or sprite size, update the diamond points and (optionally) the inset/edge thresholds.
+
+Palette filters and biomes (SampleScene defaults):
+- `UseGroundSuffixFilter=false` (keep all orientation variants; when enabled it filters `GroundTiles` by suffix and can hide `_E/_S/_W` variants).
+- `AutoSplitGroundByName=true` with `PropNameKeywords=flora` and `BlockingNameKeywords=tree, rock, boulder, stone, cliff, pine`.
+- `UseWaterBiome=true` with `WaterTileNameKeywords=Ground A2_..A14_`, `RockTileNameKeywords=Ground E2_..E10_` (names must exist in the current `GroundTiles` set).
+- `WaterInteriorTileNameKeywords` controls which tiles are allowed in fully-surrounded water; `UseWaterAutoInteriorByColor` can auto-detect interior water tiles by blue-dominant edges and a clean interior region (defaults: `WaterInteriorBlueRatio=0.9`, `WaterInteriorSampleInsetPixels=4`, `WaterInteriorFallbackCount=1`, `WaterEdgeBlueRatio=0.8`, `WaterEdgeBlueDominance=0.08`, `WaterEdgeBlueMin=0.2`, `WaterEdgeSampleInsetPixels=1`, `WaterEdgeSampleBandPixels=3`, `WaterEdgeMismatchTolerance=0.1`, `WaterEdgeMaskSamples=8`, `WaterEdgeMaskRatioThreshold=0.45`, `WaterEdgeMaskMatchWeight=0.8`, `WaterEdgeSmoothnessWeight=0.6`, `WaterTileExcludeKeywords=Ground A3_, Ground A11_, Ground A12_`).
+- When `UseWaterBiome=true`, water/rock tiles are removed from normal land selection; if the water mask doesn't build, you'll see only land tiles.
+- Water generation removes isolated single water cells (4-neighbor check) and converts land “holes” fully surrounded by water to water.
+- Water edge matching: `UseWaterEdgeColorMatch=true` enforces blue-dominant edges for any tile adjacent to water (water/rock/land), requiring water edges where the mask neighbor is water and non-water edges elsewhere; fallback uses water edge ratios and edge masks when strict matches fail.
+- Water edge refinement: `UseWaterEdgeRefinement=true` runs a post-pass over the background to re-pick variants near water using full 4-neighbor edge masks (`WaterEdgeRefinePasses=1`, `WaterEdgeSmoothnessWeight=0.6`).
+- Water mask smoothing: `UseWaterMaskSmoothing=true` applies cellular smoothing over the water mask (`WaterMaskSmoothPasses=2`, `WaterMaskSmoothFillNeighbors=5`, `WaterMaskSmoothStayNeighbors=4`, `WaterMaskSmoothIncludeDiagonals=true`) to reduce jagged shorelines.
+- Layer smoothing: `UseLayerSmoothing=true` applies majority smoothing over biome indices (`LayerSmoothingPasses=1`, `LayerSmoothingMajority=0.55`, `LayerSmoothingIncludeDiagonals=false`) to reduce speckle noise globally.
+- Layer cleanup: `UseLayerRegionCleanup=true` merges tiny biome islands into neighboring majority regions (`LayerMinRegionSize=20`, `LayerCleanupPasses=1`, `LayerCleanupIncludeDiagonals=false`).
+- Noise warp: `UseNoiseDomainWarp=true` distorts the biome noise field to break grid-like patterns (`DomainWarpScale=0.02`, `DomainWarpStrength=0.6`, `DomainWarpOctaves=2`, `DomainWarpPersistence=0.5`, `DomainWarpLacunarity=2`).
+- Layer quantization: `UseLayerQuantization=true` snaps noise into clearer biome bands with small jitter (`LayerQuantizationJitter=0.12`).
+- Macro biomes: `UseMacroBiomeNoise=true` blends in a very low-frequency noise to produce large contiguous regions (`MacroBiomeScale=0.004`, `MacroBiomeBlend=0.85`, `MacroBiomeContrast=1.2`, `MacroBiomeOctaves=1`).
+
+## ProceduralEnvironment: world streaming + far view
+
+Streaming (for very large maps):
+- `UseWorldStreaming=true` enables chunked generation around the camera.
+- Chunk controls: `StreamChunkSize`, `StreamActiveRadius`, `StreamPrefetchRadius`, `StreamUnloadRadius`, `StreamMaxLoadedChunks`.
+- Performance controls: `StreamChunksPerFrame`, `StreamFrameBudgetMs`, `StreamTargetFps`, `StreamSkipIfOverBudget`.
+- Cache policy: `StreamKeepGeneratedChunks` keeps chunks forever (no re-bake/unload); `StreamBakeAllChunksOnIdle` fills the map when camera is idle (`StreamIdleSeconds`, `StreamIdleMoveEpsilon`).
+- Water/rock biomes in streaming use the same **water mask + rock mask** as non-streaming generation (no simple noise fallback).
+- Edge matching in streaming respects `UseWaterEdgeColorMatch` and related mask/ratio settings.
+- Props/trees placement grid: `StreamPropsUseBackgroundGrid` (default `false`).
+  - `false`: props/trees are placed in the hex grid (most consistent with unit positions).
+  - `true`: props/trees placed in the background rect grid (use only if you want them locked to the square background).
+
+Far view bake:
+- `UseFarViewBake=true` renders the map to a cached texture for very far zooms.
+- Chunked bake: `UseFarViewChunkedBake=true`, `FarViewChunksPerFrame`, `FarViewChunkPixels`, `FarViewMaxTextureSize`.
+- Readback control: `UseFarViewAsyncReadback`, `FarViewReadbacksPerFrame`, `FarViewMaxPendingReadbacks`, `FarViewReadbackTimeout`.
+- UI: `ShowFarViewBakeHUD`, `FarViewHideMapWhileBaking`.
+- Important: Far view is **disabled while streaming is active** (streaming takes priority).
+
 ## Bootstrap and singletons
 
-- `CompositionRoot` (`Presentation/Bootstrap/CompositionRoot.cs`):
+- [CompositionRoot.cs](../My%20project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs):
   - Creates `GameStateService` and binds `SaveSystem` callbacks.
   - Optionally runs `StartNewGame` with `GameConfig.StartingResources`.
 - Ensures `CameraZoom2D`, `HexPathfindingBootstrap`, `ProceduralObstacles`, `ProceduralEnvironment`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `StaticObstacleHash`, `CoverSlotHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
@@ -47,7 +130,7 @@ Presentation:
   - Applies `UnitVisualCulling` and sorting layer/order to existing units.
   - `Save()` and `Load()` wrap `SaveGame`/`LoadGame` use cases.
 
-- `PathManager.Ensure()` and `PathRequestQueue.Ensure()` create global instances if missing.
+- [PathManager.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/PathManager.cs) `Ensure()` and [PathRequestQueue.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.cs) `Ensure()` create global instances if missing.
 
 ## Core runtime flows (step-by-step)
 
@@ -289,6 +372,8 @@ HudController -> Load button
 
 - `UnitVisualCulling`:
   - Disables `SpriteRenderer`, `Animator`, `UnitHpOverlay` when far from camera or outside frustum.
+- `StaticObstacleHash` / `CoverSlotHash`:
+  - Have guards for huge grids/streaming. When map size is too large or streaming is enabled, they skip heavy rebuilds to avoid RAM spikes and frame stalls.
 
 ## Diagnostics and toggles
 

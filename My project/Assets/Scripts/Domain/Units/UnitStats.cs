@@ -1,5 +1,8 @@
 using System;
 
+// [CODE-ID: SCRIPTS-DOMAIN-UNITS-UNITSTATS]
+// Logical block: Scripts/Domain/Units/UnitStats.
+
 namespace Game.Domain.Units
 {
     [Serializable]

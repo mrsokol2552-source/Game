@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-COVERSLOTHASH]
+// Logical block: Scripts/Presentation/Pathfinding/CoverSlotHash.
+
 namespace Game.Presentation.Pathfinding
 {
     /// <summary>
@@ -13,15 +16,23 @@ namespace Game.Presentation.Pathfinding
 
         [Tooltip("Enable cover slot baking and hashing.")]
         public bool Enabled = true;
+        [Tooltip("Skip rebuilding when world streaming is enabled (saves CPU/memory on huge maps).")]
+        public bool DisableWhileStreaming = true;
+        [Tooltip("Disable rebuild when total cells exceed this value (0 = no limit).")]
+        public int MaxCells = 1000000;
+        [Tooltip("Minimum seconds between rebuilds to avoid per-frame spikes.")]
+        public float MinRebuildInterval = 0.5f;
         [Tooltip("World cell size for cover spatial hash.")]
         public float BucketCellSize = 1.5f;
         [Tooltip("How many bucket rings to scan for nearest cover.")]
         public int SearchRings = 2;
 
         private HexPathfindingBootstrap _hex;
+        private ProceduralEnvironment _environment;
         private int _walkableVersion = -1;
         private int _width = -1;
         private int _height = -1;
+        private float _lastRebuildTime = -10f;
 
         private readonly Dictionary<int, List<CoverSlot>> _buckets = new Dictionary<int, List<CoverSlot>>(256);
         private readonly Stack<List<CoverSlot>> _listPool = new Stack<List<CoverSlot>>();
@@ -75,9 +86,28 @@ namespace Game.Presentation.Pathfinding
             if (_hex == null || !_hex.isActiveAndEnabled)
                 _hex = UnityEngine.Object.FindAnyObjectByType<HexPathfindingBootstrap>();
             if (_hex == null) return;
+            if (_environment == null)
+                _environment = UnityEngine.Object.FindAnyObjectByType<ProceduralEnvironment>();
+
+            if (DisableWhileStreaming && _environment != null && _environment.UseWorldStreaming)
+            {
+                DisableCache();
+                return;
+            }
+            int totalCells = _hex.Width * _hex.Height;
+            if (MaxCells > 0 && totalCells > MaxCells)
+            {
+                DisableCache();
+                return;
+            }
             if (_walkableVersion != _hex.WalkableVersion || _width != _hex.Width || _height != _hex.Height)
             {
-                Rebuild();
+                float now = Time.realtimeSinceStartup;
+                if (MinRebuildInterval <= 0f || (now - _lastRebuildTime) >= MinRebuildInterval)
+                {
+                    Rebuild();
+                    _lastRebuildTime = now;
+                }
             }
         }
 
@@ -181,6 +211,17 @@ namespace Game.Presentation.Pathfinding
                 _listPool.Push(kv.Value);
             }
             _buckets.Clear();
+        }
+
+        private void DisableCache()
+        {
+            ClearBuckets();
+            if (_hex != null)
+            {
+                _walkableVersion = _hex.WalkableVersion;
+                _width = _hex.Width;
+                _height = _hex.Height;
+            }
         }
 
         private static Vector2Int WorldToCell(Vector3 world, float cellSize)

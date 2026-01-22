@@ -4,6 +4,9 @@ using Unity.Mathematics;
 using Unity.Jobs;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDERJOB]
+// Logical block: Scripts/Presentation/Pathfinding/HexPathfinderJob.
+
 namespace Game.Presentation.Pathfinding
 {
     /// <summary>

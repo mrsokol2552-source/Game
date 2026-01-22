@@ -1,6 +1,9 @@
 using Game.Domain.Economy;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-INFRASTRUCTURE-CONFIGS-RESEARCHCONFIG]
+// Logical block: Scripts/Infrastructure/Configs/ResearchConfig.
+
 namespace Game.Infrastructure.Configs
 {
     [CreateAssetMenu(fileName = "ResearchConfig", menuName = "Configs/Research Config")]
@@ -16,4 +19,3 @@ namespace Game.Infrastructure.Configs
         public ResourceAmount[] Cost;
     }
 }
-

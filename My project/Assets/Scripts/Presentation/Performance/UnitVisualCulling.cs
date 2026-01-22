@@ -1,5 +1,8 @@
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PERFORMANCE-UNITVISUALCULLING]
+// Logical block: Scripts/Presentation/Performance/UnitVisualCulling.
+
 namespace Game.Presentation.Performance
 {
     /// <summary>

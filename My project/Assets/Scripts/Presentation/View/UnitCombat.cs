@@ -1,3 +1,19 @@
+/*
+@file: My project/Assets/Scripts/Presentation/View/UnitCombat.cs
+@module: presentation.combat.unit
+@purpose: Runs per-unit combat decisions, target acquisition, attack timing, squad-state transitions, and chase behavior.
+@entry: UnitCombat.Update, UCOM-03, UCOM-06, UCOM-08
+@api: per-unit MonoBehaviour attached to combat-capable units
+@deps: UnitView, PathManager, FlowFieldManager, EnemySquadManager, OrcaAvoidanceSystem, configs
+@data: target state, squad membership, attack cooldowns, repath timers, combat profile data
+@perf: hotpath, large-N combat update, sensitive to target scans and repath churn
+@thread: main thread only
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs, manual battle verification
+@config: inspector combat settings, UnitCombatProfile, UnitBehaviorProfile, docs/runtime_switches.md
+@assets: unit prefabs, animation state hooks, muzzle flash / hit / death presentation
+@notes: player ranged and enemy melee overrides intentionally diverge; attack range and separation must stay aligned
+*/
+
 using System.Collections.Generic;
 using Game.Domain.Units;
 using UnityEngine;
@@ -6,14 +22,22 @@ using Game.Presentation.Performance;
 using System.Linq;
 using Game.Infrastructure.Configs;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT]
+// Logical block: Scripts/Presentation/View/UnitCombat.
+
 namespace Game.Presentation.View
 {
     [RequireComponent(typeof(UnitView))]
     [RequireComponent(typeof(SpriteRenderer))]
     public class UnitCombat : MonoBehaviour
     {
+        // [UCOM-01]
+        // Combat tuning, squad state, targeting budgets, and per-unit runtime caches.
         public static readonly HashSet<UnitCombat> All = new HashSet<UnitCombat>();
         public static bool DisableCombat = false; // Self-test or debug freeze
+
+        public event System.Action OnAttack;
+        public event System.Action OnDeath;
 
         public enum SquadMode
         {
@@ -30,6 +54,16 @@ namespace Game.Presentation.View
         public float AttackRange = 1.5f;
         public int AttackDamage = 10;
         public float AttackCooldown = 0.75f;
+        [Header("Per-Faction Overrides")]
+        public bool UseFactionOverrides = true;
+        [Tooltip("Attack range for player (ranged) units.")]
+        public float PlayerAttackRange = 4.5f;
+        [Tooltip("Attack range for enemy (melee) units.")]
+        public float EnemyAttackRange = 1.1f;
+        [Tooltip("Disable ORCA when in range (player units).")]
+        public bool PlayerDisableOrcaInRange = false;
+        [Tooltip("Disable ORCA when in range (enemy units).")]
+        public bool EnemyDisableOrcaInRange = true;
         [Header("Profile")]
         public bool UseCombatProfile = false;
         public UnitCombatProfile CombatProfile;
@@ -104,6 +138,20 @@ namespace Game.Presentation.View
         public bool DisableOrcaWhenInRange = true;
         [Tooltip("Multiplier on AttackRange that disables ORCA (>= 1).")]
         public float OrcaDisableRangeMultiplier = 1.1f;
+        [Header("Collision Spacing")]
+        [Tooltip("Keep ORCA enabled when a friendly is too close (prevents overlap).")]
+        public bool KeepOrcaNearFriendlies = true;
+        [Tooltip("Friendly distance (world units) below which we keep ORCA enabled.")]
+        public float FriendlySeparationRadius = 1.0f;
+        [Header("Crouch Logic")]
+        [Tooltip("Enable crouch when a friendly is directly behind this unit while attacking.")]
+        public bool UseCrouchWhenBlocked = true;
+        [Tooltip("How long to crouch when blocked by a friendly behind (seconds).")]
+        public float CrouchBlockedSeconds = 0.45f;
+        [Tooltip("Max distance behind to trigger crouch (world units).")]
+        public float CrouchBehindDistance = 1.2f;
+        [Tooltip("Lateral tolerance for 'behind' check (world units).")]
+        public float CrouchLateralTolerance = 0.5f;
         [Header("Formation Offsets")]
         [Tooltip("Apply per-unit formation offsets near the target to reduce stacking.")]
         public bool UseFormationOffsets = true;
@@ -150,6 +198,7 @@ namespace Game.Presentation.View
         private float _flowFieldTimer;
         private bool _usingFlowField;
         private Vector3 _homePosition;
+        private bool _dead;
 
         private static int _budgetFrame = -1;
         private static int _repathsThisFrame;
@@ -157,6 +206,7 @@ namespace Game.Presentation.View
         private UnitCombat _jobNearest;
         private float _jobNearestTimer;
         private Game.Presentation.Performance.OccupancyHash _occ;
+        private UnitSpriteAnimator _anim;
         private static int _resetLogFrame = -1;
         private static int _resetLogsThisFrame;
         private static int _playerCount;
@@ -172,6 +222,8 @@ namespace Game.Presentation.View
         public int FormationIndex => _formationIndex;
         public bool IsUsingFlowField => _usingFlowField;
 
+        // [UCOM-02]
+        // Lifecycle wiring: register the unit globally, cache collaborators, and apply profiles.
         private void OnEnable()
         {
             All.Add(this);
@@ -180,9 +232,11 @@ namespace Game.Presentation.View
             _tr = transform;
             _view = GetComponent<UnitView>() ?? gameObject.AddComponent<UnitView>();
             _follower = GetComponent<UnitPathFollower>();
+            _anim = GetComponent<UnitSpriteAnimator>();
             _currentHealth = Mathf.Max(1, _view.Stats.MaxHealth);
             _homePosition = _tr.position;
             ApplyCombatProfile();
+            ApplyFactionOverrides();
             ApplyBehaviorProfile();
             _repathTimer = Random.Range(0f, RepathJitter);
             _pm = Game.Presentation.Pathfinding.PathManager.Ensure();
@@ -202,6 +256,9 @@ namespace Game.Presentation.View
             ClearSquad();
         }
 
+        // [UCOM-03]
+        // Main combat tick: target resolution, repath decisions, flow-field steering,
+        // crouch triggers, ORCA coordination, and attack execution.
         private void Update()
         {
             _combatTickTimer -= Time.deltaTime;
@@ -214,6 +271,7 @@ namespace Game.Presentation.View
                 UnregisterFaction(_lastFaction);
                 RegisterFaction(Faction);
                 _lastFaction = Faction;
+                ApplyFactionOverrides();
             }
             if (_cooldown > 0f)
                 _cooldown = Mathf.Max(0f, _cooldown - (CombatTickInterval));
@@ -285,6 +343,7 @@ namespace Game.Presentation.View
                 _hasLastTargetPos = true;
                 Vector3 tp = target.transform.position;
                 Vector3 mp = _tr.position;
+                FaceTarget(tp);
                 if (_hex == null) _hex = SharedHex();
                 var targetCell = _hex != null ? _hex.WorldToGrid(tp) : Vector2Int.zero;
                 float dist = (tp - mp).magnitude;
@@ -292,7 +351,12 @@ namespace Game.Presentation.View
                 if (_view != null && DisableOrcaWhenInRange)
                 {
                     float orcaDisableDist = AttackRange * Mathf.Max(1f, OrcaDisableRangeMultiplier);
-                    _view.UseOrcaVelocity = dist > orcaDisableDist;
+                    bool keepOrca = KeepOrcaNearFriendlies && HasFriendlyTooClose(FriendlySeparationRadius);
+                    _view.UseOrcaVelocity = dist > orcaDisableDist || keepOrca;
+                }
+                else if (_view != null)
+                {
+                    _view.UseOrcaVelocity = true;
                 }
 
                 // If path follower is active, don't override its movement
@@ -522,6 +586,8 @@ namespace Game.Presentation.View
                         _view.ClearDestination("combat-in-range");
                     if (_cooldown <= 0f)
                     {
+                        OnAttack?.Invoke();
+                        TryCrouchWhenBlocked(tp);
                         target.ApplyDamage(AttackDamage);
                         _cooldown = AttackCooldown;
                     }
@@ -610,10 +676,14 @@ namespace Game.Presentation.View
         public void ApplyDamage(int dmg)
         {
             if (dmg <= 0) return;
+            if (_dead) return;
             _currentHealth -= dmg;
             if (_currentHealth <= 0)
             {
-                Destroy(gameObject);
+                _dead = true;
+                OnDeath?.Invoke();
+                if (OnDeath == null)
+                    Destroy(gameObject);
             }
         }
 
@@ -714,8 +784,11 @@ namespace Game.Presentation.View
             FormationMaxRadiusHex = profile.FormationMaxRadiusHex;
             LogCombatResets = profile.LogCombatResets;
             MaxCombatResetLogsPerFrame = profile.MaxCombatResetLogsPerFrame;
+            ApplyFactionOverrides();
         }
 
+        // [UCOM-04]
+        // Squad assignment and per-unit formation metadata managed by the squad system.
         public void SetSquad(int squadId, SquadMode mode)
         {
             _squadId = squadId;
@@ -739,6 +812,8 @@ namespace Game.Presentation.View
             _formationIndex = -1;
         }
 
+        // [UCOM-05]
+        // Local target discovery and cache refresh helpers.
         private UnitCombat FindNearestEnemy()
         {
             UnitCombat best = null;
@@ -790,6 +865,8 @@ namespace Game.Presentation.View
             return d2 <= maxDist * maxDist;
         }
 
+        // [UCOM-06]
+        // Target arbitration between forced targets, job/hash candidates, and local threat overrides.
         private UnitCombat ResolveTarget()
         {
             if (_cachedTarget != null && (!_cachedTarget.isActiveAndEnabled || _cachedTarget.Faction == Faction))
@@ -897,6 +974,23 @@ namespace Game.Presentation.View
             Debug.LogWarning($"[CombatReset] unit={name} reason={reason} dist={dist:F2} target={targetName} frame={frame} pos={_tr?.position ?? transform.position}");
         }
 
+        // [UCOM-07]
+        // Profile/faction override layer that normalizes ranged-vs-melee behavior per faction.
+        private void ApplyFactionOverrides()
+        {
+            if (!UseFactionOverrides) return;
+            if (Faction == Game.Domain.Units.Faction.Player)
+            {
+                AttackRange = PlayerAttackRange;
+                DisableOrcaWhenInRange = PlayerDisableOrcaInRange;
+            }
+            else if (Faction == Game.Domain.Units.Faction.Enemy)
+            {
+                AttackRange = EnemyAttackRange;
+                DisableOrcaWhenInRange = EnemyDisableOrcaInRange;
+            }
+        }
+
         private static bool TryConsumeRepathBudget()
         {
             TouchBudgetFrame();
@@ -906,6 +1000,51 @@ namespace Game.Presentation.View
             return true;
         }
 
+        private void FaceTarget(Vector3 targetPos)
+        {
+            if (_view == null) return;
+            Vector3 dir = targetPos - _tr.position;
+            if (dir.sqrMagnitude <= 0.0001f) return;
+            _view.ApplyFacing(dir, CombatTickInterval);
+        }
+
+        private bool HasFriendlyTooClose(float radius)
+        {
+            if (radius <= 0.01f) return false;
+            float r2 = radius * radius;
+            foreach (var uc in All)
+            {
+                if (uc == null || uc == this || uc.Faction != Faction) continue;
+                float d2 = (uc.transform.position - _tr.position).sqrMagnitude;
+                if (d2 <= r2) return true;
+            }
+            return false;
+        }
+
+        private void TryCrouchWhenBlocked(Vector3 targetPos)
+        {
+            if (!UseCrouchWhenBlocked || _anim == null) return;
+            Vector3 dir = (targetPos - _tr.position);
+            dir.z = 0f;
+            if (dir.sqrMagnitude <= 0.0001f) return;
+            dir.Normalize();
+            Vector3 perp = new Vector3(-dir.y, dir.x, 0f);
+            float maxDist2 = CrouchBehindDistance * CrouchBehindDistance;
+            foreach (var uc in All)
+            {
+                if (uc == null || uc == this || uc.Faction != Faction) continue;
+                Vector3 delta = uc.transform.position - _tr.position;
+                delta.z = 0f;
+                if (delta.sqrMagnitude > maxDist2) continue;
+                float behind = Vector3.Dot(delta, -dir); // behind this unit
+                if (behind <= 0f) continue;
+                float lateral = Mathf.Abs(Vector3.Dot(delta, perp));
+                if (lateral > CrouchLateralTolerance) continue;
+                _anim.RequestCrouch(CrouchBlockedSeconds);
+                break;
+            }
+        }
+
         private void InvalidatePendingPath()
         {
             _pathRequestId++;
@@ -913,6 +1052,8 @@ namespace Game.Presentation.View
             _pathPendingTimer = 0f;
         }
 
+        // [UCOM-08]
+        // Far-distance steering via shared flow fields before falling back to per-unit path requests.
         private bool TryFlowFieldMove(Vector3 desired, float targetDist, bool pathActive, bool ignoreMinDistance)
         {
             if (!UseFlowFields) return false;
@@ -1053,5 +1194,4 @@ namespace Game.Presentation.View
         }
     }
 }
-
 

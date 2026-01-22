@@ -1,3 +1,19 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.cs
+@module: presentation.pathfinding.flowfields
+@purpose: Builds and caches shared flow fields for squads and clustered movement toward common goals.
+@entry: FlowFieldManager.Update, FFLD-03, FFLD-06, FFLD-07
+@api: shared MonoBehaviour singleton queried by combat/squad systems
+@deps: HexPathfindingBootstrap, UnitCombat, crowd/discomfort data, Unity Random
+@data: cached flow fields, integration costs, tile activation masks, vector samples
+@perf: hotpath, time-sliced BFS and cache management
+@thread: main thread only
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs, manual squad movement verification
+@config: inspector flow settings, docs/runtime_switches.md
+@assets: none directly; consumes live unit and grid state
+@notes: tiled fields, crowd costs, and deterministic direction settings are layered optimizations and should be tuned together
+*/
+
 using System;
 using System.Collections.Generic;
 using Game.Presentation.View;
@@ -6,6 +22,9 @@ using Unity.Collections;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER]
+// Logical block: Scripts/Presentation/Pathfinding/FlowFieldManager.
+
 namespace Game.Presentation.Pathfinding
 {
     /// <summary>
@@ -13,6 +32,8 @@ namespace Game.Presentation.Pathfinding
     /// </summary>
     public class FlowFieldManager : MonoBehaviour
     {
+        // [FFLD-01]
+        // Flow-field configuration, caches, graph buffers, and shared cost maps.
         public static FlowFieldManager Instance { get; private set; }
 
         [Tooltip("Enable flow field generation and queries.")]
@@ -173,6 +194,8 @@ namespace Game.Presentation.Pathfinding
             }
         }
 
+        // [FFLD-02]
+        // Lifecycle setup and buffer initialization.
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -189,6 +212,8 @@ namespace Game.Presentation.Pathfinding
             if (Instance == this) Instance = null;
         }
 
+        // [FFLD-03]
+        // Periodic refresh of crowd maps, influence maps, and cached field requests.
         private void Update()
         {
             if (!Enabled) return;
@@ -358,6 +383,8 @@ namespace Game.Presentation.Pathfinding
             return limit;
         }
 
+        // [FFLD-04]
+        // Dynamic crowd-density sampling that feeds penalties into integration fields.
         private void UpdateCrowdMap()
         {
             if (_hex == null) return;
@@ -457,6 +484,8 @@ namespace Game.Presentation.Pathfinding
             };
         }
 
+        // [FFLD-05]
+        // Tactical influence accumulation used to bias movement away from danger zones.
         private void UpdateInfluenceMap()
         {
             if (_hex == null) return;
@@ -612,6 +641,8 @@ namespace Game.Presentation.Pathfinding
             go.AddComponent<FlowFieldManager>();
         }
 
+        // [FFLD-06]
+        // Construction and maintenance of the coarse tile graph used for macro navigation.
         private bool EnsureTileGraph()
         {
             if (!UseTiledFields) return false;
@@ -830,6 +861,8 @@ namespace Game.Presentation.Pathfinding
             return ty * _tileCols + tx;
         }
 
+        // [FFLD-07]
+        // Per-target flow-field storage and the incremental integration build state.
         private class FlowField
         {
             public Vector2Int TargetCell;

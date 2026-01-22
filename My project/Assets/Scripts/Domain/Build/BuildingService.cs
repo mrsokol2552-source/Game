@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using Game.Domain.Economy;
 
+// [CODE-ID: SCRIPTS-DOMAIN-BUILD-BUILDINGSERVICE]
+// Logical block: Scripts/Domain/Build/BuildingService.
+
 namespace Game.Domain.Build
 {
     public static class BuildingService
@@ -40,4 +43,3 @@ namespace Game.Domain.Build
         }
     }
 }
-

@@ -1,3 +1,6 @@
+// [CODE-ID: SCRIPTS-DOMAIN-COMBAT-COMBATSIMULATOR]
+// Logical block: Scripts/Domain/Combat/CombatSimulator.
+
 namespace Game.Domain.Combat
 {
     public static class CombatSimulator
@@ -9,4 +12,3 @@ namespace Game.Domain.Combat
         }
     }
 }
-

@@ -1,3 +1,19 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.cs
+@module: presentation.pathfinding.jobs
+@purpose: Queues asynchronous path requests, schedules jobified hex path builds, and falls back to synchronous path generation when needed.
+@entry: PathRequestQueue.Enqueue, PathRequestQueue.Update, PQUE-03, PQUE-04
+@api: shared MonoBehaviour singleton for async path submission
+@deps: HexPathfindingBootstrap, HexPathfinderJob, UnitCombat, Unity Jobs/Collections
+@data: request queue, Native job buffers, occupied-cell snapshots, job counters
+@perf: hotpath, queue depth and job fallback behavior are major combat scaling factors
+@thread: main thread scheduler + worker jobs
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs, manual path queue verification
+@config: MaxPerFrame, UseJobs, MaxQueueSize, docs/runtime_switches.md
+@assets: none directly
+@notes: destroyed request owners must be filtered before scheduling and before callbacks to avoid MissingReferenceException
+*/
+
 using System;
 using System.Collections.Generic;
 using Game.Presentation.View;
@@ -6,6 +22,9 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE]
+// Logical block: Scripts/Presentation/Pathfinding/PathRequestQueue.
+
 namespace Game.Presentation.Pathfinding
 {
     /// <summary>
@@ -13,6 +32,8 @@ namespace Game.Presentation.Pathfinding
     /// </summary>
     public class PathRequestQueue : MonoBehaviour
     {
+        // [PQUE-01]
+        // Async path-request queue, job bookkeeping, and fallback counters.
         public static PathRequestQueue Instance { get; private set; }
 
         [Tooltip("How many path requests to process per frame (0 = unlimited).")]
@@ -78,6 +99,8 @@ namespace Game.Presentation.Pathfinding
             _occupiedFrame = -1;
         }
 
+        // [PQUE-02]
+        // Job lifecycle update: schedule new path work and finish completed requests.
         private void Update()
         {
             TouchJobFrame();
@@ -232,6 +255,8 @@ namespace Game.Presentation.Pathfinding
             return true;
         }
 
+        // [PQUE-03]
+        // Completion path for async jobs, callbacks, and safety checks against destroyed owners.
         private void FinishJob()
         {
             var pm = PathManager.Ensure();
@@ -371,6 +396,8 @@ namespace Game.Presentation.Pathfinding
                 map.Capacity = Mathf.Max(map.Capacity * 2, capacity);
         }
 
+        // [PQUE-04]
+        // Immutable request payload captured at queue time for async path builds.
         private struct Request
         {
             public UnitView Unit;
@@ -394,5 +421,4 @@ namespace Game.Presentation.Pathfinding
         }
     }
 }
-
 

@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 
+// [CODE-ID: SCRIPTS-INFRASTRUCTURE-AI-PATHFINDING-IGRIDPATHFINDER]
+// Logical block: Scripts/Infrastructure/AI/Pathfinding/IGridPathfinder.
+
 namespace Game.Infrastructure.AI.Pathfinding
 {
     // Path point on integer grid

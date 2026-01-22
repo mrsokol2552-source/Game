@@ -5,6 +5,9 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM]
+// Logical block: Scripts/Presentation/Performance/LocalAvoidanceSystem.
+
 namespace Game.Presentation.Performance
 {
     /// <summary>

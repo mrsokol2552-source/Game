@@ -1,3 +1,6 @@
+// [CODE-ID: SCRIPTS-DOMAIN-RESEARCH-RESEARCHSTARTRESULT]
+// Logical block: Scripts/Domain/Research/ResearchStartResult.
+
 namespace Game.Domain.Research
 {
     public enum ResearchStartResult
@@ -9,4 +12,3 @@ namespace Game.Domain.Research
         InsufficientResources
     }
 }
-

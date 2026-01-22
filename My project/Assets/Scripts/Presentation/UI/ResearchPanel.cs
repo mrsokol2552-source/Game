@@ -7,6 +7,9 @@ using Game.Infrastructure.Configs;
 using Game.Presentation.Bootstrap;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-UI-RESEARCHPANEL]
+// Logical block: Scripts/Presentation/UI/ResearchPanel.
+
 namespace Game.Presentation.UI
 {
     public class ResearchPanel : MonoBehaviour
@@ -148,7 +151,6 @@ namespace Game.Presentation.UI
         }
     }
 }
-
 
 
 

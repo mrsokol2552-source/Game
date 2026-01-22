@@ -1,5 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+
+// [CODE-ID: SCRIPTS-DOMAIN-RESEARCH-RESEARCHSTORE]
+// Logical block: Scripts/Domain/Research/ResearchStore.
 
 namespace Game.Domain.Research
 {

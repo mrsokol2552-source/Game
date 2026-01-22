@@ -1,0 +1,448 @@
+{
+  "version": 1,
+  "purpose": "Curated machine-readable navigation index for large-codebase work without loading the whole project into context.",
+  "documents": {
+    "code_map": "docs/code_map.md",
+    "code_id_index": "docs/code_id_index.md",
+    "debug_playbooks": "docs/debug_playbooks.md",
+    "runtime_switches": "docs/runtime_switches.md",
+    "gameplay_state": "docs/gameplay_current_state.md"
+  },
+  "entry_rules": {
+    "start_from_symptom": "Use docs/debug_playbooks.md first when the task begins from a bug or regression.",
+    "start_from_module": "Use docs/code_id_index.md first when the task begins from a known system name or CODE-ID.",
+    "start_from_tuning": "Use docs/runtime_switches.md first when the task begins from an inspector/runtime parameter."
+  },
+  "reading_routes": {
+    "world_generation_streaming": [
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
+      "PENV-03",
+      "PENV-05",
+      "PENV-06",
+      "PENV-07",
+      "PENV-10",
+      "PENV-16",
+      "PENV-17",
+      "PENV-18",
+      "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
+      "HPFB-01",
+      "HPFB-04"
+    ],
+    "water_rock_shores": [
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
+      "PENV-07",
+      "PENV-17",
+      "PENV-18"
+    ],
+    "props_trees_biomes": [
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
+      "PENV-08",
+      "PENV-09",
+      "PENV-10",
+      "PENV-17",
+      "PENV-18"
+    ],
+    "combat_targeting": [
+      "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+      "UCOM-03",
+      "UCOM-05",
+      "UCOM-06",
+      "UCOM-08",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
+      "ESQD-04",
+      "ESQD-05"
+    ],
+    "macro_navigation": [
+      "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER",
+      "FFLD-03",
+      "FFLD-04",
+      "FFLD-06",
+      "FFLD-07"
+    ],
+    "path_requests_and_builds": [
+      "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE",
+      "PQUE-01",
+      "PQUE-02",
+      "PQUE-03",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER",
+      "PMGR-01",
+      "PMGR-03",
+      "PMGR-04",
+      "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
+      "HPFB-03",
+      "HPFB-04"
+    ],
+    "local_avoidance_overlap": [
+      "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM",
+      "ORCA-03",
+      "ORCA-04",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM",
+      "MJOB-03",
+      "MJOB-04",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER"
+    ],
+    "bootstrap_ui_input": [
+      "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT",
+      "SCRIPTS-PRESENTATION-INPUT-INPUTCONTROLLER",
+      "SCRIPTS-PRESENTATION-INPUT-UNITSPAWNERCOMMANDER",
+      "SCRIPTS-PRESENTATION-UI-HUDCONTROLLER",
+      "SCRIPTS-PRESENTATION-UI-ACTIONSPANEL",
+      "SCRIPTS-PRESENTATION-UI-RESEARCHPANEL",
+      "SCRIPTS-PRESENTATION-CAMERA-CAMERAZOOM2D"
+    ],
+    "character_creator_pipeline": [
+      "SCRIPTS-TOOLS-CHARACTERCREATORSIMPLECONFIG",
+      "EDITOR-CHARACTERCREATORSCENEBUILDER",
+      "EDITOR-CHARACTERCREATORSIMPLECONFIGEDITOR",
+      "EDITOR-CHARACTERCREATORUNITBUILDER"
+    ]
+  },
+  "systems": {
+    "procedural_environment": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.cs",
+      "sections": {
+        "PENV-01": "Inspector config and runtime state",
+        "PENV-02": "Unity bootstrap",
+        "PENV-03": "Streaming startup",
+        "PENV-04": "Tilemap parenting between grids",
+        "PENV-05": "Streaming scheduler",
+        "PENV-06": "Per-chunk generation entry point",
+        "PENV-07": "Background chunk tile synthesis",
+        "PENV-08": "Hex-grid props/trees placement",
+        "PENV-09": "Background-grid props/trees placement",
+        "PENV-10": "Chunk unload and cleanup",
+        "PENV-11": "Delayed far-view bake start",
+        "PENV-12": "Far-view render objects",
+        "PENV-13": "Chunked far-view bake",
+        "PENV-14": "Far-view HUD and loading overlay",
+        "PENV-15": "Bake bounds debug rendering",
+        "PENV-16": "Background grid sizing",
+        "PENV-17": "Streaming biome masks",
+        "PENV-18": "Background mask coordinate helpers"
+      },
+      "hot_params": [
+        "UseWorldStreaming",
+        "StreamChunkSize",
+        "StreamActiveRadius",
+        "StreamPrefetchRadius",
+        "StreamUnloadRadius",
+        "StreamFrameBudgetMs",
+        "StreamTargetFps",
+        "StreamKeepGeneratedChunks",
+        "UseFarViewBake",
+        "FarViewOrthoThresholdPercent",
+        "FarViewChunksPerFrame",
+        "UseWaterBiome",
+        "UseWaterEdgeColorMatch",
+        "TreeCoverage",
+        "RockPropCoverage",
+        "StreamPropsUseBackgroundGrid"
+      ],
+      "tags": [
+        "worldgen",
+        "background-grid",
+        "streaming",
+        "far-view",
+        "biomes",
+        "water",
+        "props",
+        "trees"
+      ]
+    },
+    "unit_combat": {
+      "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+      "path": "My project/Assets/Scripts/Presentation/View/UnitCombat.cs",
+      "sections": {
+        "UCOM-01": "Combat state and tuning",
+        "UCOM-02": "Unit registration and cache init",
+        "UCOM-03": "Main combat update loop",
+        "UCOM-04": "Squad metadata assignment",
+        "UCOM-05": "Local nearest-enemy search",
+        "UCOM-06": "Target arbitration logic",
+        "UCOM-07": "Faction and profile overrides",
+        "UCOM-08": "Flow-field steering path"
+      },
+      "hot_params": [
+        "PlayerAttackRange",
+        "EnemyAttackRange",
+        "UseFlowFields",
+        "FlowFieldMinDistance",
+        "TargetRefreshInterval",
+        "JobTargetTtl",
+        "LostTargetGraceSeconds",
+        "FriendlySeparationRadius",
+        "UseCrouchWhenBlocked",
+        "UseFormationOffsets"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
+        "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE",
+        "SCRIPTS-PRESENTATION-PATHFINDING-UNITPATHFOLLOWER"
+      ],
+      "tags": [
+        "combat",
+        "targeting",
+        "chase",
+        "squads",
+        "attack"
+      ]
+    },
+    "enemy_squad_manager": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
+      "path": "My project/Assets/Scripts/Presentation/Performance/EnemySquadManager.cs",
+      "sections": {
+        "ESQD-01": "Squad settings and state",
+        "ESQD-04": "State transitions and target assignment",
+        "ESQD-05": "Squad flow and anchor movement"
+      },
+      "hot_params": [
+        "MaxSquadSize",
+        "InitialGatherRadiusHex",
+        "MaxGatherRadiusHex",
+        "GatherRadiusStepSeconds",
+        "ReadyDistanceHex",
+        "CombatDistanceHex",
+        "UseSquadFlow",
+        "SquadFlowMinDistance"
+      ],
+      "tags": [
+        "squads",
+        "formation",
+        "combat-state",
+        "macro-movement"
+      ]
+    },
+    "flow_fields": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.cs",
+      "sections": {
+        "FFLD-01": "Budget and cache settings",
+        "FFLD-03": "Tiled fields and gating",
+        "FFLD-04": "Crowd and influence cost layers",
+        "FFLD-06": "Vector sampling and LoS smoothing",
+        "FFLD-07": "Field processing"
+      },
+      "hot_params": [
+        "CellsPerFrame",
+        "MaxFields",
+        "FieldTtl",
+        "UseTiledFields",
+        "TileSize",
+        "UseCrowdCosts",
+        "UseDeterministicDirections",
+        "UseVectorSampling",
+        "UseInfluenceCosts",
+        "UseLoSSmoothing"
+      ],
+      "tags": [
+        "macro-nav",
+        "shared-fields",
+        "performance",
+        "crowd-costs"
+      ]
+    },
+    "pathing": {
+      "primary": [
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE",
+          "path": "My project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.cs",
+          "sections": {
+            "PQUE-01": "Queue config and state",
+            "PQUE-02": "Update and schedule loop",
+            "PQUE-03": "Job finish and fallback"
+          }
+        },
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER",
+          "path": "My project/Assets/Scripts/Presentation/Pathfinding/PathManager.cs",
+          "sections": {
+            "PMGR-01": "Build settings and caching",
+            "PMGR-03": "Occupancy-aware path logic",
+            "PMGR-04": "Nearest free cell and cluster helpers"
+          }
+        },
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
+          "path": "My project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.cs",
+          "sections": {
+            "HPFB-01": "Grid sizing and clamp settings",
+            "HPFB-03": "Walkability access",
+            "HPFB-04": "Native walkable updates"
+          }
+        }
+      ],
+      "tags": [
+        "pathfinding",
+        "queue",
+        "jobs",
+        "walkability"
+      ]
+    },
+    "orca_movement": {
+      "primary": [
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM",
+          "path": "My project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.cs",
+          "sections": {
+            "ORCA-01": "Inspector config",
+            "ORCA-03": "Agent build and job inputs",
+            "ORCA-04": "Velocity result handling"
+          }
+        },
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM",
+          "path": "My project/Assets/Scripts/Presentation/Performance/MovementJobSystem.cs",
+          "sections": {
+            "MJOB-03": "Job simulation",
+            "MJOB-04": "Apply-back to UnitView"
+          }
+        }
+      ],
+      "hot_params": [
+        "AgentRadius",
+        "NeighborDist",
+        "MaxNeighbors",
+        "TimeHorizon",
+        "UseCohesion",
+        "MinResponsibility",
+        "BatchSize"
+      ],
+      "tags": [
+        "local-avoidance",
+        "overlap",
+        "jobs",
+        "movement"
+      ]
+    }
+  },
+  "playbooks": {
+    "blue_void_or_partial_map": {
+      "doc_section": "PB-01",
+      "entrypoints": [
+        "PENV-03",
+        "PENV-05",
+        "PENV-10",
+        "PENV-16",
+        "PENV-17",
+        "HPFB-01"
+      ],
+      "switches": [
+        "UseWorldStreaming",
+        "StreamActiveRadius",
+        "StreamPrefetchRadius",
+        "StreamUnloadRadius",
+        "StreamKeepGeneratedChunks",
+        "AutoClampSize"
+      ]
+    },
+    "props_on_water_or_rock": {
+      "doc_section": "PB-02",
+      "entrypoints": [
+        "PENV-08",
+        "PENV-09",
+        "PENV-10",
+        "PENV-17",
+        "PENV-18"
+      ],
+      "switches": [
+        "StreamPropsUseBackgroundGrid",
+        "RockPropCoverage",
+        "TreeCoverage",
+        "UseWaterBiome"
+      ]
+    },
+    "broken_shores": {
+      "doc_section": "PB-03",
+      "entrypoints": [
+        "PENV-07",
+        "PENV-17",
+        "PENV-18"
+      ],
+      "switches": [
+        "UseWaterEdgeColorMatch",
+        "UseWaterAutoInteriorByColor",
+        "WaterTilesAllowRotation",
+        "RockTilesAllowRotation",
+        "WaterEdgeMaskSamples",
+        "WaterEdgeMaskRatioThreshold"
+      ]
+    },
+    "combat_units_ignore_enemies": {
+      "doc_section": "PB-06",
+      "entrypoints": [
+        "UCOM-03",
+        "UCOM-06",
+        "ESQD-04",
+        "FFLD-07"
+      ],
+      "switches": [
+        "UseFlowFields",
+        "TargetRefreshInterval",
+        "JobTargetTtl",
+        "ReadyDistanceHex",
+        "CombatDistanceHex"
+      ]
+    },
+    "unit_overlap_flicker": {
+      "doc_section": "PB-07",
+      "entrypoints": [
+        "UCOM-03",
+        "ORCA-03",
+        "ORCA-04",
+        "MJOB-03"
+      ],
+      "switches": [
+        "FriendlySeparationRadius",
+        "AgentRadius",
+        "NeighborDist",
+        "DisableOrcaWhenInRange"
+      ]
+    },
+    "path_queue_or_timeout": {
+      "doc_section": "PB-08",
+      "entrypoints": [
+        "PQUE-02",
+        "PQUE-03",
+        "PMGR-03",
+        "HPFB-04"
+      ],
+      "switches": [
+        "MaxPerFrame",
+        "UseJobs",
+        "MaxQueueSize",
+        "MaxBuildsPerFrame",
+        "MaxPathNodes"
+      ]
+    }
+  },
+  "hot_ids": [
+    "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
+    "PENV-05",
+    "PENV-07",
+    "PENV-09",
+    "PENV-10",
+    "PENV-13",
+    "PENV-17",
+    "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+    "UCOM-03",
+    "UCOM-06",
+    "UCOM-08",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
+    "ESQD-04",
+    "ESQD-05",
+    "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER",
+    "FFLD-07",
+    "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE",
+    "PQUE-02",
+    "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER",
+    "PMGR-03",
+    "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
+    "HPFB-04",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM",
+    "ORCA-03",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM",
+    "MJOB-03"
+  ]
+}

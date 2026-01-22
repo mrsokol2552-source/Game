@@ -1,6 +1,9 @@
 using Unity.Collections;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-STATICOBSTACLEHASH]
+// Logical block: Scripts/Presentation/Pathfinding/StaticObstacleHash.
+
 namespace Game.Presentation.Pathfinding
 {
     /// <summary>
@@ -12,13 +15,21 @@ namespace Game.Presentation.Pathfinding
 
         [Tooltip("Enable static obstacle hashing for blocked cells.")]
         public bool Enabled = true;
+        [Tooltip("Skip rebuilding when world streaming is enabled (saves CPU/memory on huge maps).")]
+        public bool DisableWhileStreaming = true;
+        [Tooltip("Disable hash rebuild when total cells exceed this value (0 = no limit).")]
+        public int MaxCells = 1000000;
+        [Tooltip("Minimum seconds between rebuilds to avoid per-frame spikes.")]
+        public float MinRebuildInterval = 0.5f;
 
         private HexPathfindingBootstrap _hex;
+        private ProceduralEnvironment _environment;
         private NativeHashMap<int, byte> _blocked;
         private int _capacity;
         private int _walkableVersion = -1;
         private int _width = -1;
         private int _height = -1;
+        private float _lastRebuildTime = -10f;
 
         public static void EnsureExists()
         {
@@ -51,10 +62,29 @@ namespace Game.Presentation.Pathfinding
             if (_hex == null || !_hex.isActiveAndEnabled)
                 _hex = UnityEngine.Object.FindAnyObjectByType<HexPathfindingBootstrap>();
             if (_hex == null) return;
+            if (_environment == null)
+                _environment = UnityEngine.Object.FindAnyObjectByType<ProceduralEnvironment>();
+
+            if (DisableWhileStreaming && _environment != null && _environment.UseWorldStreaming)
+            {
+                DisableCache();
+                return;
+            }
+            int totalCells = _hex.Width * _hex.Height;
+            if (MaxCells > 0 && totalCells > MaxCells)
+            {
+                DisableCache();
+                return;
+            }
 
             if (_walkableVersion != _hex.WalkableVersion || _width != _hex.Width || _height != _hex.Height)
             {
-                Rebuild();
+                float now = Time.realtimeSinceStartup;
+                if (MinRebuildInterval <= 0f || (now - _lastRebuildTime) >= MinRebuildInterval)
+                {
+                    Rebuild();
+                    _lastRebuildTime = now;
+                }
             }
         }
 
@@ -114,6 +144,21 @@ namespace Game.Presentation.Pathfinding
             _walkableVersion = _hex.WalkableVersion;
             _width = width;
             _height = height;
+        }
+
+        private void DisableCache()
+        {
+            if (_blocked.IsCreated)
+            {
+                _blocked.Dispose();
+            }
+            _capacity = 0;
+            if (_hex != null)
+            {
+                _walkableVersion = _hex.WalkableVersion;
+                _width = _hex.Width;
+                _height = _hex.Height;
+            }
         }
 
         private static int Key(int col, int row) => (row << 16) ^ (col & 0xFFFF);

@@ -6,6 +6,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 #endif
 
+// [CODE-ID: SCRIPTS-PRESENTATION-INPUT-INPUTCONTROLLER]
+// Logical block: Scripts/Presentation/Input/InputController.
+
 namespace Game.Presentation.Input
 {
     public class InputController : MonoBehaviour
@@ -134,5 +137,4 @@ namespace Game.Presentation.Input
         }
     }
 }
-
 

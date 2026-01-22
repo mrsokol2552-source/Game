@@ -3,6 +3,9 @@ using Game.Presentation.Pathfinding;
 using Game.Presentation.View;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER]
+// Logical block: Scripts/Presentation/Performance/StuckResolver.
+
 namespace Game.Presentation.Performance
 {
     /// <summary>

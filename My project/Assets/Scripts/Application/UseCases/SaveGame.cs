@@ -1,6 +1,9 @@
 using Game.Application.Services;
 using Game.Application.Ports;
 
+// [CODE-ID: SCRIPTS-APPLICATION-USECASES-SAVEGAME]
+// Logical block: Scripts/Application/UseCases/SaveGame.
+
 namespace Game.Application.UseCases
 {
     public class SaveGame

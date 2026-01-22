@@ -1,9 +1,28 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Performance/EnemySquadManager.cs
+@module: presentation.combat.squads
+@purpose: Forms squads, maintains squad anchors, and switches units between macro movement and free combat states.
+@entry: EnemySquadManager.Update, ESQD-03, ESQD-04, ESQD-05
+@api: shared MonoBehaviour singleton driving squad-level combat orchestration
+@deps: UnitCombat, FlowFieldManager, Pathfinding, faction data
+@data: squads, membership, engagement distances, gather radii, anchor/target state
+@perf: hotpath, impacts large-group combat stability and path request volume
+@thread: main thread only
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs, manual battle verification
+@config: squad sizes and threshold settings, docs/runtime_switches.md
+@assets: none directly
+@notes: ready/combat hysteresis is deliberate; tight thresholds cause state thrash and lost formations
+*/
+
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Game.Domain.Units;
 using Game.Presentation.View;
 using Game.Presentation.Pathfinding;
+
+// [CODE-ID: SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER]
+// Logical block: Scripts/Presentation/Performance/EnemySquadManager.
 
 namespace Game.Presentation.Performance
 {
@@ -12,6 +31,8 @@ namespace Game.Presentation.Performance
     /// </summary>
     public class EnemySquadManager : MonoBehaviour
     {
+        // [ESQD-01]
+        // Enemy squad registry, anchor state, and grouping thresholds for macro combat movement.
         public static EnemySquadManager Instance { get; private set; }
 
         [Tooltip("How often to update squads.")]
@@ -87,6 +108,8 @@ namespace Game.Presentation.Performance
             public float LastStateChangeTime;
         }
 
+        // [ESQD-02]
+        // Singleton/bootstrap setup for squad management.
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -103,6 +126,8 @@ namespace Game.Presentation.Performance
             if (Instance == this) Instance = null;
         }
 
+        // [ESQD-03]
+        // Periodic squad rebuild and tactical state update for enemy groups.
         private void Update()
         {
             _timer -= Time.deltaTime;
@@ -137,6 +162,8 @@ namespace Game.Presentation.Performance
                 _occ = OccupancyHash.Instance;
         }
 
+        // [ESQD-04]
+        // Squad composition, anchor generation, and local member assignment.
         private void UpdateSquads(List<Squad> squads)
         {
             for (int i = squads.Count - 1; i >= 0; i--)
@@ -285,6 +312,8 @@ namespace Game.Presentation.Performance
             }
         }
 
+        // [ESQD-05]
+        // State transitions between gathering, marching, ready, free-combat, and sleep modes.
         private void UpdateSquadStates(List<Squad> squads, List<Squad> enemies)
         {
             if (squads == null || squads.Count == 0) return;

@@ -10,6 +10,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 #endif
 
+// [CODE-ID: SCRIPTS-PRESENTATION-UI-ACTIONSPANEL]
+// Logical block: Scripts/Presentation/UI/ActionsPanel.
+
 namespace Game.Presentation.UI
 {
     public class ActionsPanel : MonoBehaviour
@@ -369,5 +372,4 @@ namespace Game.Presentation.UI
         }
     }
 }
-
 

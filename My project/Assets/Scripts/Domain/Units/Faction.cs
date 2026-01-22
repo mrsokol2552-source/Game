@@ -1,3 +1,6 @@
+// [CODE-ID: SCRIPTS-DOMAIN-UNITS-FACTION]
+// Logical block: Scripts/Domain/Units/Faction.
+
 namespace Game.Domain.Units
 {
     public enum Faction
@@ -7,4 +10,3 @@ namespace Game.Domain.Units
         Enemy = 2
     }
 }
-

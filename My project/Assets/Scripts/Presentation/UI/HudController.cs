@@ -8,6 +8,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 #endif
 
+// [CODE-ID: SCRIPTS-PRESENTATION-UI-HUDCONTROLLER]
+// Logical block: Scripts/Presentation/UI/HudController.
+
 namespace Game.Presentation.UI
 {
     public class HudController : MonoBehaviour
@@ -238,6 +241,5 @@ namespace Game.Presentation.UI
         }
     }
 }
-
 
 

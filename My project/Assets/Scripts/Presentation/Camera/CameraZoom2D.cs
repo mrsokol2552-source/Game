@@ -1,8 +1,27 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Camera/CameraZoom2D.cs
+@module: presentation.camera
+@purpose: Handles camera zoom, drag-pan, and WASD movement for the main orthographic gameplay camera.
+@entry: CameraZoom2D.Update, CameraZoom2D.LateUpdate
+@api: per-camera MonoBehaviour
+@deps: Camera, HudController, optional Input System
+@data: target zoom state, drag anchors, camera movement parameters
+@perf: per-frame input/camera update, lightweight but central to map navigation
+@thread: main thread only
+@tests: manual camera verification
+@config: inspector camera movement settings, docs/runtime_switches.md
+@assets: none directly
+@notes: far-view threshold behavior depends on current orthographic size; camera movement also drives streaming pressure
+*/
+
 using UnityEngine;
 using Game.Presentation.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
+
+// [CODE-ID: SCRIPTS-PRESENTATION-CAMERA-CAMERAZOOM2D]
+// Logical block: Scripts/Presentation/Camera/CameraZoom2D.
 
 namespace Game.Presentation.CameraControl
 {
@@ -10,12 +29,12 @@ namespace Game.Presentation.CameraControl
     public class CameraZoom2D : MonoBehaviour
     {
         public float MinOrthoSize = 2f;
-        public float MaxOrthoSize = 30f;
+        public float MaxOrthoSize = 120f;
         public float OrthoStep = 1.5f;
         public float OrthoLerpSpeed = 10f;
 
         public float MinFov = 25f;
-        public float MaxFov = 75f;
+        public float MaxFov = 90f;
         public float FovStep = 5f;
         public float FovLerpSpeed = 10f;
 

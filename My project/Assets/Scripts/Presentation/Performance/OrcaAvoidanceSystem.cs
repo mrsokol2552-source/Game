@@ -1,9 +1,28 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.cs
+@module: presentation.movement.orca
+@purpose: Computes ORCA/RVO local avoidance velocity overrides using spatial hashing and jobs.
+@entry: OrcaAvoidanceSystem.Update, ORCA-03, ORCA-04
+@api: shared MonoBehaviour singleton queried by movement/combat systems
+@deps: UnitCombat, UnitSoARegistry, MovementJobSystem, Unity Jobs/Collections
+@data: agent snapshots, cell hash buffers, avoidance outputs, NativeCollections
+@perf: hotpath, large-N avoidance system; radius/neighbor settings heavily affect cost
+@thread: main thread scheduler + worker jobs
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs, manual crowd movement verification
+@config: ORCA inspector settings, docs/runtime_switches.md
+@assets: none directly
+@notes: ORCA should not fight squad/flow decisions; disable or relax it in states that intentionally ignore local steering
+*/
+
 using System.Collections.Generic;
 using Game.Presentation.View;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+
+// [CODE-ID: SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM]
+// Logical block: Scripts/Presentation/Performance/OrcaAvoidanceSystem.
 
 namespace Game.Presentation.Performance
 {
@@ -14,6 +33,8 @@ namespace Game.Presentation.Performance
     [DefaultExecutionOrder(-100)]
     public class OrcaAvoidanceSystem : MonoBehaviour
     {
+        // [ORCA-01]
+        // ORCA system parameters, spatial buffers, and shared NativeCollections for avoidance jobs.
         public static OrcaAvoidanceSystem Instance { get; private set; }
         public static bool IsActive => Instance != null && Instance.Enabled;
 
@@ -31,6 +52,17 @@ namespace Game.Presentation.Performance
         public int MaxNeighbors = 12;
         [Tooltip("Agent radius in world units.")]
         public float AgentRadius = 0.35f;
+        [Header("Auto Radius")]
+        [Tooltip("If true, auto-tunes AgentRadius from the first active unit's sprite size.")]
+        public bool AutoAgentRadiusFromSprite = true;
+        [Tooltip("Scale applied to sprite extents when auto-tuning (0.5 = half width).")]
+        public float AutoAgentRadiusScale = 0.6f;
+        [Tooltip("Minimum allowed auto radius.")]
+        public float AutoAgentRadiusMin = 0.25f;
+        [Tooltip("NeighborDist = AgentRadius * this (when auto-tuned).")]
+        public float AutoNeighborDistScale = 4f;
+        [Tooltip("CellSize = AgentRadius * this (when auto-tuned).")]
+        public float AutoCellSizeScale = 3f;
         [Tooltip("Time horizon (seconds) for collision avoidance.")]
         public float TimeHorizon = 1.5f;
         [Header("Cohesion")]
@@ -93,6 +125,8 @@ namespace Game.Presentation.Performance
         private bool _jobActive;
         private float _timer;
 
+        // [ORCA-02]
+        // Lifecycle setup and buffer allocation.
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -115,6 +149,8 @@ namespace Game.Presentation.Performance
             if (Instance == this) Instance = null;
         }
 
+        // [ORCA-03]
+        // Frame update that gathers agents, builds the neighborhood hash, and dispatches ORCA jobs.
         private void Update()
         {
             if (ExternalUpdate) return;
@@ -133,6 +169,8 @@ namespace Game.Presentation.Performance
             if (!Enabled) return;
             if (_jobActive) return;
 
+            MaybeAutoTuneFromUnits();
+
             if (Interval > 0f)
             {
                 _timer -= deltaTime;
@@ -146,6 +184,11 @@ namespace Game.Presentation.Performance
             UnitSoARegistry.OrcaSnapshot snapshot = default;
             bool usingSnapshot = false;
             var registry = UnitSoARegistry.Instance;
+            if (registry != null)
+            {
+                registry.OrcaCellSize = CellSize;
+                registry.OrcaMinResponsibility = MinResponsibility;
+            }
             if (UseSoARegistry && registry != null && registry.TryGetOrcaSnapshot(out snapshot))
             {
                 units.Clear();
@@ -208,6 +251,24 @@ namespace Game.Presentation.Performance
             _jobActive = true;
             _activeBuffer = nextBuffer;
             buf.Count = count;
+        }
+
+        private void MaybeAutoTuneFromUnits()
+        {
+            if (!AutoAgentRadiusFromSprite) return;
+            foreach (var unit in UnitView.All)
+            {
+                if (unit == null || !unit.isActiveAndEnabled) continue;
+                var sr = unit.GetComponent<SpriteRenderer>();
+                if (sr == null || sr.sprite == null) continue;
+                float extent = Mathf.Max(sr.bounds.extents.x, sr.bounds.extents.y);
+                if (extent <= 0.0001f) continue;
+                float radius = Mathf.Max(AutoAgentRadiusMin, extent * AutoAgentRadiusScale);
+                AgentRadius = radius;
+                NeighborDist = Mathf.Max(NeighborDist, radius * AutoNeighborDistScale);
+                CellSize = Mathf.Max(CellSize, radius * AutoCellSizeScale);
+                return;
+            }
         }
 
         private int GatherUnits(List<UnitView> target)
@@ -380,6 +441,8 @@ namespace Game.Presentation.Performance
             buf.Count = 0;
         }
 
+        // [ORCA-04]
+        // Parallel ORCA solver that computes velocity constraints and final avoidance vectors.
         private struct OrcaJob : IJobParallelFor
         {
             [ReadOnly] public NativeArray<float2> Positions;

@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 
+// [CODE-ID: SCRIPTS-INFRASTRUCTURE-AI-PATHFINDING-GRIDPATHFINDER]
+// Logical block: Scripts/Infrastructure/AI/Pathfinding/GridPathfinder.
+
 namespace Game.Infrastructure.AI.Pathfinding
 {
     // Simple grid-based reachability checker (4-connected). Pure C# (no Unity deps).

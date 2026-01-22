@@ -1,5 +1,8 @@
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PERFORMANCE-JOBPIPELINECOORDINATOR]
+// Logical block: Scripts/Presentation/Performance/JobPipelineCoordinator.
+
 namespace Game.Presentation.Performance
 {
     /// <summary>

@@ -1,6 +1,9 @@
 using Game.Application.Services;
 using Game.Domain.Research;
 
+// [CODE-ID: SCRIPTS-APPLICATION-USECASES-COMPLETERESEARCH]
+// Logical block: Scripts/Application/UseCases/CompleteResearch.
+
 namespace Game.Application.UseCases
 {
     public class CompleteResearch

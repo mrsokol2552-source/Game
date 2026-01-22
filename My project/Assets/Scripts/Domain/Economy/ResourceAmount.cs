@@ -1,5 +1,8 @@
 using System;
 
+// [CODE-ID: SCRIPTS-DOMAIN-ECONOMY-RESOURCEAMOUNT]
+// Logical block: Scripts/Domain/Economy/ResourceAmount.
+
 namespace Game.Domain.Economy
 {
     [Serializable]
@@ -15,4 +18,3 @@ namespace Game.Domain.Economy
         }
     }
 }
-

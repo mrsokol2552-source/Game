@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using Game.Presentation.View;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-UNITPATHFOLLOWER]
+// Logical block: Scripts/Presentation/Pathfinding/UnitPathFollower.
+
 namespace Game.Presentation.Pathfinding
 {
     [RequireComponent(typeof(UnitView))]

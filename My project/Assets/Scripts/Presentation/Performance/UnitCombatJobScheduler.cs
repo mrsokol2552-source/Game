@@ -4,6 +4,9 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using Game.Presentation.View;
+// [CODE-ID: SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER]
+// Logical block: Scripts/Presentation/Performance/UnitCombatJobScheduler.
+
 namespace Game.Presentation.Performance
 {
     /// <summary>

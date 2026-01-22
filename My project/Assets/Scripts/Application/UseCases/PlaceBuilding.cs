@@ -3,6 +3,9 @@ using Game.Application.Services;
 using Game.Domain.Build;
 using Game.Domain.Economy;
 
+// [CODE-ID: SCRIPTS-APPLICATION-USECASES-PLACEBUILDING]
+// Logical block: Scripts/Application/UseCases/PlaceBuilding.
+
 namespace Game.Application.UseCases
 {
     public class PlaceBuilding
@@ -20,4 +23,3 @@ namespace Game.Application.UseCases
         }
     }
 }
-

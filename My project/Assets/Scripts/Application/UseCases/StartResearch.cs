@@ -4,6 +4,9 @@ using Game.Domain.Build;
 using Game.Domain.Economy;
 using Game.Domain.Research;
 
+// [CODE-ID: SCRIPTS-APPLICATION-USECASES-STARTRESEARCH]
+// Logical block: Scripts/Application/UseCases/StartResearch.
+
 namespace Game.Application.UseCases
 {
     public class StartResearch

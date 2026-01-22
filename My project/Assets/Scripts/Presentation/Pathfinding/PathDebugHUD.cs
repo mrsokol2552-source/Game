@@ -1,5 +1,8 @@
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-PATHDEBUGHUD]
+// Logical block: Scripts/Presentation/Pathfinding/PathDebugHUD.
+
 namespace Game.Presentation.Pathfinding
 {
     /// <summary>

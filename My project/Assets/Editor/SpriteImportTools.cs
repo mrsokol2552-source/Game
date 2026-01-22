@@ -4,6 +4,9 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
+// [CODE-ID: EDITOR-SPRITEIMPORTTOOLS]
+// Logical block: Editor/SpriteImportTools.
+
 public static class SpriteImportTools
 {
     [MenuItem("Tools/RTS/Sprites/Import From Repo")] 
@@ -68,4 +71,3 @@ public static class SpriteImportTools
         }
     }
 }
-

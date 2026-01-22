@@ -5,6 +5,9 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM]
+// Logical block: Scripts/Presentation/Performance/MovementJobSystem.
+
 namespace Game.Presentation.Performance
 {
     /// <summary>
@@ -13,6 +16,8 @@ namespace Game.Presentation.Performance
     [DefaultExecutionOrder(100)]
     public class MovementJobSystem : MonoBehaviour
     {
+        // [MJOB-01]
+        // Batch movement buffers and job-dispatch configuration for unit motion updates.
         public static MovementJobSystem Instance { get; private set; }
         public static bool IsActive => Instance != null && Instance.Enabled;
 
@@ -53,6 +58,8 @@ namespace Game.Presentation.Performance
             public int Count;
         }
 
+        // [MJOB-02]
+        // Lifecycle setup and persistent buffer allocation.
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -75,6 +82,8 @@ namespace Game.Presentation.Performance
             if (Instance == this) Instance = null;
         }
 
+        // [MJOB-03]
+        // Gather/apply movement state and schedule the per-unit movement job.
         private void Update()
         {
             if (ExternalUpdate) return;
@@ -278,6 +287,8 @@ namespace Game.Presentation.Performance
             buf.Count = 0;
         }
 
+        // [MJOB-04]
+        // Parallel movement integration and destination advance logic.
         private struct MovementJob : IJobParallelFor
         {
             public NativeArray<float3> Positions;

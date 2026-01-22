@@ -1,13 +1,34 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Pathfinding/PathManager.cs
+@module: presentation.pathfinding.paths
+@purpose: Builds, caches, and reuses per-unit world paths on the hex grid, including occupancy-aware replans.
+@entry: PathManager.BuildPath, PathManager.Update, PMGR-03
+@api: shared MonoBehaviour singleton used by combat and path followers
+@deps: HexPathfindingBootstrap, OccupancyHash, StaticObstacleHash, UnitCombat
+@data: cached group paths, node pools, occupancy snapshots, diagnostics counters
+@perf: hotpath, path allocation and reuse directly affect frame time under combat load
+@thread: main thread only
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs, manual chase/path verification
+@config: inspector path reuse and occupancy settings, docs/runtime_switches.md
+@assets: none directly
+@notes: friendly reservation and group reuse are behavior-critical and can cause stale-path bugs if tuned too aggressively
+*/
+
 using System.Collections.Generic;
 using Game.Infrastructure.AI.Pathfinding;
 using Game.Presentation.View;
 using UnityEngine;
+
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER]
+// Logical block: Scripts/Presentation/Pathfinding/PathManager.
 
 namespace Game.Presentation.Pathfinding
 {
     // Caches per-unit grid paths and performs suffix replan on new targets
     public class PathManager : MonoBehaviour
     {
+        // [PMGR-01]
+        // Shared pathfinding state, caches, object pools, and diagnostics counters.
         [Header("Replan Settings")]
         [Tooltip("Tail window (in nodes) that is allowed to change when retargeting")] public int TailWindow = 6;
         [Tooltip("Keep this many nodes ahead of current position before replan")] public int StableAhead = 4;
@@ -253,6 +274,8 @@ namespace Game.Presentation.Pathfinding
                 ReturnWorldList(worldPoints);
         }
 
+        // [PMGR-02]
+        // Global path-build throttling and queue budget helpers.
         private void ThrottleReset()
         {
             int frame = Time.frameCount;
@@ -367,6 +390,8 @@ namespace Game.Presentation.Pathfinding
             return _occupiedAllCache;
         }
 
+        // [PMGR-03]
+        // Occupancy-cache maintenance for friendly/enemy-aware path reuse and avoidance.
         private void EnsureOccupiedCache(System.Func<Vector3, Vector2Int> worldToCell, int gridId, float friendTtl)
         {
             int frame = Time.frameCount;
@@ -459,6 +484,8 @@ namespace Game.Presentation.Pathfinding
             return false;
         }
 
+        // [PMGR-04]
+        // Group-path reuse and cache lookup to reduce repeated per-unit path builds.
         private bool TryReuseGroupPath(UnitView unit, Vector2Int from, Vector2Int to, out List<Vector3> worldPath)
         {
             worldPath = null;
@@ -699,6 +726,8 @@ namespace Game.Presentation.Pathfinding
             }
         }
 
+        // [PMGR-05]
+        // Bootstrap discovery and pooled collection helpers for path-building resources.
         private void CacheBootstraps()
         {
             if (_hexCached == null)
@@ -763,5 +792,4 @@ namespace Game.Presentation.Pathfinding
         }
     }
 }
-
 

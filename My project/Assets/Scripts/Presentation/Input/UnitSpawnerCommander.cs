@@ -7,6 +7,9 @@ using Game.Presentation.Performance;
 using UnityEngine.InputSystem;
 #endif
 
+// [CODE-ID: SCRIPTS-PRESENTATION-INPUT-UNITSPAWNERCOMMANDER]
+// Logical block: Scripts/Presentation/Input/UnitSpawnerCommander.
+
 namespace Game.Presentation.Input
 {
     public class UnitSpawnerCommander : MonoBehaviour
@@ -210,5 +213,4 @@ namespace Game.Presentation.Input
         }
     }
 }
-
 

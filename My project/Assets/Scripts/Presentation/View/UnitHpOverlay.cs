@@ -1,5 +1,8 @@
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-VIEW-UNITHPOVERLAY]
+// Logical block: Scripts/Presentation/View/UnitHpOverlay.
+
 namespace Game.Presentation.View
 {
     [RequireComponent(typeof(UnitCombat))]

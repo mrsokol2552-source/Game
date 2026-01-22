@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using Game.Infrastructure.AI.Pathfinding;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-PATHFINDINGBOOTSTRAP]
+// Logical block: Scripts/Presentation/Pathfinding/PathfindingBootstrap.
+
 namespace Game.Presentation.Pathfinding
 {
     public class PathfindingBootstrap : MonoBehaviour

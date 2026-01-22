@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "generated_manually": true,
+  "roots": [
+    {
+      "path": "My project/Assets/Scripts",
+      "purpose": "Project-owned runtime and editor code"
+    },
+    {
+      "path": "My project/Assets/Tests",
+      "purpose": "PlayMode/EditMode tests and perf harness"
+    },
+    {
+      "path": "My project/Assets/Scenes",
+      "purpose": "Scene wiring and integration entrypoints"
+    },
+    {
+      "path": "docs",
+      "purpose": "Human-readable architecture and debugging docs"
+    },
+    {
+      "path": "maps",
+      "purpose": "Compact repo-level routing maps"
+    }
+  ],
+  "systems": [
+    {
+      "id": "worldgen",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
+      "sections": ["PENV-03", "PENV-05", "PENV-07", "PENV-09", "PENV-13", "PENV-14"],
+      "purpose": "World generation, background conversion, streaming, far-view bake"
+    },
+    {
+      "id": "hex_grid",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
+      "sections": ["HPFB-01", "HPFB-02", "HPFB-03", "HPFB-04"],
+      "purpose": "Authoritative hex grid and walkability"
+    },
+    {
+      "id": "paths",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/PathManager.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER",
+      "sections": ["PMGR-01", "PMGR-03"],
+      "purpose": "Path building, caching, occupancy-aware reuse"
+    },
+    {
+      "id": "path_queue",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE",
+      "sections": ["PQUE-01", "PQUE-03", "PQUE-04"],
+      "purpose": "Async path request queue and job scheduling"
+    },
+    {
+      "id": "flow_fields",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER",
+      "sections": ["FFLD-01", "FFLD-03", "FFLD-06", "FFLD-07"],
+      "purpose": "Shared flow fields for squads and clustered movement"
+    },
+    {
+      "id": "combat",
+      "file": "My project/Assets/Scripts/Presentation/View/UnitCombat.cs",
+      "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+      "sections": ["UCOM-01", "UCOM-03", "UCOM-06", "UCOM-08"],
+      "purpose": "Per-unit combat update, targeting, chase, attack behavior"
+    },
+    {
+      "id": "squads",
+      "file": "My project/Assets/Scripts/Presentation/Performance/EnemySquadManager.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
+      "sections": ["ESQD-01", "ESQD-03", "ESQD-04", "ESQD-05"],
+      "purpose": "Squad formation and macro combat states"
+    },
+    {
+      "id": "orca",
+      "file": "My project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM",
+      "sections": ["ORCA-01", "ORCA-03", "ORCA-04"],
+      "purpose": "Local avoidance via ORCA/RVO"
+    },
+    {
+      "id": "bootstrap",
+      "file": "My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs",
+      "code_id": "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT",
+      "purpose": "Scene service wiring and asset binding"
+    },
+    {
+      "id": "camera",
+      "file": "My project/Assets/Scripts/Presentation/Camera/CameraZoom2D.cs",
+      "code_id": "SCRIPTS-PRESENTATION-CAMERA-CAMERAZOOM2D",
+      "purpose": "Camera zoom and pan; affects streaming pressure"
+    }
+  ],
+  "docs": [
+    {
+      "path": "docs/code_map.md",
+      "purpose": "Full architecture and code map"
+    },
+    {
+      "path": "docs/code_id_index.md",
+      "purpose": "Practical CODE-ID lookup and reading routes"
+    },
+    {
+      "path": "docs/debug_playbooks.md",
+      "purpose": "Symptom-first debugging routes"
+    },
+    {
+      "path": "docs/runtime_switches.md",
+      "purpose": "Runtime and inspector tuning switches"
+    },
+    {
+      "path": "docs/code_index.json",
+      "purpose": "Machine-readable code/system index"
+    },
+    {
+      "path": "docs/agent_comment_standard.md",
+      "purpose": "Agent file-header/comment convention"
+    }
+  ]
+}

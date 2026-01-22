@@ -2,6 +2,10 @@ using System.Collections.Generic;
 using Game.Domain.Units;
 using UnityEngine;
 using Game.Presentation.Performance;
+using Game.Presentation.Bootstrap;
+
+// [CODE-ID: SCRIPTS-PRESENTATION-VIEW-UNITVIEW]
+// Logical block: Scripts/Presentation/View/UnitView.
 
 namespace Game.Presentation.View
 {
@@ -39,6 +43,17 @@ namespace Game.Presentation.View
         public float JitterDistance = 0.05f;
         [Tooltip("Time window in seconds to group jittery commands.")]
         public float JitterWindow = 0.2f;
+        [Header("Rendering")]
+        [Tooltip("Enable Y-based sorting to reduce flicker when units overlap.")]
+        public bool UseYSorting = true;
+        [Tooltip("Sorting order units per 1 world unit of Y.")]
+        public float SortOrderPerWorldUnit = 10f;
+        [Tooltip("Base sorting order applied before Y offset.")]
+        public int SortingOrderBase = 0;
+        [Tooltip("Extra offset applied to sorting order to keep units above tilemaps on large maps.")]
+        public int SortingOrderOffset = 10000;
+        public bool UseCompositionRootSorting = true;
+        public bool AddSortingTieBreaker = true;
 
         private Vector3? destination;
         private float _currentSpeed;
@@ -50,6 +65,8 @@ namespace Game.Presentation.View
         private int _steeringFrame = -1;
         private Vector3 _velocityOverride;
         private int _velocityOverrideFrame = -1;
+        private bool _sortingInitialized;
+        private int _sortingTie;
         public static bool EnableJitterLog = false;
 
         private void OnEnable()
@@ -239,6 +256,28 @@ namespace Game.Presentation.View
             transform.position = pos + delta;
 
             ApplyFacing(dir, Time.deltaTime);
+        }
+
+        private void LateUpdate()
+        {
+            if (!UseYSorting || _sr == null) return;
+            if (!_sortingInitialized)
+            {
+                if (UseCompositionRootSorting)
+                {
+                    var root = Object.FindAnyObjectByType<CompositionRoot>();
+                    if (root != null)
+                    {
+                        SortingOrderBase = root.UnitSortingOrder + SortingOrderOffset;
+                        if (!string.IsNullOrEmpty(root.UnitSortingLayerName))
+                            _sr.sortingLayerName = root.UnitSortingLayerName;
+                    }
+                }
+                _sortingTie = AddSortingTieBreaker ? (Mathf.Abs(GetInstanceID()) % 3) : 0;
+                _sortingInitialized = true;
+            }
+            int order = SortingOrderBase - Mathf.RoundToInt(transform.position.y * SortOrderPerWorldUnit);
+            _sr.sortingOrder = order + _sortingTie;
         }
 
         private void OnDrawGizmosSelected()

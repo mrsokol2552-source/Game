@@ -5,6 +5,9 @@ using UnityEngine.TestTools;
 using Game.Presentation.View;
 using Game.Domain.Units;
 
+// [CODE-ID: TESTS-PLAYMODE-UNITCOMBATSTALLTESTS]
+// Logical block: Tests/PlayMode/UnitCombatStallTests.
+
 namespace Tests.PlayMode
 {
     public class UnitCombatStallTests

@@ -1,5 +1,8 @@
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-INFRASTRUCTURE-CONFIGS-UNITCOMBATPROFILE]
+// Logical block: Scripts/Infrastructure/Configs/UnitCombatProfile.
+
 namespace Game.Infrastructure.Configs
 {
     [CreateAssetMenu(fileName = "UnitCombatProfile", menuName = "Configs/Unit Combat Profile")]

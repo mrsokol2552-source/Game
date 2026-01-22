@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 
+// [CODE-ID: SCRIPTS-DOMAIN-ECONOMY-ECONOMYSTATE]
+// Logical block: Scripts/Domain/Economy/EconomyState.
+
 namespace Game.Domain.Economy
 {
     public class EconomyState
@@ -45,4 +48,3 @@ namespace Game.Domain.Economy
         }
     }
 }
-

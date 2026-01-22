@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 
+// [CODE-ID: SCRIPTS-INFRASTRUCTURE-AI-PATHFINDING-HEXPATHFINDER]
+// Logical block: Scripts/Infrastructure/AI/Pathfinding/HexPathfinder.
+
 namespace Game.Infrastructure.AI.Pathfinding
 {
     // Hex pathfinder over odd-r offset grid storage.

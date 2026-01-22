@@ -1,5 +1,8 @@
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-VIEW-MOVEMENTSETTINGS]
+// Logical block: Scripts/Presentation/View/MovementSettings.
+
 namespace Game.Presentation.View
 {
     [CreateAssetMenu(fileName = "MovementSettings", menuName = "Game/Movement Settings", order = 0)]

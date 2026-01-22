@@ -3,6 +3,9 @@ using System.Linq;
 using Game.Presentation.View;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER]
+// Logical block: Scripts/Presentation/Pathfinding/CrowdingResolver.
+
 namespace Game.Presentation.Pathfinding
 {
     /// <summary>
@@ -379,5 +382,4 @@ namespace Game.Presentation.Pathfinding
         }
     }
 }
-
 

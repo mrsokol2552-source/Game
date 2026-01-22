@@ -1,5 +1,18 @@
 # Current Game State (RTS 2D)
 
+## Navigation helpers
+- [code_map.md](./code_map.md) - architecture map and key system locations.
+- [code_id_index.md](./code_id_index.md) - practical `CODE-ID` lookup and reading routes.
+- [debug_playbooks.md](./debug_playbooks.md) - symptom -> where to look first.
+- [runtime_switches.md](./runtime_switches.md) - high-value inspector/runtime tuning switches.
+- [unity_csharp_performance_optimization_reference.md](./unity_csharp_performance_optimization_reference.md) - practical performance reference for Unity C# code.
+- [deep-research-report.md](./deep-research-report.md) - agent-focused repository navigation reference and rationale.
+- [code_index.json](./code_index.json) - machine-readable system index.
+- [unity_mcp_tools.md](./unity_mcp_tools.md) - available Unity MCP tools and recommended usage.
+- [repo_map.md](../maps/repo_map.md) - compact top-level repo map.
+- [repo_map.json](../maps/repo_map.json) - machine-readable repo map for tools/agents.
+- [agent_comment_standard.md](./agent_comment_standard.md) - current file-header convention for hot code.
+
 ## Index / Search Hints
 - Bootstrap & lifecycle: CompositionRoot, GameStateService, SaveSystem, camera setup.
 - Domain & use cases: EconomyState/Manager, ResearchStore, StartNewGame, PlaceBuilding, StartResearch, CompleteResearch.
@@ -10,17 +23,20 @@
 - Combat & targeting: UnitCombat (steering, repath timers, budgets), UnitCombatJobScheduler, EnemySquadManager, OccupancyHash.
 - Persistence: SaveSystem bindings, what is persisted.
 - Debug/perf: PathProfiler, PathDebugHUD, diagnostic toggles.
-- Tests: Assets/Tests (EditMode + PlayMode).
+- Tests: [Assets/Tests](../My%20project/Assets/Tests) (EditMode + PlayMode).
 
 ## Layers and code map
-- This doc describes runtime behavior; for file navigation see `docs/code_map.md`.
+- This doc describes runtime behavior; for file navigation see [code_map.md](./code_map.md).
+- For exact `CODE-ID` and section lookup see [code_id_index.md](./code_id_index.md).
+- For symptom-first bug routes see [debug_playbooks.md](./debug_playbooks.md).
+- For important runtime/inspector knobs see [runtime_switches.md](./runtime_switches.md).
 - Domain: pure data + rules (`Domain/*`).
 - Application: use cases that orchestrate domain changes (`Application/*`).
 - Infrastructure: ScriptableObjects and persistence (`Infrastructure/*`).
 - Presentation: Unity MonoBehaviours (`Presentation/*`).
 
 ## Bootstrap and Lifecycle
-- `CompositionRoot` (`Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs`)
+- [CompositionRoot.cs](../My%20project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs)
   - Creates `GameStateService` and binds SaveSystem capture/restore callbacks.
   - Auto-starts a new game when `AutoStart=true`, using `GameConfig.StartingResources` or zeroing stocks.
   - Ensures helpers: `CameraZoom2D`, `HexPathfindingBootstrap` ("HexPathfinding (Auto)"), `ProceduralObstacles`, `ProceduralEnvironment`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `StaticObstacleHash`, `CoverSlotHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
@@ -231,6 +247,19 @@
   - Can auto-split blocking props by tile name keywords when enabled.
   - Supports async, chunked generation to avoid editor freezes on large maps.
   - Can update walkability directly for blocking tiles (no physics rebake) via `UseDirectWalkableUpdates`.
+  - World streaming:
+    - `UseWorldStreaming` streams chunks around the camera (active + prefetch radii).
+    - `StreamFrameBudgetMs` + `StreamTargetFps` cap per-frame work.
+    - `StreamKeepGeneratedChunks` keeps chunks and skips re-bake; `StreamBakeAllChunksOnIdle` fills the map when camera is idle.
+    - Water/rock biomes in streaming are driven by the same water/rock masks as full generation (not by simple noise).
+    - `StreamPropsUseBackgroundGrid` controls whether props/trees are placed on the background grid (rect) or hex grid (default: hex).
+  - Background rect grid:
+    - `UseBackgroundTilemap` renders square-converted ground tiles.
+    - Background cell size is derived from converted tiles; overlap can be added via `BackgroundCellOverlapPixels`.
+  - Far view bake:
+    - `UseFarViewBake` can render the map to a cached texture for very far zooms.
+    - Chunked bake uses `FarViewChunkPixels`, `FarViewChunksPerFrame`.
+    - Far view is disabled while streaming is active (streaming takes priority).
 
 ## Save / Load
 - `SaveSystem`:

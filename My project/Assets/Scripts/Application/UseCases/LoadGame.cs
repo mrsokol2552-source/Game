@@ -1,6 +1,9 @@
 using Game.Application.Services;
 using Game.Application.Ports;
 
+// [CODE-ID: SCRIPTS-APPLICATION-USECASES-LOADGAME]
+// Logical block: Scripts/Application/UseCases/LoadGame.
+
 namespace Game.Application.UseCases
 {
     public class LoadGame

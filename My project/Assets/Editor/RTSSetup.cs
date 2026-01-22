@@ -7,6 +7,9 @@ using UnityEngine;
 using BuildingConfig = Game.Infrastructure.Configs.BuildingConfig;
 using Game.Presentation.UI;
 
+// [CODE-ID: EDITOR-RTSSETUP]
+// Logical block: Editor/RTSSetup.
+
 public static class RTSSetup
 {
     private const string PrefabsFolder = "Assets/Prefabs";

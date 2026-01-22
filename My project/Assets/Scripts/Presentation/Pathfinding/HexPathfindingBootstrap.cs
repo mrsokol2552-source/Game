@@ -1,11 +1,32 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.cs
+@module: presentation.pathfinding.hexgrid
+@purpose: Owns the authoritative odd-r hex grid, walkability state, Native mirrors, and grid/world conversion helpers.
+@entry: HexPathfindingBootstrap.Awake, HexPathfindingBootstrap.InitializeGrid, HPFB-02, HPFB-03
+@api: scene MonoBehaviour singleton backing all hex pathfinding systems
+@deps: grid pathfinder implementation, ProceduralEnvironment, Physics2D collider bake
+@data: walkable grid, dirty rectangles, NativeArray mirrors, grid dimensions
+@perf: hotpath for coordinate conversion and walkability queries; memory-sensitive at large map sizes
+@thread: main thread with Native data exposed to jobs
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs, manual map generation verification
+@config: Width, Height, MaxCells, AutoClampSize, docs/runtime_switches.md
+@assets: collider layers and obstacle bake inputs
+@notes: if grid dimensions and world generation size drift apart, streaming, baking, and prop placement will all misbehave
+*/
+
 using Game.Infrastructure.AI.Pathfinding;
 using UnityEngine;
+
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP]
+// Logical block: Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.
 
 namespace Game.Presentation.Pathfinding
 {
     // Hex grid bootstrap: odd-r offset storage, pointy-top hexes.
     public class HexPathfindingBootstrap : MonoBehaviour
     {
+        // [HPFB-01]
+        // Hex-grid dimensions, walkability storage, and NativeArray mirrors used by jobs/pathfinding.
         [Header("Hex Grid Settings (Odd-R)")]
         public int Width = 1024;   // columns (q/col)
         public int Height = 1024;  // rows (r)
@@ -38,7 +59,22 @@ namespace Game.Presentation.Pathfinding
         private int _dirtyMaxRow;
         private int _walkableVersion = 1;
 
+        // [HPFB-02]
+        // Initial grid sizing and one-time bootstrap initialization.
         private void Awake()
+        {
+            InitializeGrid();
+        }
+
+        // [HPFB-03]
+        // Lazy initialization and reallocation guards for managed/native walkability buffers.
+        public void EnsureInitialized()
+        {
+            if (_walkable != null) return;
+            InitializeGrid();
+        }
+
+        private void InitializeGrid()
         {
             if (AutoClampSize && Width > 0 && Height > 0)
             {
@@ -105,6 +141,8 @@ namespace Game.Presentation.Pathfinding
             return new Vector3(Origin.x + wx, Origin.y + wy, 0f);
         }
 
+        // [HPFB-04]
+        // Public editing API for walkability and collider/physics baking.
         public void SetBlockedAtWorld(Vector3 world, bool blocked)
         {
             var cell = WorldToGrid(world);
@@ -243,6 +281,8 @@ namespace Game.Presentation.Pathfinding
             MarkWalkableDirtyRect(col, row, col, row);
         }
 
+        // [HPFB-05]
+        // Hex-coordinate conversion helpers between world, odd-r, and axial space.
         private static (int q, int r) AxialRound(float qf, float rf)
         {
             // cube rounding
@@ -408,6 +448,8 @@ namespace Game.Presentation.Pathfinding
             _dirtyMaxRow = Mathf.Max(_dirtyMaxRow, maxRow);
         }
 
+        // [HPFB-06]
+        // Native resource cleanup for job-safe grid buffers.
         private void OnDestroy()
         {
             var queue = PathRequestQueue.Instance;
@@ -431,4 +473,3 @@ namespace Game.Presentation.Pathfinding
         }
     }
 }
-

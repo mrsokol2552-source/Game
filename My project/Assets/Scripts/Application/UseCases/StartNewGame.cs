@@ -1,6 +1,9 @@
 using Game.Application.Services;
 using Game.Domain.Economy;
 
+// [CODE-ID: SCRIPTS-APPLICATION-USECASES-STARTNEWGAME]
+// Logical block: Scripts/Application/UseCases/StartNewGame.
+
 namespace Game.Application.UseCases
 {
     public class StartNewGame
@@ -30,4 +33,3 @@ namespace Game.Application.UseCases
         }
     }
 }
-

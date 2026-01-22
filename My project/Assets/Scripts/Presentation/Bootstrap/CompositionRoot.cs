@@ -1,3 +1,19 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs
+@module: presentation.bootstrap
+@purpose: Wires scene-level services, save/load hooks, configs, and default unit/building assets into the runtime.
+@entry: CompositionRoot.Awake, CompositionRoot.Start
+@api: scene bootstrap MonoBehaviour
+@deps: GameStateService, SaveSystem, configs, input/UI systems, prefabs
+@data: top-level service graph and scene-bound asset references
+@perf: not a hotpath; startup wiring only
+@thread: main thread only
+@tests: manual scene bootstrap verification
+@config: SampleScene references and inspector fields
+@assets: GameConfig, unit prefabs, sprites, research/build configs
+@notes: incorrect scene references here tend to surface as missing runtime systems rather than compile errors
+*/
+
 using System.Collections.Generic;
 using System.Linq;
 using Game.Application.Services;
@@ -9,6 +25,9 @@ using Game.Presentation.CameraControl;
 using Game.Presentation.Performance;
 using Game.Presentation.View;
 using UnityEngine;
+
+// [CODE-ID: SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT]
+// Logical block: Scripts/Presentation/Bootstrap/CompositionRoot.
 
 namespace Game.Presentation.Bootstrap
 {
@@ -334,6 +353,5 @@ namespace Game.Presentation.Bootstrap
         }
     }
 }
-
 
 

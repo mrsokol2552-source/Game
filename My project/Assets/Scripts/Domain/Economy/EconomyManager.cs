@@ -1,3 +1,6 @@
+// [CODE-ID: SCRIPTS-DOMAIN-ECONOMY-ECONOMYMANAGER]
+// Logical block: Scripts/Domain/Economy/EconomyManager.
+
 namespace Game.Domain.Economy
 {
     public class EconomyManager
@@ -17,4 +20,3 @@ namespace Game.Domain.Economy
         }
     }
 }
-

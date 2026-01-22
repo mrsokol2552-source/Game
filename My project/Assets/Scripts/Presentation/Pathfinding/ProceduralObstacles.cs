@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALOBSTACLES]
+// Logical block: Scripts/Presentation/Pathfinding/ProceduralObstacles.
+
 namespace Game.Presentation.Pathfinding
 {
     public class ProceduralObstacles : MonoBehaviour
@@ -204,7 +207,6 @@ namespace Game.Presentation.Pathfinding
         }
     }
 }
-
 
 
 

@@ -1,5 +1,8 @@
 using UnityEngine;
 
+// [CODE-ID: SCRIPTS-INFRASTRUCTURE-CONFIGS-UNITBEHAVIORPROFILE]
+// Logical block: Scripts/Infrastructure/Configs/UnitBehaviorProfile.
+
 namespace Game.Infrastructure.Configs
 {
     [CreateAssetMenu(menuName = "Configs/Unit Behavior Profile", fileName = "UnitBehaviorProfile")]

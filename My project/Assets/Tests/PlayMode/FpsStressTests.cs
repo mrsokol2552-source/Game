@@ -7,6 +7,9 @@ using Game.Domain.Units;
 using Game.Presentation.Pathfinding;
 using Game.Presentation.Performance;
 
+// [CODE-ID: TESTS-PLAYMODE-FPSSTRESSTESTS]
+// Logical block: Tests/PlayMode/FpsStressTests.
+
 namespace Tests.PlayMode
 {
     public class FpsStressTests
