@@ -154,6 +154,11 @@ namespace Game.Presentation.Performance
             _units.Clear();
             _combats.Clear();
             int needed = UnitView.All.Count;
+            if (needed <= 0)
+            {
+                _count = 0;
+                return;
+            }
             EnsureCapacity(needed);
             if (_units.Capacity < needed) _units.Capacity = needed;
             if (_combats.Capacity < needed) _combats.Capacity = needed;
@@ -211,7 +216,7 @@ namespace Game.Presentation.Performance
 
         private void EnsureCapacity(int needed)
         {
-            if (needed <= _capacity) return;
+            if (needed <= _capacity && AreArraysCreated()) return;
             DisposeArrays();
             _capacity = Mathf.NextPowerOfTwo(Mathf.Max(4, needed));
             _positions = new NativeArray<float2>(_capacity, Allocator.Persistent);
@@ -225,6 +230,21 @@ namespace Game.Presentation.Performance
             _cells = new NativeArray<int2>(_capacity, Allocator.Persistent);
             _hasCombat = new NativeArray<byte>(_capacity, Allocator.Persistent);
             _isInSquad = new NativeArray<byte>(_capacity, Allocator.Persistent);
+        }
+
+        private bool AreArraysCreated()
+        {
+            return _positions.IsCreated
+                && _velocities.IsCreated
+                && _preferred.IsCreated
+                && _maxSpeed.IsCreated
+                && _hasDestination.IsCreated
+                && _useOrca.IsCreated
+                && _responsibility.IsCreated
+                && _factions.IsCreated
+                && _cells.IsCreated
+                && _hasCombat.IsCreated
+                && _isInSquad.IsCreated;
         }
 
         private void DisposeArrays()

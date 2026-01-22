@@ -15,6 +15,9 @@ namespace Game.Presentation.View
         public static readonly HashSet<UnitCombat> All = new HashSet<UnitCombat>();
         public static bool DisableCombat = false; // Self-test or debug freeze
 
+        public event System.Action OnAttack;
+        public event System.Action OnDeath;
+
         public enum SquadMode
         {
             None,
@@ -150,6 +153,7 @@ namespace Game.Presentation.View
         private float _flowFieldTimer;
         private bool _usingFlowField;
         private Vector3 _homePosition;
+        private bool _dead;
 
         private static int _budgetFrame = -1;
         private static int _repathsThisFrame;
@@ -522,6 +526,7 @@ namespace Game.Presentation.View
                         _view.ClearDestination("combat-in-range");
                     if (_cooldown <= 0f)
                     {
+                        OnAttack?.Invoke();
                         target.ApplyDamage(AttackDamage);
                         _cooldown = AttackCooldown;
                     }
@@ -610,10 +615,14 @@ namespace Game.Presentation.View
         public void ApplyDamage(int dmg)
         {
             if (dmg <= 0) return;
+            if (_dead) return;
             _currentHealth -= dmg;
             if (_currentHealth <= 0)
             {
-                Destroy(gameObject);
+                _dead = true;
+                OnDeath?.Invoke();
+                if (OnDeath == null)
+                    Destroy(gameObject);
             }
         }
 

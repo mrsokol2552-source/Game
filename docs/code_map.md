@@ -37,6 +37,36 @@ Presentation:
 - Pathfinding: `PathManager`, `PathRequestQueue`, `HexPathfindingBootstrap`, `HexPathfinderJob`, `PathfindingBootstrap` (grid fallback), `FlowFieldManager`, `CrowdingResolver`, `ProceduralEnvironment`, `PathProfiler`, `PathDebugHUD`.
 - Pathfinding: `StaticObstacleHash` (blocked-cell hash for fast static queries), `CoverSlotHash` (pre-baked cover slots).
 
+## ProceduralEnvironment ground conversion preset (isometric -> square)
+
+The current default preset is tuned for `Zombie Rural - HD Isometric Tileset` ground tiles (128x256). Defaults live in `My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.cs` and are mirrored in `My project/Assets/Scenes/SampleScene.unity`.
+
+Key settings:
+- Manual diamond cutout: `UseGroundTileManualDiamond=true`, `GroundTileDiamondNormalized=false`, `GroundTileDiamondYFromTop=true`.
+- Diamond points (pixels): top `(63.5,175)`, right `(127,207.5)`, bottom `(63.5,240)`, left `(0,208.5)`.
+- Edge cleanup: `GroundTileDiamondInsetPixels=3`, `GroundTileMaskOutsideDiamond=true`, `GroundTileEdgeDilatePixels=2`, `GroundTileEdgeTrimPixels=1`, `GroundTileEdgeBlackThreshold=0.09`, `GroundTileEdgeChromaThreshold=0.09`.
+- Sampling: `GroundTileAlphaThreshold=0.2`, `GroundTileFilterMode=Point`, `UseGroundTileAutoCrop=false`.
+- Packed sprites: if a sprite is atlas-rotated (`sprite.packed`), it is unrotated before the manual diamond cut.
+- Background: `UseBackgroundTilemap=true`, `BackgroundCellOverlapPixels=0`.
+
+If you switch to another tileset or sprite size, update the diamond points and (optionally) the inset/edge thresholds.
+
+Palette filters and biomes (SampleScene defaults):
+- `UseGroundSuffixFilter=false` (keep all orientation variants; when enabled it filters `GroundTiles` by suffix and can hide `_E/_S/_W` variants).
+- `AutoSplitGroundByName=true` with `PropNameKeywords=flora` and `BlockingNameKeywords=tree, rock, boulder, stone, cliff, pine`.
+- `UseWaterBiome=true` with `WaterTileNameKeywords=Ground A2_..A14_`, `RockTileNameKeywords=Ground E2_..E10_` (names must exist in the current `GroundTiles` set).
+- `WaterInteriorTileNameKeywords` controls which tiles are allowed in fully-surrounded water; `UseWaterAutoInteriorByColor` can auto-detect interior water tiles by blue-dominant edges and a clean interior region (defaults: `WaterInteriorBlueRatio=0.9`, `WaterInteriorSampleInsetPixels=4`, `WaterInteriorFallbackCount=1`, `WaterEdgeBlueRatio=0.8`, `WaterEdgeBlueDominance=0.08`, `WaterEdgeBlueMin=0.2`, `WaterEdgeSampleInsetPixels=1`, `WaterEdgeSampleBandPixels=3`, `WaterEdgeMismatchTolerance=0.1`, `WaterEdgeMaskSamples=8`, `WaterEdgeMaskRatioThreshold=0.45`, `WaterEdgeMaskMatchWeight=0.8`, `WaterEdgeSmoothnessWeight=0.6`, `WaterTileExcludeKeywords=Ground A3_, Ground A11_, Ground A12_`).
+- When `UseWaterBiome=true`, water/rock tiles are removed from normal land selection; if the water mask doesn't build, you'll see only land tiles.
+- Water generation removes isolated single water cells (4-neighbor check) and converts land “holes” fully surrounded by water to water.
+- Water edge matching: `UseWaterEdgeColorMatch=true` enforces blue-dominant edges for any tile adjacent to water (water/rock/land), requiring water edges where the mask neighbor is water and non-water edges elsewhere; fallback uses water edge ratios and edge masks when strict matches fail.
+- Water edge refinement: `UseWaterEdgeRefinement=true` runs a post-pass over the background to re-pick variants near water using full 4-neighbor edge masks (`WaterEdgeRefinePasses=1`, `WaterEdgeSmoothnessWeight=0.6`).
+- Water mask smoothing: `UseWaterMaskSmoothing=true` applies cellular smoothing over the water mask (`WaterMaskSmoothPasses=2`, `WaterMaskSmoothFillNeighbors=5`, `WaterMaskSmoothStayNeighbors=4`, `WaterMaskSmoothIncludeDiagonals=true`) to reduce jagged shorelines.
+- Layer smoothing: `UseLayerSmoothing=true` applies majority smoothing over biome indices (`LayerSmoothingPasses=1`, `LayerSmoothingMajority=0.55`, `LayerSmoothingIncludeDiagonals=false`) to reduce speckle noise globally.
+- Layer cleanup: `UseLayerRegionCleanup=true` merges tiny biome islands into neighboring majority regions (`LayerMinRegionSize=20`, `LayerCleanupPasses=1`, `LayerCleanupIncludeDiagonals=false`).
+- Noise warp: `UseNoiseDomainWarp=true` distorts the biome noise field to break grid-like patterns (`DomainWarpScale=0.02`, `DomainWarpStrength=0.6`, `DomainWarpOctaves=2`, `DomainWarpPersistence=0.5`, `DomainWarpLacunarity=2`).
+- Layer quantization: `UseLayerQuantization=true` snaps noise into clearer biome bands with small jitter (`LayerQuantizationJitter=0.12`).
+- Macro biomes: `UseMacroBiomeNoise=true` blends in a very low-frequency noise to produce large contiguous regions (`MacroBiomeScale=0.004`, `MacroBiomeBlend=0.85`, `MacroBiomeContrast=1.2`, `MacroBiomeOctaves=1`).
+
 ## Bootstrap and singletons
 
 - `CompositionRoot` (`Presentation/Bootstrap/CompositionRoot.cs`):

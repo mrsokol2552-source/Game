@@ -10,12 +10,12 @@ namespace Game.Presentation.CameraControl
     public class CameraZoom2D : MonoBehaviour
     {
         public float MinOrthoSize = 2f;
-        public float MaxOrthoSize = 30f;
+        public float MaxOrthoSize = 120f;
         public float OrthoStep = 1.5f;
         public float OrthoLerpSpeed = 10f;
 
         public float MinFov = 25f;
-        public float MaxFov = 75f;
+        public float MaxFov = 90f;
         public float FovStep = 5f;
         public float FovLerpSpeed = 10f;
 

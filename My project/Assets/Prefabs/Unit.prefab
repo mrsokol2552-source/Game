@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7149862206046492017}
   - component: {fileID: 3859796039554605570}
   - component: {fileID: 4865058311059883226}
+  - component: {fileID: 6798847881124139035}
   m_Layer: 0
   m_Name: Unit
   m_TagString: Untagged
@@ -36,6 +37,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &7149862206046492017
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -81,7 +83,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -2446203892300535944, guid: eb543ff9396a2c54e83135d05f8b41e3, type: 3}
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 368746673022191736, guid: 477b71c3fc8b4284a81c0e9a8ccd1357, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -90,7 +93,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &3859796039554605570
 MonoBehaviour:
@@ -108,6 +110,17 @@ MonoBehaviour:
     Speed: 2
     MaxHealth: 100
   Movement: {fileID: 11400000, guid: 82fa1712cf783804891bfbb67f8a8d7c, type: 2}
+  UseSteering: 1
+  SteeringInfluence: 1
+  UseMovementJobs: 1
+  UseOrcaVelocity: 1
+  VelocityOverrideMaxAgeFrames: 1
+  OrcaPriority: 0
+  MirrorSpriteX: 0
+  MirrorDeadZone: 0.05
+  LogJitteryCommands: 0
+  JitterDistance: 0.05
+  JitterWindow: 0.2
 --- !u!114 &4865058311059883226
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -123,3 +136,20 @@ MonoBehaviour:
   CheckInterval: 0.125
   DistanceMargin: 2.7
   UseFrustumTest: 1
+--- !u!114 &6798847881124139035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8129896253358288555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 725a24c02ef394a4b86d73cf15dea9d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: RTS.Presentation::Game.Presentation.View.UnitSpriteAnimator
+  AnimSet: {fileID: 11400000, guid: 8fa247cf3668de34a828d874269fe259, type: 2}
+  MoveSpeedThreshold: 0.05
+  DeathDestroyExtraDelay: 0
+  UseScaledTime: 1
+  TargetRenderer: {fileID: 7149862206046492017}
