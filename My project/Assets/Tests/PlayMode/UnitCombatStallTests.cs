@@ -10,13 +10,14 @@ using Game.Domain.Units;
 
 namespace Tests.PlayMode
 {
+    [Category("Gate")]
     public class UnitCombatStallTests
     {
         [SetUp]
         public void SetUp()
         {
+            CleanupAll();
             UnitCombat.DisableCombat = false;
-            UnitCombat.All.Clear();
             Time.timeScale = 1f;
         }
 
@@ -24,7 +25,8 @@ namespace Tests.PlayMode
         public void TearDown()
         {
             UnitCombat.DisableCombat = false;
-            UnitCombat.All.Clear();
+            Time.timeScale = 1f;
+            CleanupAll();
         }
 
         [UnityTest]
@@ -35,12 +37,9 @@ namespace Tests.PlayMode
             target.SetHealth(20);
             int initial = target.CurrentHealth;
 
-            // Let combat tick
-            yield return new WaitForSeconds(1.0f);
+            yield return WaitUntilHealthAtOrBelow(target, initial - 2, 1.0f);
 
             Assert.Less(target.CurrentHealth, initial - 1, "Target should have taken multiple hits when in range.");
-
-            Cleanup(attacker, target);
         }
 
         [UnityTest]
@@ -51,12 +50,9 @@ namespace Tests.PlayMode
             target.SetHealth(20);
             int initial = target.CurrentHealth;
 
-            // Allow time to move into range and attack
-            yield return new WaitForSeconds(5.0f);
+            yield return WaitUntilHealthBelow(target, initial, 5.0f);
 
             Assert.Less(target.CurrentHealth, initial, "Attacker should close distance and deal damage.");
-
-            Cleanup(attacker, target);
         }
 
         private static UnitCombat SpawnUnit(string name, Vector3 pos, float attackCooldown, int attackDamage, Game.Domain.Units.Faction faction)
@@ -77,13 +73,31 @@ namespace Tests.PlayMode
             return combat;
         }
 
-        private static void Cleanup(params UnitCombat[] units)
+        private static void CleanupAll()
         {
-            foreach (var uc in units)
+            foreach (var uc in new System.Collections.Generic.List<UnitCombat>(UnitCombat.All))
             {
                 if (uc != null)
-                    Object.Destroy(uc.gameObject);
+                    Object.DestroyImmediate(uc.gameObject);
             }
+            UnitCombat.All.Clear();
+        }
+
+        private static IEnumerator WaitUntilHealthBelow(UnitCombat target, int threshold, float timeoutSeconds)
+        {
+            yield return WaitUntilHealthMatches(target, health => health < threshold, timeoutSeconds);
+        }
+
+        private static IEnumerator WaitUntilHealthAtOrBelow(UnitCombat target, int threshold, float timeoutSeconds)
+        {
+            yield return WaitUntilHealthMatches(target, health => health <= threshold, timeoutSeconds);
+        }
+
+        private static IEnumerator WaitUntilHealthMatches(UnitCombat target, System.Func<int, bool> predicate, float timeoutSeconds)
+        {
+            float deadline = Time.time + timeoutSeconds;
+            while (target != null && !predicate(target.CurrentHealth) && Time.time < deadline)
+                yield return null;
         }
     }
 }

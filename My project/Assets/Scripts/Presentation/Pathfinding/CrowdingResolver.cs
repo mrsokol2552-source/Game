@@ -1,3 +1,19 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Pathfinding/CrowdingResolver.cs
+@module: presentation.pathfinding.crowding
+@purpose: Periodically resolves multi-unit stacks in the same hex by nudging excess units toward nearby free cells.
+@entry: CrowdingResolver.LateUpdate, CROWD-02
+@api: scene MonoBehaviour helper used by movement/combat systems
+@deps: HexPathfindingBootstrap, PathManager, OccupancyHash, UnitCombat, UnitView
+@data: per-cell grouping map, pooled unit lists, move cooldowns, adaptive-throttle state
+@perf: medium hotpath under crowd pressure; work is throttled by frame time and population
+@thread: main thread only
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs, manual overlap-stack verification
+@config: Interval, SearchRadius, MaxGroupsPerTick, AdaptiveThrottling, MoveCooldown
+@assets: none
+@notes: this system should stay subordinate to ORCA/flow-field ownership and never fight squad-driven movement
+*/
+
 using System.Collections.Generic;
 using System.Linq;
 using Game.Presentation.View;
@@ -13,8 +29,10 @@ namespace Game.Presentation.Pathfinding
     /// Allows traversal through friendlies but never through enemies.
     /// Runs in LateUpdate to act after combat/path updates.
     /// </summary>
-    public class CrowdingResolver : MonoBehaviour
+    public partial class CrowdingResolver : MonoBehaviour
     {
+        // [CROWD-01]
+        // Resolver config, cached dependencies, per-cell groups, and adaptive-throttle state.
         public float Interval = 0.12f;
         public int SearchRadius = 4;
         [Tooltip("Max stacks resolved per tick to avoid spikes with large crowds.")]
@@ -81,6 +99,8 @@ namespace Game.Presentation.Pathfinding
         private bool _enemiesPresent;
         private int _logCountThisTick;
 
+        // [CROWD-02]
+        // LateUpdate crowd-resolution tick: group stacked units, throttle work, and issue short nudges.
         private void LateUpdate()
         {
             if (Game.Presentation.Performance.OrcaAvoidanceSystem.IsActive)
@@ -228,6 +248,8 @@ namespace Game.Presentation.Pathfinding
             Game.Presentation.Pathfinding.PathProfiler.CountCrowdMoves(movedUnits);
         }
 
+        // [CROWD-03]
+        // Dependency cache setup, pooled-list cleanup, and ephemeral timestamp maintenance.
         private void EnsureCaches()
         {
             if (_hex == null || !_hex.isActiveAndEnabled)
@@ -266,120 +288,5 @@ namespace Game.Presentation.Pathfinding
             if (_listPool.Count > 0) return _listPool.Pop();
             return new List<UnitView>(4);
         }
-
-        private List<Vector2Int> GatherFreeCells(HexPathfindingBootstrap hex, Vector2Int center, int radius, HashSet<int> reserved, UnitView self)
-        {
-            var res = new List<Vector2Int>();
-            var candidates = new List<(Vector2Int cell, float score)>();
-            Vector3 centerWorld = hex.GridToWorld(center.x, center.y);
-            for (int r = 1; r <= Mathf.Max(1, radius); r++)
-            {
-                foreach (var c in HexRing(center, r))
-                {
-                    if (c.x < 0 || c.y < 0 || c.x >= hex.Width || c.y >= hex.Height) continue;
-                    int k = Key(c);
-                    if (reserved.Contains(k)) continue;
-                    if (!hex.IsWalkable(c.x, c.y)) continue;
-                    if (_occ != null)
-                    {
-                        var wOcc = hex.GridToWorld(c.x, c.y);
-                        if (_occ.IsOccupied(wOcc, self, enemiesOnly: false)) continue; // avoid allies as well
-                    }
-                    else if (_pm != null && _pm.IsCellOccupied(c, self, enemiesOnly: false)) continue;
-                    var w = hex.GridToWorld(c.x, c.y);
-                    float d2 = (w - centerWorld).sqrMagnitude;
-                    float jitter = UnityEngine.Random.value * 0.01f;
-                    candidates.Add((c, d2 + jitter));
-                }
-            }
-            candidates.Sort((a, b) => a.score.CompareTo(b.score));
-            for (int i = 0; i < candidates.Count; i++)
-            {
-                var cell = candidates[i].cell;
-                int k = Key(cell);
-                if (reserved.Contains(k)) continue;
-                reserved.Add(k);
-                res.Add(cell);
-                if (MaxSlotsPerGroup > 0 && res.Count >= MaxSlotsPerGroup) break;
-            }
-            return res;
-        }
-
-        private static int Key(Vector2Int cell) => (cell.y << 16) ^ (cell.x & 0xFFFF);
-
-        private int ComputeSearchRadius(int unitCount)
-        {
-            int radius = SearchRadius;
-            if (AutoScaleByPopulation && UnitsPerRadiusStep > 0 && unitCount > 0)
-            {
-                int reduction = unitCount / UnitsPerRadiusStep;
-                radius = Mathf.Max(MinSearchRadius, SearchRadius - reduction);
-            }
-
-            if (!AdaptiveThrottling) return radius;
-            if (_avgFrameTime <= FrameTimeBoostLimit)
-                radius = Mathf.Min(SearchRadius, radius + 1);
-            else if (_avgFrameTime >= FrameTimeHardLimit)
-                radius = Mathf.Max(MinSearchRadius, radius - 2);
-            else if (_avgFrameTime > FrameTimeSoftLimit)
-                radius = Mathf.Max(MinSearchRadius, radius - 1);
-            return radius;
-        }
-
-        private int ComputeMaxGroups(int unitCount)
-        {
-            int groups = MaxGroupsPerTick;
-            if (AutoScaleByPopulation && UnitsPerCrowdGroupStep > 0)
-            {
-                groups = Mathf.CeilToInt(unitCount / (float)UnitsPerCrowdGroupStep);
-                if (MaxGroupsPerTick > 0) groups = Mathf.Min(groups, MaxGroupsPerTick);
-                groups = Mathf.Max(MinGroupsPerTick, groups);
-            }
-
-            if (!AdaptiveThrottling) return groups;
-            if (_avgFrameTime <= FrameTimeBoostLimit)
-                groups = MaxGroupsPerTick > 0 ? Mathf.Min(MaxGroupsPerTick, groups + 2) : groups + 2;
-            else if (_avgFrameTime >= FrameTimeHardLimit)
-                groups = Mathf.Max(MinGroupsPerTick, groups / 2);
-            else if (_avgFrameTime > FrameTimeSoftLimit)
-                groups = Mathf.Max(MinGroupsPerTick, Mathf.CeilToInt(groups * 0.75f));
-
-            if (MaxGroupsPerTick > 0) groups = Mathf.Min(groups, MaxGroupsPerTick);
-            return Mathf.Max(MinGroupsPerTick, groups);
-        }
-
-        private void MaybeLog(int radius, int groups, int units)
-        {
-            if (!DebugLogEffective) return;
-            if (Time.time - _lastLogTime < DebugLogInterval) return;
-            if (radius == _lastLogRadius && groups == _lastLogGroups) return;
-            _lastLogTime = Time.time;
-            _lastLogRadius = radius;
-            _lastLogGroups = groups;
-            Debug.Log($"[CrowdingResolver] units={units} radius={radius} maxGroups={groups} frameTime={_avgFrameTime:F3}s");
-        }
-
-        // Enumerate a ring of axial directions converted to odd-r offset
-        private IEnumerable<Vector2Int> HexRing(Vector2Int center, int radius)
-        {
-            var dirs = new (int q, int r)[] { (1,0),(1,-1),(0,-1),(-1,0),(-1,1),(0,1) };
-            int cq = center.x - (center.y - (center.y & 1)) / 2;
-            int cr = center.y;
-            int aq = cq + dirs[4].q * radius;
-            int ar = cr + dirs[4].r * radius;
-            for (int side = 0; side < 6; side++)
-            {
-                for (int step = 0; step < radius; step++)
-                {
-                    var dir = dirs[side];
-                    aq += dir.q;
-                    ar += dir.r;
-                    int col = aq + (ar - (ar & 1)) / 2;
-                    int row = ar;
-                    yield return new Vector2Int(col, row);
-                }
-            }
-        }
     }
 }
-

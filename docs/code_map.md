@@ -4,13 +4,24 @@ This document is a code-level map for quick navigation. It complements [gameplay
 For direct `CODE-ID` lookup, use [code_id_index.md](./code_id_index.md).
 For symptom-first debugging, use [debug_playbooks.md](./debug_playbooks.md).
 For high-value runtime/inspector parameters, use [runtime_switches.md](./runtime_switches.md).
+For document boundaries and anti-duplication rules, use [document_roles.md](./document_roles.md).
 For machine-readable system lookup, use [code_index.json](./code_index.json).
+For the machine-readable documentation-governance manifest, use [document_roles_index.json](./document_roles_index.json).
+For formal machine-layer ownership, validation rules, and the audit command, use [machine_layer_audit.md](./machine_layer_audit.md).
+For the executable machine-layer audit entrypoint, use [scripts/audit_machine_layer.py](../scripts/audit_machine_layer.py).
+For the executable docs-architecture audit entrypoint, use [scripts/audit_docs_architecture.py](../scripts/audit_docs_architecture.py).
+For the one-command repo validation pipeline, use [scripts/run_all_repo_audits.py](../scripts/run_all_repo_audits.py).
+For exported scene/prefab inspector-visible runtime values, use [runtime_config_export.json](./runtime_config_export.json).
+For regenerating that snapshot, use [scripts/export_runtime_config.py](../scripts/export_runtime_config.py) with [runtime_config_manifest.json](../scripts/runtime_config_manifest.json).
+For navigation/audit fixtures and regression tests, use [scripts/tests](../scripts/tests).
 For a practical performance reference, use [unity_csharp_performance_optimization_reference.md](./unity_csharp_performance_optimization_reference.md).
 For available Unity MCP capabilities and when to use them, use [unity_mcp_tools.md](./unity_mcp_tools.md).
 For the repo-navigation architecture reference behind the current documentation model, use [deep-research-report.md](./deep-research-report.md).
 For a compact repo overview, use [repo_map.md](../maps/repo_map.md).
 For a machine-readable top-level repo map, use [repo_map.json](../maps/repo_map.json).
 For the agent header/comment convention, use [agent_comment_standard.md](./agent_comment_standard.md).
+For non-runtime add-on material, use [supplements/README.md](../supplements/README.md).
+For machine-readable supplement routing, use [supplements_index.json](../supplements/supplements_index.json).
 
 ## Code ID scheme
 
@@ -25,15 +36,53 @@ Large/high-risk systems also contain shorter internal section IDs:
 
 - `PENV-*` - `ProceduralEnvironment`
 - `UCOM-*` - `UnitCombat`
+- `UVEW-*` - `UnitView`
+- `USPA-*` - `UnitSpriteAnimator`
 - `FFLD-*` - `FlowFieldManager`
 - `PMGR-*` - `PathManager`
 - `ORCA-*` - `OrcaAvoidanceSystem`
+- `USOA-*` - `UnitSoARegistry`
 - `ESQD-*` - `EnemySquadManager`
 - `HPFB-*` - `HexPathfindingBootstrap`
 - `MJOB-*` - `MovementJobSystem`
+- `LAVO-*` - `LocalAvoidanceSystem`
 - `PQUE-*` - `PathRequestQueue`
+- `CROWD-*` - `CrowdingResolver`
+- `STUCK-*` - `StuckResolver`
 
 Use these IDs when referencing a logical block instead of describing it indirectly.
+During the ongoing decomposition of the world-generation stack:
+- `PENV-03`..`PENV-05` live in [ProceduralEnvironment.Streaming.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Streaming.cs)
+- `PENV-06`..`PENV-10` live in [ProceduralEnvironment.StreamChunks.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.StreamChunks.cs)
+- `PENV-11`..`PENV-15` live in [ProceduralEnvironment.FarView.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.FarView.cs)
+- `PENV-16`..`PENV-18` live in [ProceduralEnvironment.BackgroundMasks.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.BackgroundMasks.cs)
+- `PENV-19`..`PENV-21` live in [ProceduralEnvironment.Placement.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Placement.cs)
+- `PENV-22`..`PENV-24` live in [ProceduralEnvironment.Palettes.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Palettes.cs)
+- `PENV-02` now lives in [ProceduralEnvironment.Lifecycle.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Lifecycle.cs)
+- `UCOM-03` now lives in [UnitCombat.UpdateLoop.cs](../My%20project/Assets/Scripts/Presentation/View/UnitCombat.UpdateLoop.cs)
+- `UCOM-04` and `UCOM-08` now live in [UnitCombat.FormationFlow.cs](../My%20project/Assets/Scripts/Presentation/View/UnitCombat.FormationFlow.cs)
+- `UCOM-05`..`UCOM-07` now live in [UnitCombat.Targeting.cs](../My%20project/Assets/Scripts/Presentation/View/UnitCombat.Targeting.cs)
+- `UCOM-09` and `UCOM-10` now live in [UnitCombat.State.cs](../My%20project/Assets/Scripts/Presentation/View/UnitCombat.State.cs)
+- `PMGR-03` now lives in [PathManager.Occupancy.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/PathManager.Occupancy.cs)
+- `PMGR-04` now lives in [PathManager.Reuse.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/PathManager.Reuse.cs)
+- `PQUE-02` now lives in [PathRequestQueue.Dispatch.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.Dispatch.cs)
+- `PQUE-03` now lives in [PathRequestQueue.Completion.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.Completion.cs)
+- `FFLD-04` and `FFLD-05` now live in [FlowFieldManager.CostMaps.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.CostMaps.cs)
+- `FFLD-06` now lives in [FlowFieldManager.TileGraph.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.TileGraph.cs)
+- `FFLD-07` now lives in [FlowFieldManager.FieldState.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.FieldState.cs)
+- `ESQD-04` now lives in [EnemySquadManager.Membership.cs](../My%20project/Assets/Scripts/Presentation/Performance/EnemySquadManager.Membership.cs)
+- `ESQD-05` now lives in [EnemySquadManager.Tactics.cs](../My%20project/Assets/Scripts/Presentation/Performance/EnemySquadManager.Tactics.cs)
+- `MJOB-05` now lives in [MovementJobSystem.Buffers.cs](../My%20project/Assets/Scripts/Presentation/Performance/MovementJobSystem.Buffers.cs)
+- `MJOB-04` now lives in [MovementJobSystem.Jobs.cs](../My%20project/Assets/Scripts/Presentation/Performance/MovementJobSystem.Jobs.cs)
+- `LAVO-03` now lives in [LocalAvoidanceSystem.Buffers.cs](../My%20project/Assets/Scripts/Presentation/Performance/LocalAvoidanceSystem.Buffers.cs)
+- `LAVO-04` now lives in [LocalAvoidanceSystem.Job.cs](../My%20project/Assets/Scripts/Presentation/Performance/LocalAvoidanceSystem.Job.cs)
+- `USPA-02` now lives in [UnitSpriteAnimator.Playback.cs](../My%20project/Assets/Scripts/Presentation/View/UnitSpriteAnimator.Playback.cs)
+- `USPA-03` now lives in [UnitSpriteAnimator.Combat.cs](../My%20project/Assets/Scripts/Presentation/View/UnitSpriteAnimator.Combat.cs)
+- `CROWD-04` now lives in [CrowdingResolver.Search.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/CrowdingResolver.Search.cs)
+- `CROWD-05` now lives in [CrowdingResolver.Throttle.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/CrowdingResolver.Throttle.cs)
+- `STUCK-03` now lives in [StuckResolver.Recovery.cs](../My%20project/Assets/Scripts/Presentation/Performance/StuckResolver.Recovery.cs)
+- `STUCK-04` now lives in [StuckResolver.State.cs](../My%20project/Assets/Scripts/Presentation/Performance/StuckResolver.State.cs)
+- the remaining `PENV-*` sections still live in [ProceduralEnvironment.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.cs)
 
 ## Repository layout
 
@@ -43,6 +92,7 @@ Use these IDs when referencing a logical block instead of describing it indirect
 - [Assets/Scripts/Presentation](../My%20project/Assets/Scripts/Presentation) - Unity MonoBehaviours for input, UI, view, pathfinding, performance.
 - [Assets/Tests](../My%20project/Assets/Tests) - EditMode/PlayMode tests and perf stress harness.
 - [docs](./) - system notes and architecture references.
+- [supplements](../supplements) - add-on design material, audio integration references, and source libraries.
 
 ## Layer map (Domain / Application / Infrastructure / Presentation)
 
@@ -64,10 +114,45 @@ Presentation:
 - Bootstrap: `CompositionRoot`.
 - Input: `InputController`, `UnitSpawnerCommander`.
 - UI: `HudController`, `ActionsPanel`, `ResearchPanel`.
+- UI: `HudController.Squads` holds squad summary aggregation and selection UI extracted from `HudController`.
+- UI: `ActionsPanel.SelfTest` holds save/load self-test scaffolding extracted from `ActionsPanel`.
 - View: `UnitView`, `UnitCombat`, `UnitHpOverlay`, `MovementSettings`.
+- View: `UnitView.Movement` holds per-frame movement integration, steering blend, and facing logic extracted from `UnitView`.
+- View: `UnitView.Rendering` holds Y-sorting bootstrap and selection gizmos extracted from `UnitView`.
+- View: `UnitSpriteAnimator.Playback` holds per-frame directional playback and crouch/locomotion state changes extracted from `UnitSpriteAnimator`.
+- View: `UnitSpriteAnimator.Combat` holds attack/death animation triggers and crouch requests extracted from `UnitSpriteAnimator`.
+- View: `UnitCombat.UpdateLoop` holds the combat tick orchestration, engage/no-target branches, and stall recovery extracted from `UnitCombat`.
+- View: `UnitCombat.Targeting` holds target arbitration, faction overrides, facing, crouch, and repath helper logic extracted from `UnitCombat`.
+- View: `UnitCombat.FormationFlow` holds squad metadata, formation offset math, shared hex access, and flow-field steering extracted from `UnitCombat`.
 - Performance: `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `UnitVisualCulling`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `UnitSoARegistry`, `LocalAvoidanceSystem` (legacy), `StuckResolver`.
+- Performance: `UnitCombatJobScheduler.Buffers` holds Native buffer growth, snapshot ingestion, and applyback extracted from `UnitCombatJobScheduler`.
+- Performance: `UnitCombatJobScheduler.Job` holds the parallel nearest-enemy job extracted from `UnitCombatJobScheduler`.
+- Performance: `OrcaAvoidanceSystem.Buffers` holds unit gathering, Native buffer growth, snapshot ingestion, and applyback extracted from `OrcaAvoidanceSystem`.
+- Performance: `OrcaAvoidanceSystem.Job` holds the burst-compiled ORCA solver extracted from `OrcaAvoidanceSystem`.
+- Performance: `UnitSoARegistry.Build` holds per-frame SoA snapshot projection extracted from `UnitSoARegistry`.
+- Performance: `UnitSoARegistry.Buffers` holds Native buffer ownership and capacity helpers extracted from `UnitSoARegistry`.
+- Performance: `LocalAvoidanceSystem.Buffers` holds unit gathering, Native buffer growth/fill, and steering applyback extracted from `LocalAvoidanceSystem`.
+- Performance: `LocalAvoidanceSystem.Job` holds the legacy steering job and spatial-hash helpers extracted from `LocalAvoidanceSystem`.
 - Performance: `JobPipelineCoordinator` (fixed update order for ORCA + Movement).
+- Performance: `StuckResolver.Recovery` holds nudge/repath recovery actions extracted from `StuckResolver`.
+- Performance: `StuckResolver.State` holds per-unit progress reset and stale-entry cleanup extracted from `StuckResolver`.
 - Pathfinding: `PathManager`, `PathRequestQueue`, `HexPathfindingBootstrap`, `HexPathfinderJob`, `PathfindingBootstrap` (grid fallback), `FlowFieldManager`, `CrowdingResolver`, `ProceduralEnvironment`, `PathProfiler`, `PathDebugHUD`.
+- Pathfinding: `PathManager.Occupancy` holds occupancy caches and occupied-path rejection extracted from `PathManager`.
+- Pathfinding: `PathManager.Reuse` holds reuse, nearest-free lookup, and cluster helper logic extracted from `PathManager`.
+- Pathfinding: `PathRequestQueue.Dispatch` holds queue draining, job scheduling, and immediate fallback dispatch extracted from `PathRequestQueue`.
+- Pathfinding: `PathRequestQueue.Completion` holds job completion, occupancy snapshots, stats, and safe callback/log handling extracted from `PathRequestQueue`.
+- Pathfinding: `FlowFieldManager.CostMaps` holds crowd and influence cost-map maintenance extracted from `FlowFieldManager`.
+- Pathfinding: `FlowFieldManager.TileGraph` holds coarse tile-graph construction and expansion extracted from `FlowFieldManager`.
+- Pathfinding: `FlowFieldManager.FieldState` holds per-target flow-field storage, LoS state, and next-cell sampling extracted from `FlowFieldManager`.
+- Pathfinding: `CrowdingResolver.Search` holds free-cell search, reservation keys, and odd-r ring enumeration extracted from `CrowdingResolver`.
+- Pathfinding: `CrowdingResolver.Throttle` holds adaptive-throttling, effective-work-budget, and diagnostic logging extracted from `CrowdingResolver`.
+- Pathfinding: `ProceduralEnvironment.Streaming` holds streaming bootstrap, queueing, chunk bounds, and scheduler helpers extracted from the main `ProceduralEnvironment` file.
+- Pathfinding: `ProceduralEnvironment.StreamChunks` holds per-chunk background synthesis, streamed prop/tree placement, and chunk cleanup extracted from the main `ProceduralEnvironment` file.
+- Pathfinding: `ProceduralEnvironment.Lifecycle` holds MonoBehaviour lifecycle, async/sync generation entrypoints, prepare/bootstrap, and grid/tilemap setup extracted from the main `ProceduralEnvironment` file.
+- Pathfinding: `ProceduralEnvironment.FarView` holds far-view bake scheduling, render-object maintenance, chunked bake flow, HUD, and debug helpers extracted from the main `ProceduralEnvironment` file.
+- Pathfinding: `ProceduralEnvironment.BackgroundMasks` holds background-grid sizing, streamed water/rock mask generation, land-distance fields, and background-cell lookup helpers extracted from the main `ProceduralEnvironment` file.
+- Pathfinding: `ProceduralEnvironment.Placement` holds biome-aware prop/tree placement, blocked-cell bookkeeping, and spatial placement helpers extracted from the main `ProceduralEnvironment` file.
+- Pathfinding: `ProceduralEnvironment.Palettes` holds palette resolution, biome-mask cleanup, and post-placement obstacle baking helpers extracted from the main `ProceduralEnvironment` file.
 - Pathfinding: `StaticObstacleHash` (blocked-cell hash for fast static queries), `CoverSlotHash` (pre-baked cover slots).
 
 ## ProceduralEnvironment ground conversion preset (isometric -> square)
@@ -123,12 +208,17 @@ Far view bake:
 ## Bootstrap and singletons
 
 - [CompositionRoot.cs](../My%20project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs):
-  - Creates `GameStateService` and binds `SaveSystem` callbacks.
-  - Optionally runs `StartNewGame` with `GameConfig.StartingResources`.
-- Ensures `CameraZoom2D`, `HexPathfindingBootstrap`, `ProceduralObstacles`, `ProceduralEnvironment`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `StaticObstacleHash`, `CoverSlotHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
+  - Owns the root lifecycle (`CROOT-01`), inspector references, and economy tick.
+- [CompositionRoot.Setup.cs](../My%20project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.Setup.cs):
+  - Creates `GameStateService`, auto-starts a new game, and wires scene singletons (`CROOT-02`).
+  - Ensures `CameraZoom2D`, `HexPathfindingBootstrap`, `ProceduralObstacles`, `ProceduralEnvironment`, `UnitCombatJobScheduler`, `EnemySquadManager`, `OccupancyHash`, `StaticObstacleHash`, `CoverSlotHash`, `PathRequestQueue`, `FlowFieldManager`, `MovementJobSystem`, `OrcaAvoidanceSystem`, `StuckResolver`.
   - Disables `LocalAvoidanceSystem` when ORCA is enabled.
   - Applies `UnitVisualCulling` and sorting layer/order to existing units.
+- [CompositionRoot.Actions.cs](../My%20project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.Actions.cs):
   - `Save()` and `Load()` wrap `SaveGame`/`LoadGame` use cases.
+  - Exposes test build/research actions and `LastStatusMessage` (`CROOT-03`).
+- [CompositionRoot.Persistence.cs](../My%20project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.Persistence.cs):
+  - Captures unit snapshots and restores faction visuals, overlays, culling, and sorting on load (`CROOT-04`).
 
 - [PathManager.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/PathManager.cs) `Ensure()` and [PathRequestQueue.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.cs) `Ensure()` create global instances if missing.
 
@@ -154,7 +244,7 @@ Far view bake:
   - On failure -> if target is walkable and not occupied, set a direct `UnitView.SetDestination`.
 
 ### Combat tick and targeting
-- `UnitCombat.Update` (gated by `CombatTickInterval + CombatTickJitter`):
+- [UnitCombat.UpdateLoop.cs](../My%20project/Assets/Scripts/Presentation/View/UnitCombat.UpdateLoop.cs) `UnitCombat.Update` (gated by `CombatTickInterval + CombatTickJitter`):
   - Optional `UnitCombatProfile` applies data-driven settings on enable.
   - Optional `UnitBehaviorProfile` applies hold/aggro/leash rules and target preference.
   - Clears expired forced targets and job targets.
@@ -226,7 +316,7 @@ UnitSpawnerCommander.Update (RMB)
 
 ### Combat tick (per UnitCombat)
 ```
-UnitCombat.Update (combat tick)
+UnitCombat.Update in [UnitCombat.UpdateLoop.cs](../My%20project/Assets/Scripts/Presentation/View/UnitCombat.UpdateLoop.cs) (combat tick)
   -> ResolveTarget
      -> job target (UnitCombatJobScheduler)
      -> OccupancyHash (fallback if no job target)
@@ -298,6 +388,8 @@ HudController -> Load button
 
 - `HexPathfindingBootstrap`:
   - Odd-r offset grid; pointy-top hex math.
+  - [HexPathfindingBootstrap.Walkability.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.Walkability.cs) owns walkability mutation, physics rebake, persistence, and Native mirror updates.
+  - [HexPathfindingBootstrap.Geometry.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.Geometry.cs) owns world/grid conversion, gizmos, and geometry snapshots.
   - `BakeFromPhysics` uses `Physics2D.OverlapCircle` with `ObstacleMask` or "Obstacles" layer.
   - Maintains `NativeArray<byte>` walkable map for jobs.
   - Calls `PathRequestQueue.CompleteActiveJobAndClear` before rebuilding or disposing native arrays.
@@ -336,6 +428,8 @@ HudController -> Load button
 ## Performance helpers
 
 - `UnitCombatJobScheduler`:
+  - [UnitCombatJobScheduler.Buffers.cs](../My%20project/Assets/Scripts/Presentation/Performance/UnitCombatJobScheduler.Buffers.cs) owns Native buffer growth, snapshot fill, hash-bucket construction, and applyback to `UnitCombat`.
+  - [UnitCombatJobScheduler.Job.cs](../My%20project/Assets/Scripts/Presentation/Performance/UnitCombatJobScheduler.Job.cs) owns the burst-compiled nearest-enemy search job.
   - Collects unit positions/factions into `NativeArray`.
   - Builds a spatial hash with `NativeParallelMultiHashMap`.
   - Schedules `NearestEnemyJob` and applies results on the next update tick.
@@ -344,6 +438,8 @@ HudController -> Load button
 
 - `EnemySquadManager`:
   - Forms squads for both factions (default size 12), with dynamic gather radius.
+  - [EnemySquadManager.Membership.cs](../My%20project/Assets/Scripts/Presentation/Performance/EnemySquadManager.Membership.cs) owns squad composition, recruitment, and center updates.
+  - [EnemySquadManager.Tactics.cs](../My%20project/Assets/Scripts/Presentation/Performance/EnemySquadManager.Tactics.cs) owns mode hysteresis, target assignment, and flow-anchor selection.
   - Uses squad-to-squad distance (hexes) to drive states with hysteresis.
   - Assigns forced targets via TTL; releases targets in `FreeCombat` only when close enough.
   - Assigns per-unit formation indices for arrival offsets when enabled.
@@ -354,20 +450,33 @@ HudController -> Load button
 - `MovementJobSystem`:
   - Jobified movement update for `UnitView` (enabled by default).
   - ORCA overrides can be reused for a short frame window to decouple job timing.
+- `LocalAvoidanceSystem`:
+  - Legacy lightweight steering avoidance fallback built on a spatial hash and simple neighbor repulsion.
+  - [LocalAvoidanceSystem.Buffers.cs](../My%20project/Assets/Scripts/Presentation/Performance/LocalAvoidanceSystem.Buffers.cs) owns unit gathering, Native buffer growth/fill, and steering applyback.
+  - [LocalAvoidanceSystem.Job.cs](../My%20project/Assets/Scripts/Presentation/Performance/LocalAvoidanceSystem.Job.cs) owns the steering job plus cell/hash helpers.
+  - CompositionRoot keeps it alive for fallback coverage, but disables it whenever ORCA is active.
 - `JobPipelineCoordinator`:
   - Drives ORCA + Movement in a fixed order and disables their internal Update loops when enabled.
 - `UnitSoARegistry`:
   - Builds a centralized SoA snapshot for ORCA inputs to reduce redundant per-unit collection.
+  - [UnitSoARegistry.Build.cs](../My%20project/Assets/Scripts/Presentation/Performance/UnitSoARegistry.Build.cs) owns per-frame projection from active units into ORCA/combat snapshot arrays.
+  - [UnitSoARegistry.Buffers.cs](../My%20project/Assets/Scripts/Presentation/Performance/UnitSoARegistry.Buffers.cs) owns NativeArray capacity growth, disposal, and shared cell projection helpers.
   - Also exposes combat snapshots for targeting systems when enabled.
 - `OrcaAvoidanceSystem`:
   - ORCA/RVO avoidance with spatial hash; feeds velocity overrides into movement jobs.
+  - [OrcaAvoidanceSystem.Buffers.cs](../My%20project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.Buffers.cs) owns unit gathering, Native buffer growth, snapshot ingestion, and applyback to `UnitView`.
+  - [OrcaAvoidanceSystem.Job.cs](../My%20project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.Job.cs) owns the burst-compiled ORCA solver and LP helper routines.
   - Optional cohesion bias toward friendly centroid.
   - Respects `UnitView.UseOrcaVelocity` (units can opt out of overrides but remain obstacles).
   - Per-unit priority (`UnitView.OrcaPriority`) reduces avoidance responsibility (see `MinResponsibility`).
 - `CrowdingResolver`:
   - LateUpdate stack resolver for non-squad, non-flow-field units; no-ops while ORCA or legacy local avoidance is active.
+  - [CrowdingResolver.Search.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/CrowdingResolver.Search.cs) owns free-cell search, reservation keys, and odd-r ring enumeration.
+  - [CrowdingResolver.Throttle.cs](../My%20project/Assets/Scripts/Presentation/Pathfinding/CrowdingResolver.Throttle.cs) owns adaptive throttling, effective search/group budgets, and diagnostic logging.
 - `StuckResolver`:
   - Detects stuck movers and nudges them; can force combat repath.
+  - [StuckResolver.Recovery.cs](../My%20project/Assets/Scripts/Presentation/Performance/StuckResolver.Recovery.cs) owns optional combat repath and nearest-free nudge recovery.
+  - [StuckResolver.State.cs](../My%20project/Assets/Scripts/Presentation/Performance/StuckResolver.State.cs) owns per-unit progress reset and stale-state cleanup.
   - Skips squad-controlled units outside `FreeCombat` and units currently following flow fields.
 
 - `UnitVisualCulling`:
@@ -390,7 +499,9 @@ HudController -> Load button
 ## Tests
 
 - PlayMode:
-  - `FpsStressTests` logs `[FpsStress]` average FPS for staged unit counts.
+  - `SampleSceneBootSmokeTests` loads `SampleScene`, checks required bootstrap/HUD/camera/pathfinding/environment/path-queue systems, captures startup errors, and unloads into a cleanup scene.
+  - `SampleSceneRendererDiagnosticsTests` is an explicit diagnostic-only `SampleScene` probe that logs `[SampleSceneRendererProbe]` streaming, renderer, frame, and memory baseline metrics; the companion extractor can apply the provisional owner budget outside the Unity test.
+  - `FpsStressTests` logs `[FpsStress]` average FPS for staged unit counts and `[CombatPressureProbe]` for the provisional 100v100 owner target with path and combat activity; the companion extractor can apply the provisional owner budget outside the Unity test.
   - `CombatPathResetTests` checks path reset rates during chase.
   - `UnitCombatStallTests` checks in-range attacks and chase behavior.
 - EditMode:

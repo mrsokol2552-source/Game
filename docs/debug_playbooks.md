@@ -142,7 +142,8 @@ Symptom:
 - bake HUD does not move;
 - the map disappears after bake completes;
 - bake is too slow or freezes the scene;
-- the map disappears in chunks at high zoom-out.
+- the map disappears in chunks at high zoom-out;
+- FPS drops at maximum zoom even when the scene is otherwise static.
 
 Open first:
 
@@ -170,9 +171,10 @@ Check switches:
 
 Common causes:
 
-- far view is disabled while world streaming is active;
+- far view is disabled in the scene or does not run after world streaming updates;
 - bake camera, mesh, or render textures are not fully initialized;
 - regular renderers are disabled after bake, but far view never becomes visible;
+- required streaming chunks have not drained yet, so a far-view bake would capture partial data;
 - chunk size or texture size is too large and readback stalls the frame.
 
 Fast path:
@@ -181,6 +183,8 @@ Fast path:
 2. Read `PENV-12` for far-view object setup.
 3. Read `PENV-13` for the chunk bake loop and readbacks.
 4. Read `PENV-14` for HUD and loading overlay behavior.
+5. For max-zoom FPS drops, run the explicit `SampleSceneRendererDiagnosticsTests.SampleSceneMaxZoomFarViewProbe_LogsActivationMetrics` diagnostic in a clean PlayMode Test Runner session and inspect the `[SampleSceneZoomOutProbe]` line for `streamPending`, `farViewActive`, visible chunk counts, and expected/ready content chunk counts.
+6. Keep production `SampleScene` on `UseFarViewBake=0` until the current regression is fixed: the latest manual max-zoom retest reached `810/810` streamed chunks, hid the map, and dropped to about `14` FPS with far-view enabled. Chunked far-view now has a guard that should keep the base map visible when expected content chunks are missing sprites, but this is not enough to re-enable it by default.
 
 ## PB-05. FPS drops while moving the camera
 
@@ -189,6 +193,7 @@ Symptom:
 - FPS is stable while idle but drops during camera movement;
 - the biggest drop happens near the visible edge of the world;
 - profiler points to `ProceduralEnvironment`, obstacle rebuilds, or hash rebuilds.
+- FPS drops only when zooming far out, even without movement or units. For that static max-zoom case, start with PB-04 before changing streaming budgets.
 
 Open first:
 
@@ -213,6 +218,12 @@ Common causes:
 - chunks are generated faster than the scene can absorb them;
 - already processed chunks are re-entering expensive passes;
 - props, trees, and blockers are generated together without budget separation.
+
+Fast path:
+
+1. Run the explicit `SampleSceneRendererDiagnosticsTests` diagnostic through Unity Test Runner when collecting a real scene renderer/streaming baseline.
+2. Extract and evaluate the XML with `python .\scripts\extract_sample_scene_renderer_probe.py --json --check-provisional-budget`.
+3. Treat a nonzero extractor exit as a hard provisional regression. Treat the 144 FPS `avgFrameMs` warning as a tuning signal until the budget is tightened with target-device data.
 
 ## PB-06. Units ignore enemies, stall, or join combat too late
 
@@ -252,6 +263,12 @@ Common causes:
 - job scheduler provides a stale target and local override never wins;
 - the unit stops using individual paths too early;
 - behavior profile limits aggro or leash more than expected.
+
+Fast path:
+
+1. Run the explicit `FpsStressTests.OwnerTarget100v100_PathPressure_LogsCombatPressureProbe` diagnostic when checking owner-target combat pressure.
+2. Extract and evaluate the XML with `python .\scripts\extract_combat_pressure_probe.py --json --check-provisional-budget`.
+3. Treat wrong unit counts, no path builds, no attack events, `maxFrameMs > 203`, and duration over 60 seconds as hard provisional regressions. Treat the 144 FPS `avgFrameMs` warning as a tuning signal until target-device data tightens the budget.
 
 ## PB-07. Units overlap, flicker, or stand inside each other
 

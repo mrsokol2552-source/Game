@@ -122,6 +122,22 @@ Use for:
 - running EditMode/PlayMode tests from the editor side
 - writing explicit breadcrumbs to the Unity console during debugging
 
+Agent test-use rule:
+
+- Treat Unity tests as reusable agent verification tools. They are written so Codex/agents can quickly validate future changes, not just as manual QA documentation.
+- Prefer a targeted `run_tests` filter first, using a fully qualified test class or method when known.
+- Use `returnOnlyFailures=true` for normal verification and `returnWithLogs=true` when investigating failures or flaky setup.
+- Use test categories to choose intent: `Gate` for normal regression checks, `SceneGate` for real-scene wiring checks, and `Diagnostic` for explicit/manual diagnostics such as FPS stress.
+- If `run_tests` returns a connection failure, do not mark tests as passed. Record the exact limitation in the final response, then use `recompile_scripts`, console logs, and root audits as the available fallback checks.
+- If a filtered run reports `0/0` results while an unfiltered suite reports real tests, treat the filtered result as inconclusive and run the smallest reliable broader suite.
+- After a PlayMode connection failure, a following `EditMode` call can briefly surface the completed PlayMode result with PlayMode test names plus editor cleanup logs such as `This cannot be used during play mode`. Record that only as an observed PlayMode result from the stale runner path, not as a clean EditMode result, then rerun the intended EditMode filter before recording EditMode pass/fail.
+- When PlayMode `run_tests` returns a connection failure but Unity Test Runner UI/Console shows normal completion, inspect the fresh XML result at `%USERPROFILE%\AppData\LocalLow\DefaultCompany\My project\TestResults.xml`; use it only if the timestamp matches the run and the XML reports the intended PlayMode fixture/method names.
+- For `SampleSceneRendererDiagnosticsTests`, use `python .\scripts\extract_sample_scene_renderer_probe.py --json` after the explicit diagnostic run to extract `[SampleSceneRendererProbe]` metrics from `TestResults.xml`; add `--check-provisional-budget` when the result should fail on the current hard provisional limits. Hard failures currently cover failed XML/test result, `maxFrameMs > 203`, diagnostic duration over 60 seconds, nonzero `finalPending`, missing/invalid core metrics, and validation renderer roots left alive. The 144 FPS target is currently reported as a warning through `avgFrameMs`, not a hard failure.
+- For the `FpsStressTests.OwnerTarget100v100_PathPressure_LogsCombatPressureProbe` explicit diagnostic, use `python .\scripts\extract_combat_pressure_probe.py --json --check-provisional-budget` to extract `[CombatPressureProbe]`. Hard failures currently cover failed XML/test result, wrong unit counts, no path builds, no attack events, `maxFrameMs > 203`, diagnostic duration over 60 seconds, and missing/invalid core metrics. The 144 FPS target is currently reported as a warning through `avgFrameMs`, not a hard failure.
+- Current verified limitation, 2026-05-06: Unity Test Runner UI and fresh XML can show PlayMode success while MCP `run_tests` with the same PlayMode filter still returns `Connection failed: Unknown error`; observed affected filters include `Tests.PlayMode.SampleSceneBootSmokeTests` and `Tests.PlayMode.FpsStressTests.OwnerTarget100v100_PathPressure_LogsCombatPressureProbe`. Treat this as an MCP bridge/transport limitation unless Unity Console shows a real test failure.
+- If `recompile_scripts` itself returns a transient connection failure after filesystem edits, run `execute_menu_item` with `Assets/Refresh` once and retry recompilation before treating the editor connection as down.
+- When adding behavior that future agents must preserve, add or update a narrow EditMode/PlayMode test in the same task whenever the behavior can be verified without excessive scene setup.
+
 ## Available Unity MCP resources
 
 - `unity://menu-items`
@@ -190,6 +206,8 @@ Use:
 ## Preferred workflow rules
 
 - Prefer `get_console_logs(includeStackTrace=false)` first for broad diagnosis.
+- After adding or renaming Unity assets from the filesystem, run `execute_menu_item` with `Assets/Refresh` before relying on `recompile_scripts` or `run_tests`; otherwise Unity can compile already-imported files before seeing the new partials/helpers.
+- Prefer targeted `run_tests` after C# changes when the touched system has EditMode/PlayMode coverage.
 - Prefer `batch_execute` when making multiple scene edits.
 - Prefer Unity MCP scene edits over manual `.unity` patching unless file-level changes are unavoidable.
 - If a bug may be scene-state-specific, inspect with Unity MCP before changing runtime code.

@@ -143,7 +143,7 @@ For this repository, the effective navigation roots are:
 - [Assets/Scripts/Application](../My%20project/Assets/Scripts/Application)
 - [Assets/Scripts/Infrastructure](../My%20project/Assets/Scripts/Infrastructure)
 - [Assets/Scripts/Presentation](../My%20project/Assets/Scripts/Presentation)
-- [Assets/Scripts/Editor](../My%20project/Assets/Scripts/Editor)
+- [Assets/Editor](../My%20project/Assets/Editor)
 - [Assets/Scenes](../My%20project/Assets/Scenes)
 - [Assets/SmallScaleInt](../My%20project/Assets/SmallScaleInt)
 
@@ -330,7 +330,7 @@ This repository should keep the navigation stack simple:
 - `code_id_index` for direct jump tables;
 - `debug_playbooks` for bug-first work;
 - `runtime_switches` for inspector-driven behavior;
-- `code_index.json` for machine-readable lookup.
+- [code_index.json](./code_index.json) for machine-readable lookup.
 
 Anything beyond that should justify its existence.
 
@@ -348,7 +348,7 @@ Recommended automation goals:
 
 Recommended future tooling:
 
-- a script that regenerates `code_index.json` from headers and section IDs;
+- a script that regenerates [code_index.json](./code_index.json) from headers and section IDs;
 - a script that checks for broken relative Markdown links;
 - a script that reports undocumented hot files;
 - a script that reports duplicate or inconsistent `CODE-ID` usage.
@@ -409,9 +409,9 @@ The most useful next principles for this project are:
 - keep using direct Markdown links in active docs;
 - prefer ASCII doc filenames;
 - keep `CODE-ID` and section IDs stable;
-- route all new bug work through `debug_playbooks.md`;
-- route all tuning work through `runtime_switches.md`;
-- route all broad feature work through `repo_map.md` and `code_map.md`;
+- route all new bug work through [debug_playbooks.md](./debug_playbooks.md);
+- route all tuning work through [runtime_switches.md](./runtime_switches.md);
+- route all broad feature work through [repo_map.md](../maps/repo_map.md) and [code_map.md](./code_map.md);
 - avoid adding new large docs unless they fill a clearly separate role.
 
 ## Final Rule

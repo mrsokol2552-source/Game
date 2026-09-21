@@ -1,0 +1,312 @@
+{
+  "version": 1,
+  "generated_manually": true,
+  "purpose": "Machine-readable routing index for the supplements layer. Supplements are non-runtime support materials and do not override docs/*.md until their decisions are promoted into active project documentation.",
+  "root": "supplements",
+  "role_boundary": {
+    "human_index": "supplements/README.md",
+    "machine_index": "supplements/supplements_index.json",
+    "promote_targets": [
+      "docs/gameplay_current_state.md",
+      "docs/code_map.md",
+      "docs/debug_playbooks.md",
+      "docs/runtime_switches.md"
+    ],
+    "notes": [
+      "Route by normalized directory IDs, not by raw media filenames.",
+      "Raw source media filenames are preserved as imported references and are not treated as stable navigation anchors."
+    ]
+  },
+  "documents": {
+    "root_readme": "supplements/README.md",
+    "audio_readme": "supplements/audio/README.md",
+    "music_integration": "supplements/audio/music_integration.md",
+    "sfx_integration": "supplements/audio/sfx_integration.md",
+    "design_readme": "supplements/design/README.md",
+    "states_diplomacy_research_automation_plan": "supplements/design/states_diplomacy_research_automation_plan.md",
+    "design_addendum_docx": "supplements/design/project_addendum_states_diplomacy_research_anomalies_automation_economy.docx"
+  },
+  "entry_rules": {
+    "start_from_audio_runtime": "Open supplements/audio/music_integration.md and supplements/audio/sfx_integration.md after checking the supplements index.",
+    "start_from_soundtrack_bank": "Use domains.audio.soundtrack_banks to route by normalized bank IDs, then open supplements/audio/music_integration.md.",
+    "start_from_sfx_category": "Use domains.audio.sfx_categories to route by normalized category IDs, then open supplements/audio/sfx_integration.md.",
+    "start_from_future_design": "Open supplements/design/README.md and supplements/design/states_diplomacy_research_automation_plan.md after checking the supplements index.",
+    "do_not_route_by_raw_source_filename": "Raw source file names inside soundtrack_variants and sound_effects are intentionally preserved; use the normalized directory IDs below instead."
+  },
+  "naming_policy": {
+    "directories_normalized_to_ascii_snake_case": true,
+    "markdown_and_json_paths_use_repo_relative_paths": true,
+    "raw_source_media_filenames_preserved": true,
+    "machine_layer_routes_by_directory_id": true
+  },
+  "domains": {
+    "audio": {
+      "readme": "supplements/audio/README.md",
+      "documents": [
+        "supplements/audio/music_integration.md",
+        "supplements/audio/sfx_integration.md"
+      ],
+      "roots": {
+        "soundtrack_variants": "supplements/audio/soundtrack_variants",
+        "sound_effects": "supplements/audio/sound_effects"
+      },
+      "soundtrack_banks": [
+        {
+          "id": "aftermath_ruins",
+          "path": "supplements/audio/soundtrack_variants/aftermath_ruins",
+          "file_count": 2,
+          "role": "aftermath / ruins / post-battle mood"
+        },
+        {
+          "id": "variant_a_short_c_minor_100_bpm",
+          "path": "supplements/audio/soundtrack_variants/variant_a_short_c_minor_100_bpm",
+          "file_count": 4,
+          "role": "calm baseline candidate"
+        },
+        {
+          "id": "variant_b_short_d_sharp_minor",
+          "path": "supplements/audio/soundtrack_variants/variant_b_short_d_sharp_minor",
+          "file_count": 2,
+          "role": "tense baseline candidate"
+        },
+        {
+          "id": "variant_c_extended_world_map_loop_friendly",
+          "path": "supplements/audio/soundtrack_variants/variant_c_extended_world_map_loop_friendly",
+          "file_count": 2,
+          "role": "main menu / world map candidate"
+        },
+        {
+          "id": "variant_d_extended_orchestral_focus",
+          "path": "supplements/audio/soundtrack_variants/variant_d_extended_orchestral_focus",
+          "file_count": 2,
+          "role": "heavier orchestral candidate"
+        }
+      ],
+      "sfx_categories": [
+        {
+          "id": "alert_tensewar_short_stinger",
+          "path": "supplements/audio/sound_effects/alert_tensewar_short_stinger",
+          "file_count": 1,
+          "role": "alert / stinger"
+        },
+        {
+          "id": "build_complete",
+          "path": "supplements/audio/sound_effects/build_complete",
+          "file_count": 1,
+          "role": "construction completion"
+        },
+        {
+          "id": "build_start_loop",
+          "path": "supplements/audio/sound_effects/build_start_loop",
+          "file_count": 1,
+          "role": "construction loop"
+        },
+        {
+          "id": "city_day_night_loops",
+          "path": "supplements/audio/sound_effects/city_day_night_loops",
+          "file_count": 2,
+          "role": "city ambience"
+        },
+        {
+          "id": "click_select_hover",
+          "path": "supplements/audio/sound_effects/click_select_hover",
+          "file_count": 1,
+          "role": "ui hover / select"
+        },
+        {
+          "id": "comms_beep_ready",
+          "path": "supplements/audio/sound_effects/comms_beep_ready",
+          "file_count": 1,
+          "role": "comms confirmation"
+        },
+        {
+          "id": "confirm_success",
+          "path": "supplements/audio/sound_effects/confirm_success",
+          "file_count": 1,
+          "role": "ui success"
+        },
+        {
+          "id": "convoy_depart_arrive",
+          "path": "supplements/audio/sound_effects/convoy_depart_arrive",
+          "file_count": 2,
+          "role": "vehicle logistics cues"
+        },
+        {
+          "id": "crowd_panic_loop",
+          "path": "supplements/audio/sound_effects/crowd_panic_loop",
+          "file_count": 1,
+          "role": "panic ambience"
+        },
+        {
+          "id": "crowd_safe_loop_distant",
+          "path": "supplements/audio/sound_effects/crowd_safe_loop_distant",
+          "file_count": 1,
+          "role": "safe ambience"
+        },
+        {
+          "id": "error_deny",
+          "path": "supplements/audio/sound_effects/error_deny",
+          "file_count": 1,
+          "role": "ui deny"
+        },
+        {
+          "id": "explosion_small_medium",
+          "path": "supplements/audio/sound_effects/explosion_small_medium",
+          "file_count": 2,
+          "role": "combat explosion"
+        },
+        {
+          "id": "footsteps_light_heavy_loops",
+          "path": "supplements/audio/sound_effects/footsteps_light_heavy_loops",
+          "file_count": 2,
+          "role": "footsteps"
+        },
+        {
+          "id": "heavy_cannon",
+          "path": "supplements/audio/sound_effects/heavy_cannon",
+          "file_count": 1,
+          "role": "heavy weapon shot"
+        },
+        {
+          "id": "impact_dirt_concrete",
+          "path": "supplements/audio/sound_effects/impact_dirt_concrete",
+          "file_count": 2,
+          "role": "surface impacts"
+        },
+        {
+          "id": "infection_tick_subtle_system_hit",
+          "path": "supplements/audio/sound_effects/infection_tick_subtle_system_hit",
+          "file_count": 1,
+          "role": "system / infection cue"
+        },
+        {
+          "id": "open_close_panel",
+          "path": "supplements/audio/sound_effects/open_close_panel",
+          "file_count": 1,
+          "role": "ui panel open / close"
+        },
+        {
+          "id": "path_blocked",
+          "path": "supplements/audio/sound_effects/path_blocked",
+          "file_count": 1,
+          "role": "path error"
+        },
+        {
+          "id": "ping_map_marker",
+          "path": "supplements/audio/sound_effects/ping_map_marker",
+          "file_count": 1,
+          "role": "map ping"
+        },
+        {
+          "id": "place_building_ghost",
+          "path": "supplements/audio/sound_effects/place_building_ghost",
+          "file_count": 1,
+          "role": "placement preview"
+        },
+        {
+          "id": "ptt_click_in_out",
+          "path": "supplements/audio/sound_effects/ptt_click_in_out",
+          "file_count": 2,
+          "role": "radio push-to-talk"
+        },
+        {
+          "id": "quarantine_placed_breached",
+          "path": "supplements/audio/sound_effects/quarantine_placed_breached",
+          "file_count": 2,
+          "role": "quarantine state cues"
+        },
+        {
+          "id": "radio_shortwave_loop",
+          "path": "supplements/audio/sound_effects/radio_shortwave_loop",
+          "file_count": 1,
+          "role": "radio ambience"
+        },
+        {
+          "id": "research_start_complete",
+          "path": "supplements/audio/sound_effects/research_start_complete",
+          "file_count": 2,
+          "role": "research ui cues"
+        },
+        {
+          "id": "ricochet_suppression_whiz",
+          "path": "supplements/audio/sound_effects/ricochet_suppression_whiz",
+          "file_count": 2,
+          "role": "bullet near-miss / ricochet"
+        },
+        {
+          "id": "rifle_burst",
+          "path": "supplements/audio/sound_effects/rifle_burst",
+          "file_count": 1,
+          "role": "rifle fire"
+        },
+        {
+          "id": "shelter_door_gate",
+          "path": "supplements/audio/sound_effects/shelter_door_gate",
+          "file_count": 1,
+          "role": "door / gate"
+        },
+        {
+          "id": "surge_outbreak",
+          "path": "supplements/audio/sound_effects/surge_outbreak",
+          "file_count": 1,
+          "role": "threat escalation"
+        },
+        {
+          "id": "trench_dig_loop",
+          "path": "supplements/audio/sound_effects/trench_dig_loop",
+          "file_count": 1,
+          "role": "digging loop"
+        },
+        {
+          "id": "vehicle_idle_move_loops",
+          "path": "supplements/audio/sound_effects/vehicle_idle_move_loops",
+          "file_count": 2,
+          "role": "vehicle engine loops"
+        }
+      ],
+      "auxiliary_files": [
+        {
+          "id": "source_website",
+          "path": "supplements/audio/sound_effects/source_website.txt",
+          "role": "source provenance"
+        }
+      ]
+    },
+    "design": {
+      "readme": "supplements/design/README.md",
+      "documents": [
+        {
+          "id": "states_diplomacy_research_automation_plan",
+          "path": "supplements/design/states_diplomacy_research_automation_plan.md",
+          "role": "future systems design plan",
+          "status": "conceptual_reference"
+        },
+        {
+          "id": "project_addendum_states_diplomacy_research_anomalies_automation_economy",
+          "path": "supplements/design/project_addendum_states_diplomacy_research_anomalies_automation_economy.docx",
+          "role": "supporting addendum document",
+          "status": "supporting_reference"
+        }
+      ]
+    }
+  },
+  "routes": {
+    "audio_runtime_integration": [
+      "supplements/supplements_index.json",
+      "supplements/audio/README.md",
+      "supplements/audio/music_integration.md",
+      "supplements/audio/sfx_integration.md",
+      "docs/gameplay_current_state.md",
+      "docs/code_map.md"
+    ],
+    "future_feature_design": [
+      "supplements/supplements_index.json",
+      "supplements/design/README.md",
+      "supplements/design/states_diplomacy_research_automation_plan.md",
+      "docs/gameplay_current_state.md",
+      "docs/code_map.md",
+      "docs/debug_playbooks.md",
+      "docs/runtime_switches.md"
+    ]
+  }
+}

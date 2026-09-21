@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "tracked_docs": [
+    {
+      "path": "README.md",
+      "layer": "root",
+      "role_id": "fixture_root_overview",
+      "ownership_tags": ["fixture_overview"],
+      "required_links": [
+        "docs/code_map.md",
+        "maps/repo_map.md"
+      ]
+    },
+    {
+      "path": "docs/code_map.md",
+      "layer": "docs",
+      "role_id": "fixture_code_map",
+      "ownership_tags": ["fixture_code_routing"],
+      "required_links": [
+        "maps/repo_map.md"
+      ]
+    },
+    {
+      "path": "maps/repo_map.md",
+      "layer": "maps",
+      "role_id": "fixture_repo_map",
+      "ownership_tags": ["fixture_repo_routing"],
+      "required_links": [
+        "docs/code_map.md"
+      ]
+    },
+    {
+      "path": "supplements/README.md",
+      "layer": "supplements",
+      "role_id": "fixture_supplements_root",
+      "ownership_tags": ["fixture_supplements_routing"],
+      "required_links": []
+    }
+  ],
+  "ignored_docs": []
+}

@@ -33,6 +33,14 @@ My project/.plastic/
 
 # Additional local folders
 LOGS UNITY/
+Vrem_2/
+*.log
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
 
 # Second Unity project (track useful parts, ignore caches)
 UnityProject/[Ll]ibrary/

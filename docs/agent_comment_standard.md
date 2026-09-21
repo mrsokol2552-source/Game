@@ -63,3 +63,7 @@ The `CODE-ID` and section comments answer:
 - where exactly inside the file should I jump?
 
 Use both together.
+
+See also:
+
+- [code_map.md](./code_map.md)

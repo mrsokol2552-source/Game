@@ -2,7 +2,7 @@
 @file: My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs
 @module: presentation.bootstrap
 @purpose: Wires scene-level services, save/load hooks, configs, and default unit/building assets into the runtime.
-@entry: CompositionRoot.Awake, CompositionRoot.Start
+@entry: CompositionRoot.Awake, CROOT-01
 @api: scene bootstrap MonoBehaviour
 @deps: GameStateService, SaveSystem, configs, input/UI systems, prefabs
 @data: top-level service graph and scene-bound asset references
@@ -14,15 +14,9 @@
 @notes: incorrect scene references here tend to surface as missing runtime systems rather than compile errors
 */
 
-using System.Collections.Generic;
-using System.Linq;
 using Game.Application.Services;
-using Game.Application.UseCases;
 using Game.Infrastructure.Configs;
 using Game.Infrastructure.Persistence;
-using Game.Presentation.Input;
-using Game.Presentation.CameraControl;
-using Game.Presentation.Performance;
 using Game.Presentation.View;
 using UnityEngine;
 
@@ -31,8 +25,10 @@ using UnityEngine;
 
 namespace Game.Presentation.Bootstrap
 {
-    public class CompositionRoot : MonoBehaviour
+    public partial class CompositionRoot : MonoBehaviour
     {
+        // [CROOT-01]
+        // Core lifecycle, shared inspector references, and root service ownership.
         public static GameStateService Game { get; private set; }
 
         [Header("Config")]
@@ -55,93 +51,15 @@ namespace Game.Presentation.Bootstrap
 
         private void Awake()
         {
-            if (Game == null)
-            {
-                Game = new GameStateService();
-            }
+            EnsureGameState();
             saveSystem = new SaveSystem();
             saveSystem.BindUnitsEx(CaptureUnitsEx, RestoreUnitsEx);
 
-            if (AutoStart)
-            {
-                var start = new StartNewGame(Game);
-                if (GameConfig != null && GameConfig.StartingResources != null)
-                    start.Execute(GameConfig.StartingResources);
-                else
-                    start.Execute();
-            }
-
-            // Ensure camera zoom controller exists
-            var cam = Camera.main;
-            if (cam != null && cam.GetComponent<CameraZoom2D>() == null)
-            {
-                cam.gameObject.AddComponent<CameraZoom2D>();
-            }
-
-            // Ensure a HexPathfindingBootstrap exists by default and bind obstacles for persistence
-            var hex = UnityEngine.Object.FindAnyObjectByType<global::Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
-            if (hex == null)
-            {
-                var go = new GameObject("HexPathfinding (Auto)");
-                hex = go.AddComponent<global::Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
-            }
-            if (hex != null)
-            {
-                saveSystem.BindObstacles(hex.CaptureBlocked, hex.RestoreBlocked);
-            }
-
-            // Ensure procedural obstacles spawner exists (optional).
-            // Respect inactive objects so disabling in the scene doesn't auto-spawn a new one.
-            var procs = UnityEngine.Object.FindObjectsByType<global::Game.Presentation.Pathfinding.ProceduralObstacles>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
-            var proc = procs.Length > 0 ? procs[0] : null;
-            if (proc == null)
-            {
-                var goProc = new GameObject("ProceduralObstacles (Auto)");
-                proc = goProc.AddComponent<global::Game.Presentation.Pathfinding.ProceduralObstacles>();
-                // Optional: try to assign a default rock sprite if present via inspector later
-            }
-
-            // Ensure procedural environment exists (optional).
-            // Respect inactive objects so disabling in the scene doesn't auto-spawn a new one.
-            var envs = UnityEngine.Object.FindObjectsByType<global::Game.Presentation.Pathfinding.ProceduralEnvironment>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
-            var env = envs.Length > 0 ? envs[0] : null;
-            if (env == null)
-            {
-                var goEnv = new GameObject("ProceduralEnvironment (Auto)");
-                env = goEnv.AddComponent<global::Game.Presentation.Pathfinding.ProceduralEnvironment>();
-            }
-
-            // Ensure performance helpers
-            global::Game.Presentation.Performance.UnitCombatJobScheduler.EnsureExists();
-            global::Game.Presentation.Performance.EnemySquadManager.EnsureExists();
-            global::Game.Presentation.Performance.OccupancyHash.Ensure();
-            global::Game.Presentation.Performance.LocalAvoidanceSystem.EnsureExists();
-            global::Game.Presentation.Performance.OrcaAvoidanceSystem.EnsureExists();
-            global::Game.Presentation.Performance.MovementJobSystem.EnsureExists();
-            global::Game.Presentation.Performance.JobPipelineCoordinator.EnsureExists();
-            global::Game.Presentation.Performance.UnitSoARegistry.EnsureExists();
-            global::Game.Presentation.Performance.StuckResolver.EnsureExists();
-            global::Game.Presentation.Pathfinding.PathRequestQueue.Ensure();
-            global::Game.Presentation.Pathfinding.FlowFieldManager.EnsureExists();
-            global::Game.Presentation.Pathfinding.StaticObstacleHash.EnsureExists();
-            global::Game.Presentation.Pathfinding.CoverSlotHash.EnsureExists();
-
-            var legacyAvoid = global::Game.Presentation.Performance.LocalAvoidanceSystem.Instance;
-            if (legacyAvoid != null)
-                legacyAvoid.Enabled = false;
-
-            // Ensure existing units in the scene also use visual culling
-            var units = Object.FindObjectsByType<UnitView>(FindObjectsSortMode.None);
-            foreach (var u in units)
-            {
-                if (u == null) continue;
-                if (u.GetComponent<UnitVisualCulling>() == null)
-                    u.gameObject.AddComponent<UnitVisualCulling>();
-                var sr = u.GetComponent<SpriteRenderer>();
-                ApplyUnitSorting(sr);
-            }
+            ExecuteAutoStartIfEnabled();
+            EnsureCameraZoomController();
+            EnsurePathfindingAndEnvironment();
+            EnsurePerformanceSystems();
+            ConfigureExistingSceneUnits();
         }
 
         private void Update()
@@ -150,206 +68,10 @@ namespace Game.Presentation.Bootstrap
             Game?.EconomyManager.Tick(Time.deltaTime);
         }
 
-        public void Save()
-        {
-            new SaveGame(Game, saveSystem).Execute();
-        }
-
-        public void Load()
-        {
-            new LoadGame(Game, saveSystem).Execute();
-        }
-
-        public string LastStatusMessage { get; private set; }
-
-        public void SetStatus(string message)
-        {
-            LastStatusMessage = message;
-        }
-
-        public void AttemptPlaceTestBuilding()
-        {
-            var cost = (TestBuilding != null && TestBuilding.Cost != null && TestBuilding.Cost.Length > 0)
-                ? (IReadOnlyList<global::Game.Domain.Economy.ResourceAmount>)TestBuilding.Cost
-                : new[]
-                {
-                    new global::Game.Domain.Economy.ResourceAmount(global::Game.Domain.Economy.ResourceType.Materials, 25),
-                    new global::Game.Domain.Economy.ResourceAmount(global::Game.Domain.Economy.ResourceType.LaborHours, 5)
-                };
-
-            var useCase = new PlaceBuilding(Game);
-            var result = useCase.Execute(cost, out var shortfall);
-            switch (result)
-            {
-                case global::Game.Domain.Build.BuildResult.Success:
-                    SetStatus("Build: Success (resources spent)");
-                    Debug.Log("[Build] Success: resources consumed.");
-                    break;
-                case global::Game.Domain.Build.BuildResult.InsufficientResources:
-                    string msg = "Build: Not enough resources";
-                    if (shortfall != null)
-                    {
-                        foreach (var s in shortfall)
-                            msg += $"\n- Need +{s.Amount} of {s.Type}";
-                    }
-                    SetStatus(msg);
-                    Debug.LogWarning(msg);
-                    break;
-                default:
-                    SetStatus("Build: Invalid request");
-                    Debug.LogWarning("[Build] Invalid request");
-                    break;
-            }
-        }
-
-        public void AttemptStartTestResearch()
-        {
-            var def = (TestResearch != null && TestResearch.Items != null && TestResearch.Items.Length > 0)
-                ? TestResearch.Items[0]
-                : null;
-            if (def == null)
-            {
-                SetStatus("Research: No ResearchConfig/Items set");
-                return;
-            }
-
-            var start = new StartResearch(Game);
-            var cost = (System.Collections.Generic.IReadOnlyList<Game.Domain.Economy.ResourceAmount>)(def.Cost ?? System.Array.Empty<Game.Domain.Economy.ResourceAmount>());
-            var res = start.Execute(def.Id, cost, out var shortfall);
-            switch (res)
-            {
-                case global::Game.Domain.Research.ResearchStartResult.Started:
-                    SetStatus($"Research: '{def.Id}' started (Queued)");
-                    break;
-                case global::Game.Domain.Research.ResearchStartResult.AlreadyQueued:
-                    SetStatus($"Research: '{def.Id}' already queued");
-                    break;
-                case global::Game.Domain.Research.ResearchStartResult.AlreadyDone:
-                    SetStatus($"Research: '{def.Id}' already done");
-                    break;
-                case global::Game.Domain.Research.ResearchStartResult.InsufficientResources:
-                    string msg = $"Research: Not enough resources for '{def.Id}'";
-                    if (shortfall != null)
-                    {
-                        foreach (var s in shortfall)
-                            msg += $"\n- Need +{s.Amount} of {s.Type}";
-                    }
-                    SetStatus(msg);
-                    break;
-                default:
-                    SetStatus($"Research: invalid request");
-                    break;
-            }
-        }
-
-        public void AttemptCompleteTestResearch()
-        {
-            var def = (TestResearch != null && TestResearch.Items != null && TestResearch.Items.Length > 0)
-                ? TestResearch.Items[0]
-                : null;
-            if (def == null)
-            {
-                SetStatus("Research: No ResearchConfig/Items set");
-                return;
-            }
-
-            var complete = new CompleteResearch(Game);
-            if (complete.Execute(def.Id))
-                SetStatus($"Research: '{def.Id}' completed (Done)");
-            else
-                SetStatus($"Research: '{def.Id}' not started (Locked)");
-        }
-
-        private IEnumerable<SaveSystem.UnitSnapshot> CaptureUnitsEx()
-        {
-            var units = Object.FindObjectsByType<UnitView>(FindObjectsSortMode.None);
-            return units.Select(u =>
-            {
-                var combat = u.GetComponent<global::Game.Presentation.View.UnitCombat>();
-                var snap = new SaveSystem.UnitSnapshot
-                {
-                    Position = u.transform.position,
-                    HasDestination = u.TryGetDestination(out var d),
-                    Destination = d,
-                    Faction = combat != null ? (int)combat.Faction : (int)global::Game.Domain.Units.Faction.Player,
-                    Health = combat != null ? combat.CurrentHealth : u.Stats.MaxHealth
-                };
-                return snap;
-            }).ToList();
-        }
-
-        private void RestoreUnitsEx(IEnumerable<SaveSystem.UnitSnapshot> states)
-        {
-            var existing = Object.FindObjectsByType<UnitView>(FindObjectsSortMode.None);
-            foreach (var u in existing)
-            {
-                if (u != null) Destroy(u.gameObject);
-            }
-
-            var prefab = DefaultUnitPrefab;
-            var spawner = Object.FindFirstObjectByType<UnitSpawnerCommander>();
-            if (prefab == null && spawner != null) prefab = spawner.UnitPrefab;
-
-            if (prefab == null)
-            {
-                Debug.LogWarning("[CompositionRoot] No unit prefab assigned; cannot restore units.");
-                return;
-            }
-
-            UnitView last = null;
-            foreach (var s in states)
-            {
-                var u = Instantiate(prefab, s.Position, Quaternion.identity);
-                if (s.HasDestination)
-                    u.SetDestination(s.Destination);
-                var combat = u.GetComponent<global::Game.Presentation.View.UnitCombat>();
-                if (combat == null) combat = u.gameObject.AddComponent<global::Game.Presentation.View.UnitCombat>();
-                combat.Faction = (global::Game.Domain.Units.Faction)s.Faction;
-                combat.SetHealth(s.Health > 0 ? s.Health : u.Stats.MaxHealth);
-                var sr = u.GetComponent<UnityEngine.SpriteRenderer>();
-                if (sr != null)
-                {
-                    // Color tint by faction
-                sr.color = combat.Faction == global::Game.Domain.Units.Faction.Enemy ? Color.red : Color.white;
-                // Assign sprite if provided
-                if (combat.Faction == global::Game.Domain.Units.Faction.Enemy && EnemySprite != null)
-                    sr.sprite = EnemySprite;
-                else if (combat.Faction == global::Game.Domain.Units.Faction.Player && PlayerSprite != null)
-                    sr.sprite = PlayerSprite;
-                ApplyUnitSorting(sr);
-            }
-            if (u.GetComponent<global::Game.Presentation.View.UnitHpOverlay>() == null) u.gameObject.AddComponent<global::Game.Presentation.View.UnitHpOverlay>();
-            if (u.GetComponent<UnitVisualCulling>() == null) u.gameObject.AddComponent<UnitVisualCulling>();
-            last = u;
-        }
-
-            if (spawner != null && last != null)
-            {
-                spawner.SetLastUnit(last);
-            }
-        }
-
         private void OnDestroy()
         {
             if (ReferenceEquals(Game, null)) return;
             // keep Game static until domain teardown is needed
-        }
-
-        private void ApplyUnitSorting(SpriteRenderer sr)
-        {
-            if (sr == null) return;
-            if (!string.IsNullOrEmpty(UnitSortingLayerName) && SortingLayerExists(UnitSortingLayerName))
-                sr.sortingLayerName = UnitSortingLayerName;
-            sr.sortingOrder = UnitSortingOrder;
-        }
-
-        private static bool SortingLayerExists(string name)
-        {
-            foreach (var l in SortingLayer.layers)
-            {
-                if (l.name == name) return true;
-            }
-            return false;
         }
     }
 }

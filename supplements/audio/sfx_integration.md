@@ -1,91 +1,161 @@
-﻿# SFX_INTEGRATION.md - Интеграция звуковых эффектов в проект (Unity)
+# SFX Integration (Unity)
 
-> Версия: 1.0 - Автор: Audio/Tech - Совместимо с `MUSIC_INTEGRATION.md`  
-> Цель: стандартизировать **создание, импорт, маршрутизацию, воспроизведение и оптимизацию** SFX в нашей RTS.
+This document defines the SFX-side integration rules for the project.
 
----
+Use it together with:
 
-## 0) Кратко: TL;DR чек-лист
-- Формат мастеров: **48 kHz / 24-bit WAV**, **true peak <= -1 dBTP**.  
-- Генерация длин: **по умолчанию 3 с**, UI one-shot - 1 с, амбиенты - 6-10 с (склейка из 3-с).  
-- Громкость (ориентир): UI -18...-16 LUFS; in-game SFX -16...-12 LUFS (короткие пики ок).  
-- На экспорт в игру: OGG/PCM; **моно** там, где можно (foley/steps), **стерео** - для широких (взрывы/UI wide).  
-- Нейминг: `SFX_<Категория>_<Событие>_<Var##>.wav`.  
-- Вариативность: **5-8 вариантов** на событие; в коде: random pitch +/-3-5%, volume +/-1.5 dB.  
-- Mixer-группы: **SFX_UI, SFX_World, SFX_Combat, SFX_Voice, SFX_Ambience**. Экспонируем `SFX_Tension`, `SFX_War`, `OcclusionLPF`.  
-- Импорт: one-shot - **Decompress on Load**, лупы длинные - **Streaming**, средние - **Compressed In Memory**.  
-- Пространство: 2D для UI, 3D для мира; кастомные **Rolloff** и **LPF** по расстоянию/укрытию.  
-- Off-screen/LOD: уменьшать громкость/полосу (LPF), сворачивать лупы толпы в дальних секторах.
+- [../README.md](../README.md)
+- [../supplements_index.json](../supplements_index.json)
+- [README.md](./README.md)
+- [music_integration.md](./music_integration.md)
+- [../../docs/gameplay_current_state.md](../../docs/gameplay_current_state.md)
+- [../../docs/unity_mcp_tools.md](../../docs/unity_mcp_tools.md)
 
----
+## TL;DR
 
-## 1) Структура папок и нейминг
-```
+- master format: `48 kHz / 24-bit WAV`
+- target true peak: `<= -1 dBTP`
+- one-shot UI assets: usually short, trimmed aggressively
+- world/combat assets: multiple variants per event
+- mixer routing must be explicit
+- use pooling and randomization in playback
+- use Addressables for scalable runtime loading
+
+## Folder Structure
+
+Main audio SFX root:
+
+- [sound_effects](./sound_effects)
+
+Recommended Unity-side audio layout:
+
+```text
 Assets/Audio/
-  Mixers/             # .mixer и снапшоты (Calm/Tense/War)
+  Mixers/
   SFX/
-    UI/               # клики, подтверждения, алерты
-    World/            # двери, механика, окружение, толпы
-    Combat/           # оружие, взрывы, попадания
-    Voice/            # радио PTT, бипы, System VO
-    Ambience/         # day/night, shortwave, ландшафты
-  Addressables/
-    Labels: SFX_UI, SFX_World, SFX_Combat, SFX_Voice, SFX_Ambience
+    UI/
+    World/
+    Combat/
+    Voice/
+    Ambience/
 ```
 
-**Имена файлов:**  
-`SFX_<Категория>_<Событие>_<Var##>.wav` -> `SFX_UI_Click_V03.wav`, `SFX_Combat_Explosion_M_V02.wav`
+Current source-library categories:
 
-**Метаданные (CSV/JSON для каталога, опционально):**
-```json
-[
-  {
-    "id": "ui_click",
-    "path": "Assets/Audio/SFX/UI/SFX_UI_Click_V01.wav",
-    "group": "SFX_UI",
-    "variants": 8,
-    "length_ms": 120
-  }
-]
+- [alert_tensewar_short_stinger](./sound_effects/alert_tensewar_short_stinger)
+- [build_complete](./sound_effects/build_complete)
+- [build_start_loop](./sound_effects/build_start_loop)
+- [city_day_night_loops](./sound_effects/city_day_night_loops)
+- [click_select_hover](./sound_effects/click_select_hover)
+- [comms_beep_ready](./sound_effects/comms_beep_ready)
+- [confirm_success](./sound_effects/confirm_success)
+- [convoy_depart_arrive](./sound_effects/convoy_depart_arrive)
+- [crowd_panic_loop](./sound_effects/crowd_panic_loop)
+- [crowd_safe_loop_distant](./sound_effects/crowd_safe_loop_distant)
+- [error_deny](./sound_effects/error_deny)
+- [explosion_small_medium](./sound_effects/explosion_small_medium)
+- [footsteps_light_heavy_loops](./sound_effects/footsteps_light_heavy_loops)
+- [heavy_cannon](./sound_effects/heavy_cannon)
+- [impact_dirt_concrete](./sound_effects/impact_dirt_concrete)
+- [infection_tick_subtle_system_hit](./sound_effects/infection_tick_subtle_system_hit)
+- [open_close_panel](./sound_effects/open_close_panel)
+- [path_blocked](./sound_effects/path_blocked)
+- [ping_map_marker](./sound_effects/ping_map_marker)
+- [place_building_ghost](./sound_effects/place_building_ghost)
+- [ptt_click_in_out](./sound_effects/ptt_click_in_out)
+- [quarantine_placed_breached](./sound_effects/quarantine_placed_breached)
+- [radio_shortwave_loop](./sound_effects/radio_shortwave_loop)
+- [research_start_complete](./sound_effects/research_start_complete)
+- [ricochet_suppression_whiz](./sound_effects/ricochet_suppression_whiz)
+- [rifle_burst](./sound_effects/rifle_burst)
+- [shelter_door_gate](./sound_effects/shelter_door_gate)
+- [surge_outbreak](./sound_effects/surge_outbreak)
+- [trench_dig_loop](./sound_effects/trench_dig_loop)
+- [vehicle_idle_move_loops](./sound_effects/vehicle_idle_move_loops)
+- [source_website.txt](./sound_effects/source_website.txt)
+
+## Naming Convention
+
+Recommended in-game naming:
+
+```text
+SFX_<Category>_<Event>_<Var##>.wav
 ```
 
----
+Examples:
 
-## 2) Спека контента
-- **Мастера:** 48 kHz / 24-bit WAV, true peak <= -1 dBTP.  
-- **Громкость:** UI -18...-16 LUFS (короткий интеграл), боевые/мир - -16...-12 LUFS.  
-- **Длины генерации:**  
-  - UI one-shot: генерируй ~1 с -> резать до **80-300 мс** (fade 5-10 мс).  
-  - Whoosh/alerts: генерируй 2-3 с -> **180-600 мс**.  
-  - Удары/двери: генерируй 2-3 с -> **300-800 мс**.  
-  - Выстрел/взрыв: генерируй 3 с (саб-хвост) -> **0.3-1.2 с**.  
-  - Лупы (шаги, стройка, двигатель): генерируй 3 с -> **1.2-1.8 с** seamless loop.  
-  - Толпа/shortwave: генерируй 3 с x 2-4 -> склей **6-10 с** луп.
-- **Вариативность:** минимум **5-8** на событие (Var01..Var08).
+- `SFX_UI_Click_V03.wav`
+- `SFX_Combat_Explosion_M_V02.wav`
 
----
+## Content Rules
 
-## 3) Импорт в Unity (AudioImporter)
-Для партий через Project Settings или ScriptedImporter (пример ниже).
+Recommended loudness targets:
 
-**One-shots (UI/мелкие):**
-- Load Type: **Decompress on Load**
-- Compression: **PCM** или Vorbis Q~0.7 (если много)
-- Force To Mono: **On** (кроме явно стерео)
-- Preload Audio Data: **On**
+- UI: `-18 .. -16 LUFS`
+- in-game SFX: `-16 .. -12 LUFS`
 
-**Средние лупы (шаги/стройка/двигатели):**
-- Load Type: **Compressed In Memory**
-- Compression: **Vorbis Q~0.6-0.7**
-- Force To Mono: On (если ок по восприятию)
-- Loop: **On**, Fade-in/out 5-10 ms в исходнике
+Suggested generation/trim ranges:
 
-**Длинные амбиенты:**
-- Load Type: **Streaming**
-- Compression: **Vorbis Q~0.6**
-- Stereo: **On**, Loop: **On**
+- UI clicks: `80 .. 300 ms`
+- alerts / whooshes: `180 .. 600 ms`
+- impacts / doors: `300 .. 800 ms`
+- gunfire / explosions: `0.3 .. 1.2 s`
+- seamless short loops: `1.2 .. 1.8 s`
+- ambience composites: `6 .. 10 s`
 
-**Пример пакетной настройки (Editor script, C#):**
+Recommended variation count:
+
+- `5 .. 8` per event
+
+## Import Presets
+
+### One-shots
+
+Use for:
+
+- UI
+- short confirmations
+- short combat events
+
+Recommended settings:
+
+- load type: `Decompress On Load`
+- compression: `PCM` or high-quality `Vorbis`
+- mono whenever practical
+- preload enabled
+
+### Medium loops
+
+Use for:
+
+- footsteps
+- build loops
+- engines
+
+Recommended settings:
+
+- load type: `Compressed In Memory`
+- compression: `Vorbis`
+- mono when acceptable
+- loop enabled
+
+### Long ambience
+
+Use for:
+
+- city ambience
+- radio loops
+- background civilian layers
+
+Recommended settings:
+
+- load type: `Streaming`
+- compression: `Vorbis`
+- stereo preserved
+- loop enabled
+
+### Example editor preset script
+
 ```csharp
 #if UNITY_EDITOR
 using UnityEditor;
@@ -104,18 +174,18 @@ public static class SfxImportPreset
 
             var isAmbience = path.Contains("/Ambience/");
             var isUI = path.Contains("/UI/");
-
             var settings = importer.defaultSampleSettings;
+
             settings.sampleRateSetting = AudioSampleRateSetting.PreserveSampleRate;
-            settings.loadType = isAmbience ? AudioClipLoadType.Streaming :
-                                (isUI ? AudioClipLoadType.DecompressOnLoad : AudioClipLoadType.CompressedInMemory);
+            settings.loadType = isAmbience
+                ? AudioClipLoadType.Streaming
+                : (isUI ? AudioClipLoadType.DecompressOnLoad : AudioClipLoadType.CompressedInMemory);
             settings.compressionFormat = isUI ? AudioCompressionFormat.PCM : AudioCompressionFormat.Vorbis;
             settings.quality = isUI ? 1.0f : 0.7f;
 
             importer.forceToMono = !path.Contains("/Combat/") && !isAmbience && !path.Contains("_ST_");
             importer.defaultSampleSettings = settings;
             importer.preloadAudioData = !isAmbience;
-
             importer.SaveAndReimport();
         }
     }
@@ -123,44 +193,46 @@ public static class SfxImportPreset
 #endif
 ```
 
----
+## Mixer Routing
 
-## 4) AudioMixer и маршрутизация
-Группы (см. `MUSIC_INTEGRATION.md`):  
-- **SFX_UI**, **SFX_World**, **SFX_Combat**, **SFX_Voice**, **SFX_Ambience** -> все в `SFX/Main`, далее в `Master`.
-- Экспонированные параметры:  
-  - `SFX_Tension (0..1)` - добавка яркости (эквалайзер/Transient Shaper) на шинах.  
-  - `SFX_War (0..1)` - поднимает боевые на +1..+2 dB, ослабляет музыку.  
-  - `OcclusionLPF (0..1)` - глобальный LPF для укрытий/офф-скрина.
-- **Ducking:** В Calm/Tense музыка duck'ится SFX (side-chain на Music). В War - duck меньше или отключён.
+Suggested mixer groups:
 
-Снапшоты: **Calm / Tense / War** (времена кросс-фейда 250-400 мс).
+- `SFX_UI`
+- `SFX_World`
+- `SFX_Combat`
+- `SFX_Voice`
+- `SFX_Ambience`
 
----
+Useful exposed parameters:
 
-## 5) События -> Звук (схема интеграции)
-Все игровые события публикуются в EventBus (или аналог), `SfxManager` подписывается и мапит на клипы.
+- `SFX_Tension`
+- `SFX_War`
+- `OcclusionLPF`
 
-Примеры маппинга (сокр.):
-```
-OnUiClick                -> SFX_UI_Click_* (rand)
-OnResearchStarted        -> SFX_UI_ResearchStart_*
-OnResearchCompleted      -> SFX_UI_ResearchDone_*
-OnConvoyDepart/Arrive    -> SFX_World_ConvoyDepart/Arrive_*
-OnBuildPlaced/Started    -> SFX_World_BuildPlace / SFX_World_BuildLoop (loop start)
-OnBuildCompleted         -> SFX_World_BuildDone_*
-OnFootstep(unit, mat)    -> SFX_World_Footstep_{Light|Heavy}_{mat}_*
-OnFire(weapon)           -> SFX_Combat_{RifleBurst|Cannon}_*
-OnHit(surface)           -> SFX_Combat_Impact_{Dirt|Concrete}_*
-OnExplosionSmall/Medium  -> SFX_Combat_Explosion_{S|M}_*
-OnInfectionTick          -> SFX_World_InfectionPulse_*
-OnOutbreak               -> SFX_World_InfectionSurge_*
-OnRadioPtt(in/out)       -> SFX_Voice_RadioPTT_{In|Out}_*
-```
+Suggested behavior:
 
----
+- music ducks gently under SFX in `Calm` / `Tense`
+- war states reduce or disable ducking if needed
 
-## 6) SfxManager (пример API)
+## Event-to-Sound Mapping
+
+Examples:
+
+- `OnUiClick` -> UI click bank
+- `OnResearchStarted` -> research start cue
+- `OnResearchCompleted` -> research complete cue
+- `OnConvoyDepart` / `OnConvoyArrive` -> convoy cues
+- `OnBuildPlaced` / `OnBuildStarted` / `OnBuildCompleted` -> building cues
+- `OnFootstep(unit, mat)` -> footsteps by weight/material
+- `OnFire(weapon)` -> gun bank
+- `OnHit(surface)` -> impact bank
+- `OnExplosionSmall` / `OnExplosionMedium` -> explosion bank
+- `OnInfectionTick` -> infection pulse
+- `OnOutbreak` -> outbreak cue
+- `OnRadioPtt(in/out)` -> radio click bank
+
+## Example SfxManager API
+
 ```csharp
 using UnityEngine;
 using UnityEngine.Audio;
@@ -169,20 +241,20 @@ using System.Collections.Generic;
 public class SfxManager : MonoBehaviour
 {
     public static SfxManager I;
-    [Header("Routing")]
+
     public AudioMixer mixer;
     public AudioMixerGroup sfxUI, sfxWorld, sfxCombat, sfxVoice, sfxAmbience;
 
-    [Header("Banks")]
     public List<AudioClip> uiClick;
     public List<AudioClip> buildDone;
     public List<AudioClip> rifleBurst;
-    // ... остальное
 
     [Range(0f, 0.05f)] public float randPitch = 0.03f;
     [Range(0f, 1.5f)] public float randVolDb = 1.0f;
 
-    void Awake(){ I = this; }
+    private readonly Queue<AudioSource> pool = new();
+
+    void Awake() => I = this;
 
     public void PlayUI(AudioClip clip)
     {
@@ -217,107 +289,120 @@ public class SfxManager : MonoBehaviour
         ReturnToPool(src);
     }
 
-    // --- helpers (pool/random) ---
-    Queue<AudioSource> pool = new();
     AudioSource GetPooledSource()
     {
         if (pool.Count > 0) return pool.Dequeue();
         var go = new GameObject("SFX_AudioSource");
         go.transform.parent = transform;
         var src = go.AddComponent<AudioSource>();
-        src.rolloffMode = AudioRolloffMode.Custom; // используем кривые проекта
+        src.rolloffMode = AudioRolloffMode.Custom;
         return src;
     }
-    void ReturnToPool(AudioSource s){ s.clip=null; s.loop=false; pool.Enqueue(s); }
+
+    void ReturnToPool(AudioSource src)
+    {
+        src.clip = null;
+        src.loop = false;
+        pool.Enqueue(src);
+    }
 
     AudioSource GetOneShotSource(AudioMixerGroup grp)
     {
-        var s = GetPooledSource();
-        s.outputAudioMixerGroup = grp;
-        s.spatialBlend = 0f;
-        return s;
+        var src = GetPooledSource();
+        src.outputAudioMixerGroup = grp;
+        src.spatialBlend = 0f;
+        return src;
     }
+
     AudioSource GetOneShot3DSource(AudioMixerGroup grp, Vector3 pos)
     {
-        var s = GetPooledSource();
-        s.outputAudioMixerGroup = grp;
-        s.transform.position = pos;
-        s.spatialBlend = 1f;
-        return s;
+        var src = GetPooledSource();
+        src.outputAudioMixerGroup = grp;
+        src.transform.position = pos;
+        src.spatialBlend = 1f;
+        return src;
     }
-    void SetupRandom(AudioSource s)
+
+    void SetupRandom(AudioSource src)
     {
-        s.pitch = 1f + Random.Range(-randPitch, randPitch);
+        src.pitch = 1f + Random.Range(-randPitch, randPitch);
         float volDb = Random.Range(-randVolDb, randVolDb);
-        s.volume = Mathf.Pow(10f, volDb/20f);
+        src.volume = Mathf.Pow(10f, volDb / 20f);
     }
 }
 ```
 
----
+## Spatialization, Falloff, and Occlusion
 
-## 7) Пространство, затухание, окклюзия
-- **UI:** `spatialBlend = 0`.  
-- **Мир:** `spatialBlend = 1`, **Custom Rolloff** (кривая проекта); **MinDistance** подбираем так, чтобы ближний звук не был слишком громок.  
-- **LPF/окклюзия:** параметр `OcclusionLPF (0..1)` в Mixer - повышается, если между источником и слушателем есть укрытие/стена или источник **off-screen**.  
-- **Off-screen & LOD:** при сворачивании сектора -> останавливаем дорогостоящие лупы, оставляем только агрегированные (толпа, shortwave) на низком уровне и с LPF.
+- use `2D` playback for UI
+- use `3D` playback for world events
+- tune custom rolloff curves per category
+- use LPF or similar filtering for off-screen / occluded content
 
----
+For distant sectors or off-screen LOD:
 
-## 8) Addressables и память
-- Метки: **SFX_UI, SFX_World, SFX_Combat, SFX_Voice, SFX_Ambience**.  
-- **One-shots частые** - держим в памяти; **длинные амбиенты** - Streaming.  
-- При смене сцены/сектора - выгружаем неиспользуемые группы (release by label).
+- lower volume
+- reduce bandwidth
+- collapse many similar loops into fewer aggregated ambience loops
 
----
+## Addressables and Memory
 
-## 9) Гайд по категориям (минимальный набор)
-- **UI:** Click/Hover/Select/Confirm/Error/Panel Open/Close/Map Ping/Alert.  
-- **Экономика/Логистика:** Research Start/Complete, Convoy Depart/Arrive, Path Blocked.  
-- **Стройка/Фортификации:** Place (ghost), Build Start (loop), Build Complete, Trench Dig (loop).  
-- **Юниты/Движение:** Footsteps (light/heavy; материалы), Vehicle Idle/Move (loops).  
-- **Бой:** Rifle Burst, Heavy Cannon, Impact Dirt/Concrete, Explosion S/M, Bullet Whiz/Ricochet.  
-- **Инфекция:** Infection Tick, Surge/Outbreak, Quarantine Placed/Breached.  
-- **Мирные:** Crowd Safe/Panic (loops), Shelter Gate.  
-- **Амбиент:** City Day/Night, Shortwave (loop).  
-- **Радио:** PTT In/Out, Comms Beep.
+Suggested labels:
 
----
+- `SFX_UI`
+- `SFX_World`
+- `SFX_Combat`
+- `SFX_Voice`
+- `SFX_Ambience`
 
-## 10) Тесты и калибровка
-- **Уровни:** прогнать контрольную сцену, выровнять относительные громкости (UI не перекрикивает бой; бой не давит музыку).  
-- **Loop-seamless:** бесшовность всех лупов (кросс-фейд 5-10 мс + точка петли).  
-- **Вариативность:** нет "machine-gun effect" у повторяемых клипов.  
-- **Ducking/Снапшоты:** проверить переходы Calm<->Tense<->War без щелчков.  
-- **OC/LPF:** проверить поведение за стенами/офф-скрином.  
-- **Нагрузочные:** массовая стрельба + толпа + стройка - без треска/клиппинга; CPU/GC стабилен.
+Recommended rule:
 
----
+- load only the banks needed by the current scene/state
+- release handles when they are no longer needed
 
-## 11) План интеграции (по шагам)
-1. Создать группы в **AudioMixer**, экспонировать `SFX_Tension`, `SFX_War`, `OcclusionLPF`.  
-2. Импортировать минимальный набор клипов (см.  - 9), применить пресет импортёра ( - 3).  
-3. Разложить по Addressables (labels).  
-4. Добавить `SfxManager` в сцену, связать MixerGroup'ы и банки клипов.  
-5. Подписать `SfxManager` на EventBus (UI, Combat, World, Infection).  
-6. Настроить **снапшоты** Mixer и автоматизацию параметров от гейм-состояния.  
-7. Прогнать чек-листы ( - 10), зафиксировать уровни и кривые.  
-8. Задокументировать пути и идентификаторы в аудио-каталоге (CSV/JSON).
+## Minimal First-Pass Category Coverage
 
----
+At minimum, the project should have clean coverage for:
 
-## 12) Приложение: пресеты генерации для @SoundEffect
-- UI Click/Hover: `short UI blip, 120ms, bandpassed 800-3kHz, slight radio grit, no reverb`  
-- Confirm/Success: `two-note chime, C-Eb, 250ms, subtle shimmer`  
-- Error: `ui error tone, descending minor second, 200ms, soft distortion`  
-- Panel Whoosh: `ui whoosh short, 180-220ms, air-noise, no low end`  
-- Research Start/Done: `subtle spark + relay 250ms` / `warm chime triad 400ms`  
-- Build Loop: `construction loop, light hammering 1.5s, band 200-4kHz`  
-- Rifle Burst: `tactical rifle 3-round, dry, tight 180ms`  
-- Explosion S/M: `explosion small 350ms tight` / `explosion medium 600ms controlled tail`  
-- Crowd Safe/Panic: `crowd ambience loop 1.5s low band` / `crowd panic loop 1.5s lowpassed`  
-- Shortwave: `shortwave static loop 1.5s gentle`
+- UI click / hover / confirm / deny
+- path blocked
+- build place / start / complete
+- convoy depart / arrive
+- footsteps
+- rifle fire
+- heavy cannon
+- impact dirt / concrete
+- explosions
+- infection tick / outbreak
+- radio PTT
+- city ambience / radio ambience
 
----
+## Test and Calibration Checklist
 
-**Готово.** Этот документ - "живой": по мере внедрения фиксируем уровни, кривые, карты событий и адреса. Совместим с музыкальными снапшотами из `MUSIC_INTEGRATION.md`.
+- no clipping
+- no obvious repetition in short sessions
+- acceptable loudness balance vs music
+- UI remains readable over combat
+- loops are seamless
+- pooled audio sources are reused correctly
+- off-screen audio degrades gracefully
+
+## Integration Order
+
+1. Finalize folder naming and bank grouping.
+2. Import and apply Unity presets.
+3. Create mixer groups and snapshots.
+4. Build `SfxManager`.
+5. Connect gameplay events.
+6. Add randomization and pooling.
+7. Add Addressables labels.
+8. Profile memory and runtime voice count.
+
+## Generation Prompt Presets
+
+If more SFX are generated later, keep the output aligned with the existing library:
+
+- short, trimmed UI cues
+- multi-variant combat events
+- loop-friendly ambience segments
+- clean naming and category assignment

@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "tracked_docs": [
+    {
+      "path": "README.md",
+      "layer": "root",
+      "role_id": "root_overview",
+      "ownership_tags": ["project_overview", "quickstart_entry"],
+      "required_links": [
+        "docs/code_map.md",
+        "maps/repo_map.md",
+        "docs/document_roles.md"
+      ]
+    },
+    {
+      "path": "docs/agent_comment_standard.md",
+      "layer": "docs",
+      "role_id": "agent_comment_standard",
+      "ownership_tags": ["agent_file_headers", "agent_comment_metadata"],
+      "required_links": [
+        "docs/code_map.md"
+      ]
+    },
+    {
+      "path": "docs/agent_project_workflow_rules.md",
+      "layer": "docs",
+      "role_id": "agent_project_workflow_rules",
+      "ownership_tags": ["agent_workflow_rules", "documentation_planning_testing_contract"],
+      "required_links": [
+        "AGENTS.md",
+        "docs/document_roles.md",
+        "docs/gameplay_current_state.md",
+        "docs/unity_mcp_tools.md"
+      ]
+    },
+    {
+      "path": "docs/code_id_index.md",
+      "layer": "docs",
+      "role_id": "code_jump_index",
+      "ownership_tags": ["section_jump_table", "task_reading_routes"],
+      "required_links": [
+        "docs/code_map.md",
+        "maps/repo_map.md"
+      ]
+    },
+    {
+      "path": "docs/code_map.md",
+      "layer": "docs",
+      "role_id": "code_architecture_map",
+      "ownership_tags": ["architecture_map", "code_ownership", "runtime_flows"],
+      "required_links": [
+        "docs/code_id_index.md",
+        "maps/repo_map.md"
+      ]
+    },
+    {
+      "path": "docs/debug_playbooks.md",
+      "layer": "docs",
+      "role_id": "debug_playbooks",
+      "ownership_tags": ["symptom_triage", "debug_entry_routes"],
+      "required_links": [
+        "docs/code_id_index.md",
+        "docs/runtime_switches.md"
+      ]
+    },
+    {
+      "path": "docs/deep-research-report.md",
+      "layer": "docs",
+      "role_id": "repo_design_research",
+      "ownership_tags": ["repo_design_principles", "agent_navigation_rationale"],
+      "required_links": [
+        "docs/code_map.md",
+        "maps/repo_map.md"
+      ]
+    },
+    {
+      "path": "docs/document_roles.md",
+      "layer": "docs",
+      "role_id": "document_governance",
+      "ownership_tags": ["doc_role_boundaries", "doc_duplication_policy"],
+      "required_links": [
+        "docs/code_map.md",
+        "maps/repo_map.md"
+      ]
+    },
+    {
+      "path": "docs/gameplay_current_state.md",
+      "layer": "docs",
+      "role_id": "gameplay_runtime_state",
+      "ownership_tags": ["current_gameplay_behavior", "current_runtime_constraints"],
+      "required_links": [
+        "docs/code_map.md",
+        "docs/runtime_switches.md"
+      ]
+    },
+    {
+      "path": "docs/machine_layer_audit.md",
+      "layer": "docs",
+      "role_id": "machine_layer_governance",
+      "ownership_tags": ["machine_layer_scope", "machine_layer_invariants"],
+      "required_links": [
+        "scripts/audit_machine_layer.py",
+        "docs/code_index.json"
+      ]
+    },
+    {
+      "path": "docs/navigation_optimization_ideas.md",
+      "layer": "docs",
+      "role_id": "navigation_ideas_backlog",
+      "ownership_tags": ["navigation_ideas_backlog", "movement_system_candidates"],
+      "required_links": [
+        "docs/gameplay_current_state.md"
+      ]
+    },
+    {
+      "path": "docs/runtime_switches.md",
+      "layer": "docs",
+      "role_id": "runtime_switch_registry",
+      "ownership_tags": ["runtime_switch_registry", "inspector_tuning_surface"],
+      "required_links": [
+        "docs/runtime_config_export.json",
+        "scripts/export_runtime_config.py"
+      ]
+    },
+    {
+      "path": "docs/translated_tiles_grid_theory.md",
+      "layer": "docs",
+      "role_id": "tiles_grid_theory_reference",
+      "ownership_tags": ["tile_grid_theory_reference", "external_spatial_reference"],
+      "required_links": []
+    },
+    {
+      "path": "docs/unity_csharp_performance_optimization_reference.md",
+      "layer": "docs",
+      "role_id": "performance_reference",
+      "ownership_tags": ["performance_heuristics", "optimization_checklist"],
+      "required_links": [
+        "docs/code_map.md"
+      ]
+    },
+    {
+      "path": "docs/unity_mcp_tools.md",
+      "layer": "docs",
+      "role_id": "unity_mcp_workflow",
+      "ownership_tags": ["unity_mcp_capabilities", "unity_mcp_usage_policy"],
+      "required_links": [
+        "docs/code_map.md"
+      ]
+    },
+    {
+      "path": "maps/repo_map.md",
+      "layer": "maps",
+      "role_id": "repo_top_level_routing",
+      "ownership_tags": ["top_level_repo_routing", "entrypoint_shortcuts"],
+      "required_links": [
+        "docs/code_map.md"
+      ]
+    },
+    {
+      "path": "supplements/README.md",
+      "layer": "supplements",
+      "role_id": "supplements_root",
+      "ownership_tags": ["supplements_root_routing", "add_on_reference_index"],
+      "required_links": [
+        "supplements/audio/README.md",
+        "supplements/design/README.md"
+      ]
+    },
+    {
+      "path": "supplements/audio/README.md",
+      "layer": "supplements",
+      "role_id": "audio_supplements_overview",
+      "ownership_tags": ["audio_supplement_routing", "audio_reference_scope"],
+      "required_links": [
+        "supplements/audio/music_integration.md",
+        "supplements/audio/sfx_integration.md"
+      ]
+    },
+    {
+      "path": "supplements/audio/music_integration.md",
+      "layer": "supplements",
+      "role_id": "music_integration_reference",
+      "ownership_tags": ["music_pipeline_reference", "music_asset_notes"],
+      "required_links": [
+        "supplements/README.md"
+      ]
+    },
+    {
+      "path": "supplements/audio/sfx_integration.md",
+      "layer": "supplements",
+      "role_id": "sfx_integration_reference",
+      "ownership_tags": ["sfx_pipeline_reference", "sfx_asset_notes"],
+      "required_links": [
+        "supplements/README.md"
+      ]
+    },
+    {
+      "path": "supplements/design/README.md",
+      "layer": "supplements",
+      "role_id": "design_supplements_overview",
+      "ownership_tags": ["design_supplement_routing", "design_reference_scope"],
+      "required_links": [
+        "supplements/design/states_diplomacy_research_automation_plan.md"
+      ]
+    },
+    {
+      "path": "supplements/design/states_diplomacy_research_automation_plan.md",
+      "layer": "supplements",
+      "role_id": "design_automation_plan_reference",
+      "ownership_tags": ["states_automation_plan", "diplomacy_research_addendum"],
+      "required_links": [
+        "supplements/design/README.md"
+      ]
+    }
+  ],
+  "ignored_docs": []
+}

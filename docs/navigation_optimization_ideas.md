@@ -2,6 +2,8 @@
 
 This file consolidates the practical, high-impact ideas from the two removed architecture docs. It focuses on changes that align with the current Unity RTS codebase and the goal of scaling to large unit counts.
 
+Current runtime state and already-landed systems are tracked separately in [gameplay_current_state.md](./gameplay_current_state.md).
+
 ## Implemented (baseline to keep)
 - FlowFieldManager with time-sliced BFS, per-target caching, distance-limited expansion, and optional LoS smoothing.
 - Tiled flow fields: coarse tile graph with active tile gating along the coarse path.

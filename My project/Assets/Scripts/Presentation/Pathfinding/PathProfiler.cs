@@ -127,6 +127,7 @@ namespace Game.Presentation.Pathfinding
                 _commandsThisFrame = 0;
                 _jitterThisFrame = 0;
                 _crowdMovesThisFrame = 0;
+                _pathResetsThisFrame = 0;
             }
             _commandsThisFrame++;
         }

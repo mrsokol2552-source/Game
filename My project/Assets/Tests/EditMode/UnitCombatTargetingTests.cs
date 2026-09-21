@@ -10,6 +10,7 @@ using Game.Presentation.Performance;
 
 namespace Tests.EditMode
 {
+    [Category("Gate")]
     public class UnitCombatTargetingTests
     {
         private MethodInfo _resolveTarget;
@@ -25,6 +26,11 @@ namespace Tests.EditMode
             _targetRefreshTimer = typeof(UnitCombat).GetField("_targetRefreshTimer", BindingFlags.Instance | BindingFlags.NonPublic);
             _jobTimer = typeof(UnitCombat).GetField("_jobNearestTimer", BindingFlags.Instance | BindingFlags.NonPublic);
             _forcedTimer = typeof(UnitCombat).GetField("_forcedTargetTimer", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            Assert.NotNull(_resolveTarget, "Missing UnitCombat.ResolveTarget; update UnitCombatTargetingTests to the new targeting entry point.");
+            Assert.NotNull(_targetRefreshTimer, "Missing UnitCombat._targetRefreshTimer; update test refresh setup.");
+            Assert.NotNull(_jobTimer, "Missing UnitCombat._jobNearestTimer; update job-target expiry setup.");
+            Assert.NotNull(_forcedTimer, "Missing UnitCombat._forcedTargetTimer; update forced-target expiry setup.");
         }
 
         [TearDown]
@@ -49,6 +55,24 @@ namespace Tests.EditMode
 
             var target = InvokeResolve(self);
             Assert.AreSame(job, target);
+        }
+
+        [Test]
+        public void PreferForcedTarget_OverridesJobTarget()
+        {
+            var self = Spawn(Faction.Player, "self");
+            var forced = Spawn(Faction.Enemy, "forced");
+            var job = Spawn(Faction.Enemy, "job");
+
+            EnsureSchedulerEnabled();
+            SetRefreshNow(self);
+
+            self.PreferForcedTarget = true;
+            InvokeSetJobNearest(self, job);
+            self.AssignSquadTarget(forced, 2f);
+
+            var target = InvokeResolve(self);
+            Assert.AreSame(forced, target);
         }
 
         [Test]
@@ -96,6 +120,7 @@ namespace Tests.EditMode
             go.AddComponent<SpriteRenderer>();
             var uc = go.AddComponent<UnitCombat>();
             uc.Faction = faction;
+            UnitCombat.All.Add(uc);
             return uc;
         }
 
@@ -107,6 +132,7 @@ namespace Tests.EditMode
         private void InvokeSetJobNearest(UnitCombat uc, UnitCombat target)
         {
             var method = typeof(UnitCombat).GetMethod("SetJobNearest", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            Assert.NotNull(method, "Missing UnitCombat.SetJobNearest; update job-target arbitration tests.");
             method.Invoke(uc, new object[] { target });
         }
 

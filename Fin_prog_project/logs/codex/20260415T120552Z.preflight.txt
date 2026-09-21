@@ -1,0 +1,5 @@
+codex_path=c:\Users\Александр\.vscode\extensions\openai.chatgpt-26.409.20454-win32-x64\bin\windows-x86_64\codex.EXE
+codex_version=codex-cli 0.119.0-alpha.28
+working_directory=C:\Users\Александр\Desktop\Game\Fin_prog_project\data\evidence
+prompt_path=C:\Users\Александр\Desktop\Game\Fin_prog_project\data\evidence\prompts\latest_prompt.txt
+command=codex exec --cd C:\Users\Александр\Desktop\Game\Fin_prog_project\data\evidence <prompt>

@@ -1,3 +1,19 @@
+/*
+@file: My project/Assets/Scripts/Presentation/View/UnitView.cs
+@module: presentation.view.unit
+@purpose: Holds per-unit movement state, destination/override API, and shared runtime flags consumed by movement, combat, and avoidance systems.
+@entry: UnitView.SetDestination, UVEW-01, UVEW-02
+@api: MonoBehaviour used by movement, pathfinding, combat, ORCA, and culling systems
+@deps: MovementSettings, PathProfiler, MovementJobSystem, CompositionRoot
+@data: destination, steering/velocity overrides, speed, facing state, sorting configuration
+@perf: hotpath; destination and override access are touched by several runtime systems each frame
+@thread: main thread only
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs, manual combat/movement verification
+@config: Movement, UseMovementJobs, UseSteering, ORCA and sorting inspector settings
+@assets: SpriteRenderer on the unit GameObject
+@notes: gameplay steering and visual sorting are intentionally being separated to make future render/data migration safer
+*/
+
 using System.Collections.Generic;
 using Game.Domain.Units;
 using UnityEngine;
@@ -9,8 +25,10 @@ using Game.Presentation.Bootstrap;
 
 namespace Game.Presentation.View
 {
-    public class UnitView : MonoBehaviour
+    public partial class UnitView : MonoBehaviour
     {
+        // [UVEW-01]
+        // Per-unit state, movement/avoidance/sorting config, and lifecycle membership in UnitView.All.
         public static readonly HashSet<UnitView> All = new HashSet<UnitView>();
 
         public UnitStats Stats = new UnitStats();
@@ -84,10 +102,14 @@ namespace Game.Presentation.View
             _sr = GetComponent<SpriteRenderer>();
         }
 
+        // [UVEW-02]
+        // Destination, steering, velocity-override, and state accessors used by runtime systems.
         public void SetDestination(Vector3 target)
         {
             if ((target - transform.position).sqrMagnitude < 0.0001f)
                 return; // ignore tiny re-commands to avoid jitter
+            if (destination.HasValue && (target - destination.Value).sqrMagnitude < 0.0001f)
+                return;
             Game.Presentation.Pathfinding.PathProfiler.CountCommand();
             if (LogJitteryCommands && EnableJitterLog)
             {
@@ -193,109 +215,5 @@ namespace Game.Presentation.View
         }
 
         public MovementSettings GetMovementSettings() => MovementOrDefault;
-
-        public void ApplyFacing(Vector3 dir, float deltaTime)
-        {
-            if (dir.sqrMagnitude <= 0.0001f) return;
-            _lastDir = dir;
-            if (MirrorSpriteX && _sr != null)
-            {
-                if (Mathf.Abs(dir.x) > MirrorDeadZone)
-                    _sr.flipX = dir.x < 0f;
-            }
-            if (MovementOrDefault.RotateToVelocity && _currentSpeed > 0.01f)
-            {
-                float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
-                transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.Euler(0f, 0f, angle), MovementOrDefault.TurnSpeed * deltaTime);
-            }
-        }
-
-        private void Update()
-        {
-            if (UseMovementJobs && MovementJobSystem.IsActive)
-                return;
-            if (!destination.HasValue)
-            {
-                _currentSpeed = Mathf.MoveTowards(_currentSpeed, 0f, (MovementOrDefault.Deceleration) * Time.deltaTime);
-                return;
-            }
-
-            var target = destination.Value;
-            var pos = transform.position;
-            var to = target - pos; to.z = 0f;
-            float dist = to.magnitude;
-            var m = MovementOrDefault;
-
-            // Arrival check
-            if (dist <= m.StopDistance)
-            {
-                transform.position = target;
-                destination = null;
-                _currentSpeed = 0f;
-                return;
-            }
-
-            // Desired speed with slowdown near target
-            float desiredSpeed = m.MaxSpeed;
-            if (dist < m.SlowdownDistance)
-                desiredSpeed = Mathf.Lerp(0.5f, m.MaxSpeed, dist / m.SlowdownDistance);
-            float accel = desiredSpeed > _currentSpeed ? m.Acceleration : m.Deceleration;
-            _currentSpeed = Mathf.MoveTowards(_currentSpeed, desiredSpeed, accel * Time.deltaTime);
-
-            // Move
-            Vector3 dir = to / dist;
-            if (UseSteering && _steeringFrame == Time.frameCount)
-            {
-                Vector3 steered = dir + (_steering * SteeringInfluence);
-                if (steered.sqrMagnitude > 0.0001f)
-                    dir = steered.normalized;
-            }
-            Vector3 delta = dir * _currentSpeed * Time.deltaTime;
-            if (delta.sqrMagnitude > to.sqrMagnitude)
-                delta = to; // do not overshoot
-            transform.position = pos + delta;
-
-            ApplyFacing(dir, Time.deltaTime);
-        }
-
-        private void LateUpdate()
-        {
-            if (!UseYSorting || _sr == null) return;
-            if (!_sortingInitialized)
-            {
-                if (UseCompositionRootSorting)
-                {
-                    var root = Object.FindAnyObjectByType<CompositionRoot>();
-                    if (root != null)
-                    {
-                        SortingOrderBase = root.UnitSortingOrder + SortingOrderOffset;
-                        if (!string.IsNullOrEmpty(root.UnitSortingLayerName))
-                            _sr.sortingLayerName = root.UnitSortingLayerName;
-                    }
-                }
-                _sortingTie = AddSortingTieBreaker ? (Mathf.Abs(GetInstanceID()) % 3) : 0;
-                _sortingInitialized = true;
-            }
-            int order = SortingOrderBase - Mathf.RoundToInt(transform.position.y * SortOrderPerWorldUnit);
-            _sr.sortingOrder = order + _sortingTie;
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            if (destination.HasValue)
-            {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawLine(transform.position, destination.Value);
-            }
-        }
-
-        private MovementSettings MovementOrDefault
-        {
-            get
-            {
-                if (Movement != null) return Movement;
-                return MovementSettings.Default;
-            }
-        }
     }
 }

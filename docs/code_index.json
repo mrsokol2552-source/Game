@@ -6,87 +6,249 @@
     "code_id_index": "docs/code_id_index.md",
     "debug_playbooks": "docs/debug_playbooks.md",
     "runtime_switches": "docs/runtime_switches.md",
-    "gameplay_state": "docs/gameplay_current_state.md"
+    "gameplay_state": "docs/gameplay_current_state.md",
+    "document_roles": "docs/document_roles.md",
+    "document_roles_index": "docs/document_roles_index.json",
+    "machine_layer_audit": "docs/machine_layer_audit.md",
+    "docs_architecture_audit": "scripts/audit_docs_architecture.py",
+    "run_all_repo_audits": "scripts/run_all_repo_audits.py",
+    "sample_scene_renderer_probe_extract": "scripts/extract_sample_scene_renderer_probe.py",
+    "combat_pressure_probe_extract": "scripts/extract_combat_pressure_probe.py",
+    "runtime_config_export": "docs/runtime_config_export.json",
+    "runtime_config_manifest": "scripts/runtime_config_manifest.json",
+    "deep_research_report": "docs/deep-research-report.md",
+    "supplements_index": "supplements/supplements_index.json",
+    "supplements_readme": "supplements/README.md",
+    "audio_supplements": "supplements/audio/README.md",
+    "design_supplements": "supplements/design/README.md"
   },
   "entry_rules": {
     "start_from_symptom": "Use docs/debug_playbooks.md first when the task begins from a bug or regression.",
     "start_from_module": "Use docs/code_id_index.md first when the task begins from a known system name or CODE-ID.",
-    "start_from_tuning": "Use docs/runtime_switches.md first when the task begins from an inspector/runtime parameter."
+    "start_from_tuning": "Use docs/runtime_switches.md first when the task begins from an inspector/runtime parameter.",
+    "start_from_doc_cleanup": "Use docs/document_roles.md first when the task is about documentation ownership, overlap, or structure.",
+    "start_from_doc_manifest": "Use docs/document_roles_index.json first when the task is about governed docs, required cross-links, or documentation coverage drift.",
+    "start_from_machine_layer": "Use docs/machine_layer_audit.md first when the task is about index consistency, routing drift, or machine-readable navigation artifacts.",
+    "start_from_inspector_surface": "Use docs/runtime_config_export.json first when the task starts from current serialized scene/prefab values, then docs/runtime_switches.md for interpretation.",
+    "start_from_supplement": "Use supplements/supplements_index.json first for machine routing, then supplements/README.md for the human summary."
   },
   "reading_routes": {
     "world_generation_streaming": [
-      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-LIFECYCLE",
+      "PENV-02",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMING",
       "PENV-03",
+      "PENV-04",
       "PENV-05",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMCHUNKS",
       "PENV-06",
       "PENV-07",
-      "PENV-10",
-      "PENV-16",
-      "PENV-17",
-      "PENV-18",
-      "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
-      "HPFB-01",
-      "HPFB-04"
-    ],
-    "water_rock_shores": [
-      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
-      "PENV-07",
-      "PENV-17",
-      "PENV-18"
-    ],
-    "props_trees_biomes": [
-      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
       "PENV-08",
       "PENV-09",
       "PENV-10",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BACKGROUNDMASKS",
+      "PENV-16",
       "PENV-17",
-      "PENV-18"
+      "PENV-18",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-PLACEMENT",
+      "PENV-19",
+      "PENV-20",
+      "PENV-21",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-PALETTES",
+      "PENV-22",
+      "PENV-23",
+      "PENV-24",
+      "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
+      "HPFB-01",
+      "HPFB-03",
+      "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP-WALKABILITY",
+      "HPFB-04",
+      "HPFB-06",
+      "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP-GEOMETRY",
+      "HPFB-05"
+    ],
+    "far_view_debug": [
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-FARVIEW",
+      "PENV-11",
+      "PENV-12",
+      "PENV-13",
+      "PENV-14",
+      "PENV-15",
+      "SCRIPTS-PRESENTATION-CAMERA-CAMERAZOOM2D"
+    ],
+    "water_rock_shores": [
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMCHUNKS",
+      "PENV-07",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BACKGROUNDMASKS",
+      "PENV-17",
+      "PENV-18",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BIOMEMASKCHUNKRENDERER",
+      "PENV-42"
+    ],
+    "props_trees_biomes": [
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMCHUNKS",
+      "PENV-08",
+      "PENV-09",
+      "PENV-10",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-PLACEMENT",
+      "PENV-19",
+      "PENV-20",
+      "PENV-21",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-PALETTES",
+      "PENV-22",
+      "PENV-23",
+      "PENV-24"
     ],
     "combat_targeting": [
       "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+      "UCOM-01",
+      "UCOM-02",
+      "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-UPDATELOOP",
       "UCOM-03",
+      "UCOM-11",
+      "UCOM-12",
+      "UCOM-13",
+      "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-STATE",
+      "UCOM-09",
+      "UCOM-10",
+      "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-TARGETING",
       "UCOM-05",
       "UCOM-06",
+      "UCOM-07",
+      "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-FORMATIONFLOW",
+      "UCOM-04",
       "UCOM-08",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER",
+      "UCJS-01",
+      "UCJS-02",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER-BUFFERS",
+      "UCJS-03",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER-JOB",
+      "UCJS-04",
       "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
+      "ESQD-01",
+      "ESQD-03",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER-MEMBERSHIP",
       "ESQD-04",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER-TACTICS",
       "ESQD-05"
     ],
     "macro_navigation": [
       "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER",
       "FFLD-03",
+      "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-COSTMAPS",
       "FFLD-04",
+      "FFLD-05",
+      "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-TILEGRAPH",
       "FFLD-06",
+      "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-FIELDSTATE",
       "FFLD-07"
     ],
     "path_requests_and_builds": [
       "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE",
       "PQUE-01",
+      "PQUE-04",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE-DISPATCH",
       "PQUE-02",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE-COMPLETION",
       "PQUE-03",
       "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER-OCCUPANCY",
       "PMGR-01",
       "PMGR-03",
+      "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER-REUSE",
       "PMGR-04",
       "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
       "HPFB-03",
-      "HPFB-04"
+      "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP-WALKABILITY",
+      "HPFB-04",
+      "HPFB-06",
+      "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP-GEOMETRY",
+      "HPFB-05"
     ],
     "local_avoidance_overlap": [
+      "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM",
+      "LAVO-01",
+      "LAVO-02",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM-BUFFERS",
+      "LAVO-03",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM-JOB",
+      "LAVO-04",
       "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM",
+      "ORCA-01",
+      "ORCA-02",
       "ORCA-03",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM-BUFFERS",
+      "ORCA-05",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM-JOB",
       "ORCA-04",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY",
+      "USOA-01",
+      "USOA-02",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY-BUILD",
+      "USOA-03",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY-BUFFERS",
+      "USOA-04",
       "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM",
+      "MJOB-01",
+      "MJOB-02",
       "MJOB-03",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM-BUFFERS",
+      "MJOB-05",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM-JOBS",
       "MJOB-04",
-      "SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER"
+      "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER",
+      "CROWD-01",
+      "CROWD-02",
+      "CROWD-03",
+      "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER-SEARCH",
+      "CROWD-04",
+      "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER-THROTTLE",
+      "CROWD-05",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER",
+      "STUCK-01",
+      "STUCK-02",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER-RECOVERY",
+      "STUCK-03",
+      "SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER-STATE",
+      "STUCK-04"
+    ],
+    "unit_visuals_animation": [
+      "SCRIPTS-PRESENTATION-VIEW-UNITVIEW",
+      "UVEW-01",
+      "UVEW-02",
+      "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-STATE",
+      "UCOM-09",
+      "UCOM-10",
+      "SCRIPTS-PRESENTATION-VIEW-UNITVIEW-MOVEMENT",
+      "UVEW-03",
+      "SCRIPTS-PRESENTATION-VIEW-UNITVIEW-RENDERING",
+      "UVEW-04",
+      "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR",
+      "USPA-01",
+      "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR-PLAYBACK",
+      "USPA-02",
+      "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR-COMBAT",
+      "USPA-03",
+      "SCRIPTS-PRESENTATION-VIEW-DIRECTIONALANIMATIONSET",
+      "SCRIPTS-PRESENTATION-VIEW-UNITSORTBYY",
+      "SCRIPTS-PRESENTATION-VIEW-UNITHPOVERLAY"
     ],
     "bootstrap_ui_input": [
       "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT",
+      "CROOT-01",
+      "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-SETUP",
+      "CROOT-02",
+      "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-ACTIONS",
+      "CROOT-03",
+      "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-PERSISTENCE",
+      "CROOT-04",
       "SCRIPTS-PRESENTATION-INPUT-INPUTCONTROLLER",
       "SCRIPTS-PRESENTATION-INPUT-UNITSPAWNERCOMMANDER",
       "SCRIPTS-PRESENTATION-UI-HUDCONTROLLER",
+      "SCRIPTS-PRESENTATION-UI-HUDCONTROLLER-SQUADS",
       "SCRIPTS-PRESENTATION-UI-ACTIONSPANEL",
+      "SCRIPTS-PRESENTATION-UI-ACTIONSPANEL-SELFTEST",
       "SCRIPTS-PRESENTATION-UI-RESEARCHPANEL",
       "SCRIPTS-PRESENTATION-CAMERA-CAMERAZOOM2D"
     ],
@@ -95,6 +257,17 @@
       "EDITOR-CHARACTERCREATORSCENEBUILDER",
       "EDITOR-CHARACTERCREATORSIMPLECONFIGEDITOR",
       "EDITOR-CHARACTERCREATORUNITBUILDER"
+    ],
+    "audio_supplements": [
+      "supplements/supplements_index.json",
+      "supplements/audio/README.md",
+      "supplements/audio/music_integration.md",
+      "supplements/audio/sfx_integration.md"
+    ],
+    "design_supplements": [
+      "supplements/supplements_index.json",
+      "supplements/design/README.md",
+      "supplements/design/states_diplomacy_research_automation_plan.md"
     ]
   },
   "systems": {
@@ -102,24 +275,7 @@
       "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
       "path": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.cs",
       "sections": {
-        "PENV-01": "Inspector config and runtime state",
-        "PENV-02": "Unity bootstrap",
-        "PENV-03": "Streaming startup",
-        "PENV-04": "Tilemap parenting between grids",
-        "PENV-05": "Streaming scheduler",
-        "PENV-06": "Per-chunk generation entry point",
-        "PENV-07": "Background chunk tile synthesis",
-        "PENV-08": "Hex-grid props/trees placement",
-        "PENV-09": "Background-grid props/trees placement",
-        "PENV-10": "Chunk unload and cleanup",
-        "PENV-11": "Delayed far-view bake start",
-        "PENV-12": "Far-view render objects",
-        "PENV-13": "Chunked far-view bake",
-        "PENV-14": "Far-view HUD and loading overlay",
-        "PENV-15": "Bake bounds debug rendering",
-        "PENV-16": "Background grid sizing",
-        "PENV-17": "Streaming biome masks",
-        "PENV-18": "Background mask coordinate helpers"
+        "PENV-01": "Inspector config and runtime state"
       },
       "hot_params": [
         "UseWorldStreaming",
@@ -150,18 +306,240 @@
         "trees"
       ]
     },
+    "procedural_environment_background_masks": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BACKGROUNDMASKS",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.BackgroundMasks.cs",
+      "sections": {
+        "PENV-16": "Background grid sizing",
+        "PENV-17": "Streaming biome masks",
+        "PENV-18": "Background mask coordinate helpers"
+      },
+      "hot_params": [
+        "UseBackgroundTilemap",
+        "BackgroundCellSizeOverride",
+        "BackgroundCellOverlapPixels",
+        "BackgroundMaxWidth",
+        "BackgroundMaxHeight",
+        "BackgroundMaxCells",
+        "UseWaterBiome",
+        "WaterCoverage",
+        "RiverCount",
+        "RiverWidthMin",
+        "RiverWidthMax",
+        "RiverTurnStrength",
+        "LakeAttempts",
+        "LakeMinSize",
+        "LakeMaxSize",
+        "RockMinThickness",
+        "RockMaxThickness",
+        "RockThicknessNoiseScale"
+      ],
+      "tags": [
+        "worldgen",
+        "background-grid",
+        "masks",
+        "water",
+        "rock",
+        "distance-field",
+        "coord-conversion"
+      ]
+    },
+    "procedural_environment_placement": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-PLACEMENT",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Placement.cs",
+      "sections": {
+        "PENV-19": "Biome-aware candidate caches, placement filters, and density helpers",
+        "PENV-20": "Placement building, batching, and tile application",
+        "PENV-21": "Blocked-cell bookkeeping, spatial hash, and hex distance helpers"
+      },
+      "hot_params": [
+        "PropCoverage",
+        "PropCount",
+        "PropMinHexDistance",
+        "TreeCoverage",
+        "TreeCount",
+        "TreeMinHexDistance",
+        "RockPropCoverage",
+        "RockPropCount",
+        "RockPropMinHexDistance",
+        "BlockingPropCoverage",
+        "BlockingPropCount",
+        "BlockingMinHexDistance",
+        "UseOptimizedPropPlacement",
+        "TreeGradientEdge",
+        "TreeGradientPower",
+        "UseTreeBiomeNoise",
+        "TreeBiomeScale",
+        "TreeBiomeThreshold",
+        "TreeBiomeFeather",
+        "StreamPropsUseBackgroundGrid"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMCHUNKS",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BACKGROUNDMASKS",
+        "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP"
+      ],
+      "tags": [
+        "worldgen",
+        "props",
+        "trees",
+        "placement",
+        "biomes",
+        "blocking"
+      ]
+    },
+    "procedural_environment_palettes": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-PALETTES",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Palettes.cs",
+      "sections": {
+        "PENV-22": "Post-placement obstacle rebake and palette routing",
+        "PENV-23": "Palette weighting, accent extraction, and selection helpers",
+        "PENV-24": "Water/rock biome mask cleanup and smoothing"
+      },
+      "hot_params": [
+        "AutoSplitGroundByName",
+        "PropNameKeywords",
+        "UseGroundSuffixFilter",
+        "GroundSuffixFilter",
+        "AutoSplitBlockingByName",
+        "BlockingNameKeywords",
+        "ConvertGroundTilesRuntime",
+        "PropNoBoostKeywords",
+        "TreeRareKeywords",
+        "TreeVeryRareKeywords",
+        "TreeAccentKeywords",
+        "TreeAccentExcludeFromBase",
+        "TreeRareWeight",
+        "TreeVeryRareWeight",
+        "UseWaterMaskSmoothing",
+        "WaterMaskSmoothPasses",
+        "WaterMaskSmoothFillNeighbors",
+        "WaterMaskSmoothStayNeighbors",
+        "WaterMaskSmoothIncludeDiagonals",
+        "UseDirectWalkableUpdates"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BACKGROUNDMASKS",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-PLACEMENT",
+        "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP"
+      ],
+      "tags": [
+        "worldgen",
+        "palettes",
+        "props",
+        "trees",
+        "masks",
+        "blocking"
+      ]
+    },
+    "procedural_environment_stream_chunks": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMCHUNKS",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.StreamChunks.cs",
+      "sections": {
+        "PENV-06": "Per-chunk generation entry point",
+        "PENV-07": "Background chunk tile synthesis",
+        "PENV-08": "Hex-grid props/trees placement",
+        "PENV-09": "Background-grid props/trees placement",
+        "PENV-10": "Chunk unload and cleanup"
+      },
+      "hot_params": [
+        "StreamChunkSize",
+        "UseBackgroundTilemap",
+        "StreamPropsUseBackgroundGrid",
+        "UseWaterBiome",
+        "UseWaterEdgeColorMatch",
+        "UseGroundTileEdgeColorMatch",
+        "UseGroundTileAntiRepeat",
+        "TreeCoverage",
+        "TreeAccentCoverage",
+        "PropCoverage",
+        "RockPropCoverage",
+        "UseDirectWalkableUpdates",
+        "StreamKeepGeneratedChunks",
+        "StreamBakeAllChunks",
+        "StreamUnloadRadius",
+        "StreamMaxLoadedChunks"
+      ],
+      "tags": [
+        "worldgen",
+        "streaming",
+        "chunk-generation",
+        "background-grid",
+        "biomes",
+        "water",
+        "props",
+        "trees",
+        "cleanup"
+      ]
+    },
+    "procedural_environment_streaming": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMING",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Streaming.cs",
+      "sections": {
+        "PENV-03": "Streaming startup",
+        "PENV-04": "Tilemap parenting between grids",
+        "PENV-05": "Streaming scheduler"
+      },
+      "hot_params": [
+        "UseWorldStreaming",
+        "StreamChunkSize",
+        "StreamActiveRadius",
+        "StreamPrefetchRadius",
+        "StreamUnloadRadius",
+        "StreamChunksPerFrame",
+        "StreamFrameBudgetMs",
+        "StreamTargetFps",
+        "StreamSkipIfOverBudget",
+        "StreamKeepGeneratedChunks",
+        "StreamBakeAllChunks",
+        "StreamBakeAllChunksOnIdle",
+        "StreamPropsUseBackgroundGrid"
+      ],
+      "tags": [
+        "worldgen",
+        "streaming",
+        "queueing",
+        "chunk-bounds",
+        "background-grid"
+      ]
+    },
+    "procedural_environment_farview": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-FARVIEW",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.FarView.cs",
+      "sections": {
+        "PENV-11": "Delayed far-view bake start",
+        "PENV-12": "Far-view render objects",
+        "PENV-13": "Chunked far-view bake",
+        "PENV-14": "Far-view HUD and loading overlay",
+        "PENV-15": "Bake bounds debug rendering"
+      },
+      "hot_params": [
+        "UseFarViewBake",
+        "FarViewOrthoThresholdPercent",
+        "FarViewAlwaysActive",
+        "UseFarViewChunkedBake",
+        "UseFarViewDirectChunkRender",
+        "FarViewChunksPerFrame",
+        "FarViewBakeFrameBudgetMs",
+        "FarViewHideMapWhileBaking",
+        "ShowFarViewBakeHUD",
+        "ShowFarViewBakeBounds"
+      ],
+      "tags": [
+        "far-view",
+        "bake",
+        "hud",
+        "debug",
+        "render-state"
+      ]
+    },
     "unit_combat": {
       "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
       "path": "My project/Assets/Scripts/Presentation/View/UnitCombat.cs",
       "sections": {
         "UCOM-01": "Combat state and tuning",
-        "UCOM-02": "Unit registration and cache init",
-        "UCOM-03": "Main combat update loop",
-        "UCOM-04": "Squad metadata assignment",
-        "UCOM-05": "Local nearest-enemy search",
-        "UCOM-06": "Target arbitration logic",
-        "UCOM-07": "Faction and profile overrides",
-        "UCOM-08": "Flow-field steering path"
+        "UCOM-02": "Unit registration and cache init"
       },
       "hot_params": [
         "PlayerAttackRange",
@@ -183,35 +561,397 @@
       ],
       "tags": [
         "combat",
-        "targeting",
-        "chase",
+        "state",
+        "lifecycle",
         "squads",
+        "tuning"
+      ]
+    },
+    "unit_combat_update_loop": {
+      "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-UPDATELOOP",
+      "path": "My project/Assets/Scripts/Presentation/View/UnitCombat.UpdateLoop.cs",
+      "sections": {
+        "UCOM-03": "Main combat update loop",
+        "UCOM-11": "Tick gate, timer maintenance, and pending-path normalization",
+        "UCOM-12": "Active target engagement and chase/repath flow",
+        "UCOM-13": "No-target grace handling and stall recovery"
+      },
+      "hot_params": [
+        "CombatTickInterval",
+        "CombatTickJitter",
+        "RepathInterval",
+        "RepathIntervalFar",
+        "RepathIntervalVeryFar",
+        "LostTargetGraceSeconds",
+        "FriendlySeparationRadius",
+        "UseFormationOffsets",
+        "StallRepathSeconds"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-TARGETING",
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-FORMATIONFLOW",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE",
+        "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER"
+      ],
+      "tags": [
+        "combat",
+        "hotpath",
+        "targeting",
+        "repath",
         "attack"
+      ]
+    },
+    "unit_combat_targeting": {
+      "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-TARGETING",
+      "path": "My project/Assets/Scripts/Presentation/View/UnitCombat.Targeting.cs",
+      "sections": {
+        "UCOM-05": "Local nearest-enemy search",
+        "UCOM-06": "Target arbitration logic",
+        "UCOM-07": "Faction and profile overrides"
+      },
+      "hot_params": [
+        "PlayerAttackRange",
+        "EnemyAttackRange",
+        "TargetRefreshInterval",
+        "JobTargetTtl",
+        "LostTargetGraceSeconds",
+        "LocalThreatOverrideMultiplier",
+        "FriendlySeparationRadius",
+        "UseCrouchWhenBlocked"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER",
+        "SCRIPTS-PRESENTATION-PERFORMANCE-OCCUPANCYHASH",
+        "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER"
+      ],
+      "tags": [
+        "combat",
+        "targeting",
+        "forced-targets",
+        "facing",
+        "crouch"
+      ]
+    },
+    "unit_combat_formation_flow": {
+      "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-FORMATIONFLOW",
+      "path": "My project/Assets/Scripts/Presentation/View/UnitCombat.FormationFlow.cs",
+      "sections": {
+        "UCOM-04": "Squad metadata assignment",
+        "UCOM-08": "Flow-field steering path"
+      },
+      "hot_params": [
+        "UseFlowFields",
+        "FlowFieldMinDistance",
+        "FlowFieldStepInterval",
+        "FlowFieldStepJitter",
+        "UseFormationOffsets",
+        "FormationOffsetStartDistance",
+        "FormationSpacingHex",
+        "FormationMaxRadiusHex"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
+        "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER",
+        "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP"
+      ],
+      "tags": [
+        "combat",
+        "squads",
+        "formation",
+        "flow-fields"
+      ]
+    },
+    "unit_combat_state": {
+      "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-STATE",
+      "path": "My project/Assets/Scripts/Presentation/View/UnitCombat.State.cs",
+      "sections": {
+        "UCOM-09": "Damage application, health accessors, manual-move resets, and forced-target control",
+        "UCOM-10": "Behavior/combat profile application and override propagation"
+      },
+      "hot_params": [
+        "UseCombatProfile",
+        "CombatProfile",
+        "UseBehaviorProfile",
+        "BehaviorProfile"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-UPDATELOOP",
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-TARGETING",
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-FORMATIONFLOW"
+      ],
+      "tags": [
+        "combat",
+        "state",
+        "health",
+        "forced-targets",
+        "profiles"
+      ]
+    },
+    "procedural_environment_lifecycle": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-LIFECYCLE",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Lifecycle.cs",
+      "sections": {
+        "PENV-02": "Unity bootstrap and generation entrypoints"
+      },
+      "hot_params": [
+        "Enabled",
+        "GenerateOnAwake",
+        "UseAsyncGeneration",
+        "ClearBeforeGenerate",
+        "UseWorldStreaming",
+        "UseFarViewBake",
+        "FarViewBakeOnStart",
+        "CenterCameraOnGenerate",
+        "UseTilemapChunkMode",
+        "UseBackgroundTilemap"
+      ],
+      "tags": [
+        "worldgen",
+        "lifecycle",
+        "bootstrap",
+        "generation",
+        "tilemap-setup"
+      ]
+    },
+    "unit_view": {
+      "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITVIEW",
+      "path": "My project/Assets/Scripts/Presentation/View/UnitView.cs",
+      "sections": {
+        "UVEW-01": "Per-unit state, movement and sorting config, and lifecycle membership",
+        "UVEW-02": "Destination, steering, velocity-override, and state accessors"
+      },
+      "hot_params": [
+        "UseSteering",
+        "SteeringInfluence",
+        "UseMovementJobs",
+        "UseOrcaVelocity",
+        "VelocityOverrideMaxAgeFrames",
+        "OrcaPriority"
+      ],
+      "tags": [
+        "movement",
+        "unit",
+        "destination",
+        "overrides",
+        "state"
+      ]
+    },
+    "unit_view_movement": {
+      "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITVIEW-MOVEMENT",
+      "path": "My project/Assets/Scripts/Presentation/View/UnitView.Movement.cs",
+      "sections": {
+        "UVEW-03": "Per-frame movement integration, steering blend, arrival handling, and facing updates"
+      },
+      "hot_params": [
+        "UseMovementJobs",
+        "UseSteering",
+        "SteeringInfluence",
+        "MirrorSpriteX",
+        "MirrorDeadZone"
+      ],
+      "tags": [
+        "movement",
+        "unit",
+        "facing",
+        "steering",
+        "hotpath"
+      ]
+    },
+    "unit_view_rendering": {
+      "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITVIEW-RENDERING",
+      "path": "My project/Assets/Scripts/Presentation/View/UnitView.Rendering.cs",
+      "sections": {
+        "UVEW-04": "LateUpdate Y-sorting, CompositionRoot sorting bootstrap, and selection gizmos"
+      },
+      "hot_params": [
+        "UseYSorting",
+        "SortOrderPerWorldUnit",
+        "SortingOrderBase",
+        "SortingOrderOffset",
+        "UseCompositionRootSorting"
+      ],
+      "tags": [
+        "rendering",
+        "sorting",
+        "unit",
+        "sprite-renderer",
+        "gizmos"
+      ]
+    },
+    "unit_sprite_animator": {
+      "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR",
+      "path": "My project/Assets/Scripts/Presentation/View/UnitSpriteAnimator.cs",
+      "sections": {
+        "USPA-01": "Animator state, renderer wiring, and combat event subscription lifecycle"
+      },
+      "hot_params": [
+        "AnimSet",
+        "MoveSpeedThreshold",
+        "DeathDestroyExtraDelay",
+        "UseScaledTime",
+        "UseCrouchAfterAttack",
+        "CrouchAfterAttackSeconds",
+        "ForceCrouch"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR-PLAYBACK",
+        "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR-COMBAT",
+        "SCRIPTS-PRESENTATION-VIEW-UNITVIEW",
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+        "SCRIPTS-PRESENTATION-VIEW-DIRECTIONALANIMATIONSET"
+      ],
+      "tags": [
+        "view",
+        "animation",
+        "sprites",
+        "lifecycle"
+      ]
+    },
+    "unit_sprite_animator_playback": {
+      "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR-PLAYBACK",
+      "path": "My project/Assets/Scripts/Presentation/View/UnitSpriteAnimator.Playback.cs",
+      "sections": {
+        "USPA-02": "Per-frame playback and locomotion/crouch state machine"
+      },
+      "hot_params": [
+        "AnimSet",
+        "MoveSpeedThreshold",
+        "UseScaledTime",
+        "UseCrouchAfterAttack",
+        "CrouchAfterAttackSeconds",
+        "ForceCrouch"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR",
+        "SCRIPTS-PRESENTATION-VIEW-UNITVIEW",
+        "SCRIPTS-PRESENTATION-VIEW-DIRECTIONALANIMATIONSET"
+      ],
+      "tags": [
+        "view",
+        "animation",
+        "playback",
+        "crouch"
+      ]
+    },
+    "unit_sprite_animator_combat": {
+      "file_id": "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR-COMBAT",
+      "path": "My project/Assets/Scripts/Presentation/View/UnitSpriteAnimator.Combat.cs",
+      "sections": {
+        "USPA-03": "Attack/death animation triggers and external crouch requests"
+      },
+      "hot_params": [
+        "AnimSet",
+        "DeathDestroyExtraDelay",
+        "UseCrouchAfterAttack",
+        "CrouchAfterAttackSeconds"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR",
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+        "SCRIPTS-PRESENTATION-VIEW-UNITVIEW"
+      ],
+      "tags": [
+        "view",
+        "animation",
+        "combat",
+        "death"
       ]
     },
     "enemy_squad_manager": {
       "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
       "path": "My project/Assets/Scripts/Presentation/Performance/EnemySquadManager.cs",
       "sections": {
-        "ESQD-01": "Squad settings and state",
-        "ESQD-04": "State transitions and target assignment",
-        "ESQD-05": "Squad flow and anchor movement"
+        "ESQD-01": "Squad registry, thresholds, and cached squad state",
+        "ESQD-02": "Singleton/bootstrap lifecycle",
+        "ESQD-03": "Main squad orchestration tick"
       },
       "hot_params": [
+        "Interval",
         "MaxSquadSize",
-        "InitialGatherRadiusHex",
-        "MaxGatherRadiusHex",
-        "GatherRadiusStepSeconds",
-        "ReadyDistanceHex",
-        "CombatDistanceHex",
-        "UseSquadFlow",
-        "SquadFlowMinDistance"
+        "DrivePlayers"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER-MEMBERSHIP",
+        "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER-TACTICS",
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-FORMATIONFLOW"
       ],
       "tags": [
         "squads",
-        "formation",
-        "combat-state",
-        "macro-movement"
+        "registry",
+        "orchestration",
+        "macro-combat"
+      ]
+    },
+    "unit_combat_job_scheduler": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER",
+      "path": "My project/Assets/Scripts/Presentation/Performance/UnitCombatJobScheduler.cs",
+      "sections": {
+        "UCJS-01": "Scheduler config, double-buffered unit lists, and Native job-buffer ownership",
+        "UCJS-02": "Lifecycle setup and per-interval nearest-enemy job scheduling"
+      },
+      "hot_params": [
+        "Interval",
+        "HashCellSize",
+        "HashRings",
+        "Disabled",
+        "UseSoARegistry"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER-BUFFERS",
+        "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER-JOB",
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+        "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY"
+      ],
+      "tags": [
+        "combat",
+        "targeting",
+        "jobs",
+        "scheduler"
+      ]
+    },
+    "unit_combat_job_scheduler_buffers": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER-BUFFERS",
+      "path": "My project/Assets/Scripts/Presentation/Performance/UnitCombatJobScheduler.Buffers.cs",
+      "sections": {
+        "UCJS-03": "Native buffer growth, hash fill, snapshot ingestion, and applyback"
+      },
+      "hot_params": [
+        "HashCellSize",
+        "UseSoARegistry"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER",
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+        "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY"
+      ],
+      "tags": [
+        "combat",
+        "targeting",
+        "buffers",
+        "native-arrays"
+      ]
+    },
+    "unit_combat_job_scheduler_job": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER-JOB",
+      "path": "My project/Assets/Scripts/Presentation/Performance/UnitCombatJobScheduler.Job.cs",
+      "sections": {
+        "UCJS-04": "Burst-compiled nearest-enemy search inside spatial-hash neighborhoods"
+      },
+      "hot_params": [
+        "HashRings"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER",
+        "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER-BUFFERS"
+      ],
+      "tags": [
+        "combat",
+        "targeting",
+        "jobs",
+        "burst"
       ]
     },
     "flow_fields": {
@@ -219,10 +959,7 @@
       "path": "My project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.cs",
       "sections": {
         "FFLD-01": "Budget and cache settings",
-        "FFLD-03": "Tiled fields and gating",
-        "FFLD-04": "Crowd and influence cost layers",
-        "FFLD-06": "Vector sampling and LoS smoothing",
-        "FFLD-07": "Field processing"
+        "FFLD-03": "Per-frame field refresh and request updates"
       },
       "hot_params": [
         "CellsPerFrame",
@@ -243,15 +980,57 @@
         "crowd-costs"
       ]
     },
+    "flow_fields_costmaps": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-COSTMAPS",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.CostMaps.cs",
+      "sections": {
+        "FFLD-04": "Crowd cost-map maintenance",
+        "FFLD-05": "Influence cost-map maintenance"
+      },
+      "hot_params": [
+        "UseCrowdCosts",
+        "CrowdMinUnits",
+        "CrowdCostPerUnit",
+        "CrowdCostMax",
+        "CrowdDetourAllowance",
+        "UseInfluenceCosts",
+        "InfluenceRadiusHex",
+        "InfluenceCostPerUnit",
+        "InfluenceCostMax",
+        "InfluenceDetourAllowance",
+        "InfluenceUpdateInterval",
+        "InfluenceUpdateJitter",
+        "VectorStepFraction"
+      ],
+      "tags": [
+        "macro-nav",
+        "crowd-costs",
+        "influence",
+        "smoothing"
+      ]
+    },
     "pathing": {
       "primary": [
         {
           "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE",
           "path": "My project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.cs",
           "sections": {
-            "PQUE-01": "Queue config and state",
-            "PQUE-02": "Update and schedule loop",
-            "PQUE-03": "Job finish and fallback"
+            "PQUE-01": "Queue config, job buffers, and lifecycle guards",
+            "PQUE-04": "Immutable request payload"
+          }
+        },
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE-DISPATCH",
+          "path": "My project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.Dispatch.cs",
+          "sections": {
+            "PQUE-02": "Queue draining, job scheduling, and immediate fallback dispatch"
+          }
+        },
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE-COMPLETION",
+          "path": "My project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.Completion.cs",
+          "sections": {
+            "PQUE-03": "Async job completion, occupancy snapshots, and callback safety"
           }
         },
         {
@@ -259,8 +1038,22 @@
           "path": "My project/Assets/Scripts/Presentation/Pathfinding/PathManager.cs",
           "sections": {
             "PMGR-01": "Build settings and caching",
-            "PMGR-03": "Occupancy-aware path logic",
-            "PMGR-04": "Nearest free cell and cluster helpers"
+            "PMGR-02": "Frame budget throttling",
+            "PMGR-05": "Bootstrap caches and pooled resources"
+          }
+        },
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER-OCCUPANCY",
+          "path": "My project/Assets/Scripts/Presentation/Pathfinding/PathManager.Occupancy.cs",
+          "sections": {
+            "PMGR-03": "Occupancy-aware path logic"
+          }
+        },
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER-REUSE",
+          "path": "My project/Assets/Scripts/Presentation/Pathfinding/PathManager.Reuse.cs",
+          "sections": {
+            "PMGR-04": "Nearest free cell, reuse, and cluster helpers"
           }
         },
         {
@@ -286,17 +1079,44 @@
           "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM",
           "path": "My project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.cs",
           "sections": {
-            "ORCA-01": "Inspector config",
-            "ORCA-03": "Agent build and job inputs",
-            "ORCA-04": "Velocity result handling"
+            "ORCA-01": "Inspector config and shared NativeCollections",
+            "ORCA-02": "Lifecycle and buffer ownership",
+            "ORCA-03": "Frame update, agent gather or snapshot selection, and job dispatch"
+          }
+        },
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM-BUFFERS",
+          "path": "My project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.Buffers.cs",
+          "sections": {
+            "ORCA-05": "Unit gathering, buffer growth, snapshot ingestion, and applyback"
+          }
+        },
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM-JOB",
+          "path": "My project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.Job.cs",
+          "sections": {
+            "ORCA-04": "Burst-compiled ORCA solver and linear-program helpers"
           }
         },
         {
           "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM",
           "path": "My project/Assets/Scripts/Presentation/Performance/MovementJobSystem.cs",
           "sections": {
-            "MJOB-03": "Job simulation",
-            "MJOB-04": "Apply-back to UnitView"
+            "MJOB-03": "Main movement scheduling tick"
+          }
+        },
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM-BUFFERS",
+          "path": "My project/Assets/Scripts/Presentation/Performance/MovementJobSystem.Buffers.cs",
+          "sections": {
+            "MJOB-05": "Unit gathering, buffer growth, and applyback"
+          }
+        },
+        {
+          "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM-JOBS",
+          "path": "My project/Assets/Scripts/Presentation/Performance/MovementJobSystem.Jobs.cs",
+          "sections": {
+            "MJOB-04": "Parallel movement integration"
           }
         }
       ],
@@ -314,6 +1134,744 @@
         "overlap",
         "jobs",
         "movement"
+      ]
+    },
+    "orca_avoidance_system_buffers": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM-BUFFERS",
+      "path": "My project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.Buffers.cs",
+      "sections": {
+        "ORCA-05": "Unit gathering, Native buffer growth, snapshot ingestion, and applyback"
+      },
+      "hot_params": [
+        "CellSize",
+        "MinResponsibility",
+        "MaxNeighbors",
+        "UseSoARegistry"
+      ],
+      "tags": [
+        "local-avoidance",
+        "orca",
+        "buffers",
+        "snapshot",
+        "applyback"
+      ]
+    },
+    "orca_avoidance_system_job": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM-JOB",
+      "path": "My project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.Job.cs",
+      "sections": {
+        "ORCA-04": "Burst-compiled ORCA solver and linear-program helpers"
+      },
+      "hot_params": [
+        "NeighborDist",
+        "AgentRadius",
+        "TimeHorizon",
+        "UseCohesion",
+        "CohesionRadius",
+        "CohesionWeight",
+        "CohesionMaxSpeedFraction",
+        "AvoidEnemies"
+      ],
+      "tags": [
+        "local-avoidance",
+        "orca",
+        "job",
+        "burst",
+        "linear-program"
+      ]
+    },
+    "unit_soa_registry": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY",
+      "path": "My project/Assets/Scripts/Presentation/Performance/UnitSoARegistry.cs",
+      "sections": {
+        "USOA-01": "Singleton state, inspector toggles, SoA buffers, and snapshot payload structs",
+        "USOA-02": "Lifecycle setup, external tick control, and snapshot accessors"
+      },
+      "hot_params": [
+        "Enabled",
+        "ExternalUpdate",
+        "OrcaCellSize",
+        "OrcaMinResponsibility"
+      ],
+      "tags": [
+        "snapshot",
+        "soa",
+        "combat",
+        "orca",
+        "shared-data"
+      ]
+    },
+    "unit_soa_registry_build": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY-BUILD",
+      "path": "My project/Assets/Scripts/Presentation/Performance/UnitSoARegistry.Build.cs",
+      "sections": {
+        "USOA-03": "Per-frame SoA snapshot projection from active units"
+      },
+      "hot_params": [
+        "OrcaCellSize",
+        "OrcaMinResponsibility"
+      ],
+      "tags": [
+        "snapshot",
+        "soa",
+        "build",
+        "orca",
+        "combat"
+      ]
+    },
+    "unit_soa_registry_buffers": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY-BUFFERS",
+      "path": "My project/Assets/Scripts/Presentation/Performance/UnitSoARegistry.Buffers.cs",
+      "sections": {
+        "USOA-04": "NativeArray capacity growth, disposal, and shared cell projection helpers"
+      },
+      "hot_params": [
+        "OrcaCellSize"
+      ],
+      "tags": [
+        "snapshot",
+        "soa",
+        "buffers",
+        "native-arrays",
+        "capacity"
+      ]
+    },
+    "flow_fields_tilegraph": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-TILEGRAPH",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.TileGraph.cs",
+      "sections": {
+        "FFLD-06": "Coarse tile-graph construction and tile-path expansion"
+      },
+      "hot_params": [
+        "UseTiledFields",
+        "TileSize",
+        "TilePadding"
+      ],
+      "tags": [
+        "macro-nav",
+        "tile-graph",
+        "coarse-routing",
+        "path-expansion"
+      ]
+    },
+    "flow_fields_fieldstate": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-FIELDSTATE",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.FieldState.cs",
+      "sections": {
+        "FFLD-07": "Per-target flow-field storage, LoS flags, and next-cell sampling"
+      },
+      "hot_params": [
+        "UseDeterministicDirections",
+        "UseVectorSampling",
+        "UseLoSSmoothing",
+        "LoSMaxRange",
+        "LoSMinImprovement",
+        "VectorStepFraction"
+      ],
+      "tags": [
+        "macro-nav",
+        "field-storage",
+        "los",
+        "vector-sampling"
+      ]
+    },
+    "path_queue_dispatch": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE-DISPATCH",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.Dispatch.cs",
+      "sections": {
+        "PQUE-02": "Queue draining, job scheduling, and immediate fallback dispatch"
+      },
+      "hot_params": [
+        "MaxPerFrame",
+        "ProcessSynchronouslyIfIdle",
+        "UseJobs",
+        "MaxQueueSize"
+      ],
+      "tags": [
+        "pathfinding",
+        "queue",
+        "jobs",
+        "dispatch"
+      ]
+    },
+    "path_queue_completion": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE-COMPLETION",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.Completion.cs",
+      "sections": {
+        "PQUE-03": "Async job completion, occupancy snapshots, and callback safety"
+      },
+      "hot_params": [
+        "LogJobResults",
+        "MaxLogsPerFrame"
+      ],
+      "tags": [
+        "pathfinding",
+        "jobs",
+        "completion",
+        "occupancy"
+      ]
+    },
+    "local_avoidance": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM",
+      "path": "My project/Assets/Scripts/Presentation/Performance/LocalAvoidanceSystem.cs",
+      "sections": {
+        "LAVO-01": "Legacy local-avoidance config, singleton ownership, and double-buffered runtime state",
+        "LAVO-02": "Scheduler tick, ORCA handoff, job completion, and next avoidance-job submission"
+      },
+      "hot_params": [
+        "Enabled",
+        "Interval",
+        "CellSize",
+        "AvoidRadius",
+        "AvoidStrength",
+        "MaxSteer",
+        "Rings",
+        "MaxNeighbors",
+        "AvoidEnemies",
+        "SkipWithoutDestination",
+        "BatchSize"
+      ],
+      "tags": [
+        "legacy-avoidance",
+        "movement",
+        "scheduler",
+        "fallback",
+        "runtime"
+      ]
+    },
+    "local_avoidance_buffers": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM-BUFFERS",
+      "path": "My project/Assets/Scripts/Presentation/Performance/LocalAvoidanceSystem.Buffers.cs",
+      "sections": {
+        "LAVO-03": "Unit gathering, Native buffer growth/fill, and steering applyback"
+      },
+      "hot_params": [
+        "CellSize"
+      ],
+      "tags": [
+        "legacy-avoidance",
+        "buffers",
+        "snapshot",
+        "applyback",
+        "native-arrays"
+      ]
+    },
+    "local_avoidance_job": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM-JOB",
+      "path": "My project/Assets/Scripts/Presentation/Performance/LocalAvoidanceSystem.Job.cs",
+      "sections": {
+        "LAVO-04": "Steering job plus cell/hash helpers"
+      },
+      "hot_params": [
+        "AvoidRadius",
+        "AvoidStrength",
+        "MaxSteer",
+        "Rings",
+        "MaxNeighbors",
+        "AvoidEnemies",
+        "SkipWithoutDestination"
+      ],
+      "tags": [
+        "legacy-avoidance",
+        "job",
+        "spatial-hash",
+        "steering",
+        "fallback"
+      ]
+    },
+    "crowding_resolver": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/CrowdingResolver.cs",
+      "sections": {
+        "CROWD-01": "Resolver config, cached dependencies, per-cell groups, and adaptive-throttle state",
+        "CROWD-02": "LateUpdate crowd-resolution tick, grouping, and short nudge issue path",
+        "CROWD-03": "Dependency cache setup, pooled-list cleanup, and move-timestamp maintenance"
+      },
+      "hot_params": [
+        "Interval",
+        "SearchRadius",
+        "MaxGroupsPerTick",
+        "MaxSlotsPerGroup",
+        "SkipWhenBuilderBusy",
+        "AllowStayCountPerCell",
+        "AdaptiveThrottling",
+        "MoveCooldown",
+        "ResolveWithoutEnemies",
+        "NoEnemyResolveWindow"
+      ],
+      "tags": [
+        "crowd-relief",
+        "overlap",
+        "pathfinding",
+        "lateupdate",
+        "adaptive-throttle"
+      ]
+    },
+    "crowding_resolver_search": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER-SEARCH",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/CrowdingResolver.Search.cs",
+      "sections": {
+        "CROWD-04": "Free-cell search, reservation-key helpers, and odd-r ring enumeration"
+      },
+      "hot_params": [
+        "SearchRadius",
+        "MaxSlotsPerGroup"
+      ],
+      "tags": [
+        "crowd-relief",
+        "search",
+        "ring-enumeration",
+        "reservations",
+        "hex-grid"
+      ]
+    },
+    "crowding_resolver_throttle": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER-THROTTLE",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/CrowdingResolver.Throttle.cs",
+      "sections": {
+        "CROWD-05": "Adaptive throttling, effective radius/group budgets, and diagnostic logging"
+      },
+      "hot_params": [
+        "AdaptiveThrottling",
+        "AutoScaleByPopulation",
+        "UnitsPerCrowdGroupStep",
+        "UnitsPerRadiusStep",
+        "FrameTimeSoftLimit",
+        "FrameTimeHardLimit",
+        "FrameTimeBoostLimit",
+        "MinSearchRadius",
+        "MinGroupsPerTick",
+        "DebugLogEffective"
+      ],
+      "tags": [
+        "crowd-relief",
+        "adaptive-throttle",
+        "budgeting",
+        "frame-time",
+        "diagnostics"
+      ]
+    },
+    "stuck_resolver": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER",
+      "path": "My project/Assets/Scripts/Presentation/Performance/StuckResolver.cs",
+      "sections": {
+        "STUCK-01": "Resolver config, singleton ownership, per-unit progress windows, and throttled log state",
+        "STUCK-02": "Periodic progress sampling, guards, and recovery dispatch"
+      },
+      "hot_params": [
+        "Enabled",
+        "Interval",
+        "WindowSeconds",
+        "MinTravelDistance",
+        "MinSpeed",
+        "ArrivalSlack",
+        "NudgeRadius",
+        "ResolveCooldown",
+        "AllowManualPathNudge",
+        "ForceCombatRepath"
+      ],
+      "tags": [
+        "stuck-recovery",
+        "movement",
+        "progress-scan",
+        "late-recovery",
+        "runtime"
+      ]
+    },
+    "stuck_resolver_recovery": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER-RECOVERY",
+      "path": "My project/Assets/Scripts/Presentation/Performance/StuckResolver.Recovery.cs",
+      "sections": {
+        "STUCK-03": "Optional combat repath and nearest-free nudge recovery"
+      },
+      "hot_params": [
+        "ForceCombatRepath",
+        "NudgeRadius",
+        "LogStuck",
+        "MaxLogsPerTick"
+      ],
+      "tags": [
+        "stuck-recovery",
+        "nudge",
+        "combat-repath",
+        "pathfinding",
+        "diagnostics"
+      ]
+    },
+    "stuck_resolver_state": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER-STATE",
+      "path": "My project/Assets/Scripts/Presentation/Performance/StuckResolver.State.cs",
+      "sections": {
+        "STUCK-04": "Per-unit progress reset and stale-entry cleanup"
+      },
+      "hot_params": [
+        "ResolveCooldown"
+      ],
+      "tags": [
+        "stuck-recovery",
+        "state",
+        "cleanup",
+        "progress-window",
+        "maintenance"
+      ]
+    },
+    "bootstrap_composition_root": {
+      "file_id": "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT",
+      "path": "My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs",
+      "sections": {
+        "CROOT-01": "Core lifecycle, inspector references, and root service ownership"
+      },
+      "hot_params": [
+        "GameConfig",
+        "DefaultUnitPrefab",
+        "TestBuilding",
+        "PlayerSprite",
+        "EnemySprite",
+        "UnitSortingLayerName",
+        "UnitSortingOrder",
+        "TestResearch",
+        "AutoStart"
+      ],
+      "tags": [
+        "bootstrap",
+        "scene-wiring",
+        "lifecycle",
+        "services"
+      ]
+    },
+    "bootstrap_composition_root_setup": {
+      "file_id": "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-SETUP",
+      "path": "My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.Setup.cs",
+      "sections": {
+        "CROOT-02": "Bootstrap helpers, singleton wiring, and existing-scene unit setup"
+      },
+      "hot_params": [
+        "AutoStart",
+        "GameConfig",
+        "UnitSortingLayerName",
+        "UnitSortingOrder"
+      ],
+      "tags": [
+        "bootstrap",
+        "scene-wiring",
+        "singletons",
+        "camera",
+        "pathfinding"
+      ]
+    },
+    "bootstrap_composition_root_actions": {
+      "file_id": "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-ACTIONS",
+      "path": "My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.Actions.cs",
+      "sections": {
+        "CROOT-03": "Save/load wrappers, status text, and debug test actions"
+      },
+      "hot_params": [
+        "TestBuilding",
+        "TestResearch"
+      ],
+      "tags": [
+        "bootstrap",
+        "save-load",
+        "debug-actions",
+        "research",
+        "building"
+      ]
+    },
+    "bootstrap_composition_root_persistence": {
+      "file_id": "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-PERSISTENCE",
+      "path": "My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.Persistence.cs",
+      "sections": {
+        "CROOT-04": "Save/restore callbacks, restored-unit visuals, and sorting helpers"
+      },
+      "hot_params": [
+        "DefaultUnitPrefab",
+        "PlayerSprite",
+        "EnemySprite",
+        "UnitSortingLayerName",
+        "UnitSortingOrder"
+      ],
+      "tags": [
+        "bootstrap",
+        "save-load",
+        "restore",
+        "unit-visuals",
+        "sorting"
+      ]
+    },
+    "hud_controller": {
+      "file_id": "SCRIPTS-PRESENTATION-UI-HUDCONTROLLER",
+      "path": "My project/Assets/Scripts/Presentation/UI/HudController.cs",
+      "hot_params": [],
+      "tags": [
+        "ui",
+        "hud",
+        "resource-panel",
+        "status"
+      ]
+    },
+    "hud_controller_squads": {
+      "file_id": "SCRIPTS-PRESENTATION-UI-HUDCONTROLLER-SQUADS",
+      "path": "My project/Assets/Scripts/Presentation/UI/HudController.Squads.cs",
+      "hot_params": [],
+      "tags": [
+        "ui",
+        "hud",
+        "squads",
+        "selection"
+      ]
+    },
+    "actions_panel": {
+      "file_id": "SCRIPTS-PRESENTATION-UI-ACTIONSPANEL",
+      "path": "My project/Assets/Scripts/Presentation/UI/ActionsPanel.cs",
+      "hot_params": [
+        "Visible",
+        "Width",
+        "Height"
+      ],
+      "tags": [
+        "ui",
+        "dev-panel",
+        "spawn",
+        "debug-actions"
+      ]
+    },
+    "actions_panel_self_test": {
+      "file_id": "SCRIPTS-PRESENTATION-UI-ACTIONSPANEL-SELFTEST",
+      "path": "My project/Assets/Scripts/Presentation/UI/ActionsPanel.SelfTest.cs",
+      "hot_params": [],
+      "tags": [
+        "ui",
+        "dev-panel",
+        "self-test",
+        "save-load"
+      ]
+    },
+    "hex_grid": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.cs",
+      "sections": {
+        "HPFB-01": "Hex-grid dimensions, walkability storage, and NativeArray mirrors",
+        "HPFB-02": "Initial grid sizing and one-time bootstrap initialization",
+        "HPFB-03": "Lazy initialization and reallocation guards"
+      },
+      "hot_params": [
+        "Width",
+        "Height",
+        "HexSize",
+        "Origin",
+        "AutoFitToCamera",
+        "AutoClampSize",
+        "MaxCells"
+      ],
+      "tags": [
+        "pathfinding",
+        "hex-grid",
+        "bootstrap",
+        "walkability"
+      ]
+    },
+    "hex_grid_walkability": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP-WALKABILITY",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.Walkability.cs",
+      "sections": {
+        "HPFB-04": "Walkability mutation, collider baking, persistence, and dirty-rectangle updates",
+        "HPFB-06": "Native buffer cleanup and job-safe synchronization helpers"
+      },
+      "hot_params": [
+        "ObstacleMask",
+        "SampleRadius",
+        "AutoBakeColliders",
+        "LogBake"
+      ],
+      "tags": [
+        "pathfinding",
+        "hex-grid",
+        "walkability",
+        "physics-bake",
+        "native-buffers"
+      ]
+    },
+    "hex_grid_geometry": {
+      "file_id": "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP-GEOMETRY",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.Geometry.cs",
+      "sections": {
+        "HPFB-05": "World/grid conversion, gizmos, and geometry snapshots"
+      },
+      "hot_params": [
+        "HexSize",
+        "Origin",
+        "DrawGrid",
+        "DrawOnlyVisible",
+        "GridColor"
+      ],
+      "tags": [
+        "pathfinding",
+        "hex-grid",
+        "geometry",
+        "conversion",
+        "gizmos"
+      ]
+    },
+    "enemy_squad_membership": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER-MEMBERSHIP",
+      "path": "My project/Assets/Scripts/Presentation/Performance/EnemySquadManager.Membership.cs",
+      "sections": {
+        "ESQD-04": "Squad composition, recruitment, and center maintenance"
+      },
+      "hot_params": [
+        "MaxSquadSize",
+        "InitialGatherRadiusHex",
+        "MaxGatherRadiusHex",
+        "GatherRadiusStepHex",
+        "GatherRadiusStepSeconds",
+        "SleepRetrySeconds",
+        "DrivePlayers"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
+        "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT"
+      ],
+      "tags": [
+        "squads",
+        "recruitment",
+        "membership",
+        "grouping"
+      ]
+    },
+    "enemy_squad_tactics": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER-TACTICS",
+      "path": "My project/Assets/Scripts/Presentation/Performance/EnemySquadManager.Tactics.cs",
+      "sections": {
+        "ESQD-05": "Squad mode hysteresis, target assignment, and flow-anchor updates"
+      },
+      "hot_params": [
+        "ReadyDistanceHex",
+        "CombatDistanceHex",
+        "ReadyExitDistanceHex",
+        "CombatExitDistanceHex",
+        "FreeCombatReleaseHex",
+        "StateHoldSeconds",
+        "SquadTargetTTL",
+        "AssignTargetsWhileGathering",
+        "UseSquadFlow",
+        "SquadFlowMinDistance"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
+        "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER",
+        "SCRIPTS-PRESENTATION-PERFORMANCE-OCCUPANCYHASH"
+      ],
+      "tags": [
+        "squads",
+        "tactics",
+        "targeting",
+        "flow-fields"
+      ]
+    },
+    "movement_job_system": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM",
+      "path": "My project/Assets/Scripts/Presentation/Performance/MovementJobSystem.cs",
+      "sections": {
+        "MJOB-01": "Movement batch state and scheduling config",
+        "MJOB-02": "Lifecycle setup and persistent buffer ownership",
+        "MJOB-03": "Main movement scheduling tick"
+      },
+      "hot_params": [
+        "Enabled",
+        "Interval",
+        "BatchSize",
+        "ExternalUpdate"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM-BUFFERS",
+        "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM-JOBS",
+        "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM"
+      ],
+      "tags": [
+        "movement",
+        "jobs",
+        "scheduling",
+        "runtime"
+      ]
+    },
+    "movement_job_system_buffers": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM-BUFFERS",
+      "path": "My project/Assets/Scripts/Presentation/Performance/MovementJobSystem.Buffers.cs",
+      "sections": {
+        "MJOB-05": "Unit gathering, buffer growth, fill, and applyback"
+      },
+      "hot_params": [
+        "BatchSize"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM",
+        "SCRIPTS-PRESENTATION-VIEW-UNITVIEW"
+      ],
+      "tags": [
+        "movement",
+        "buffers",
+        "native-arrays",
+        "applyback"
+      ]
+    },
+    "movement_job_system_jobs": {
+      "file_id": "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM-JOBS",
+      "path": "My project/Assets/Scripts/Presentation/Performance/MovementJobSystem.Jobs.cs",
+      "sections": {
+        "MJOB-04": "Parallel movement integration and destination advance logic"
+      },
+      "hot_params": [
+        "BatchSize"
+      ],
+      "related": [
+        "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM",
+        "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM-BUFFERS"
+      ],
+      "tags": [
+        "movement",
+        "jobs",
+        "parallel",
+        "integration"
+      ]
+    },
+    "sample_scene_boot_smoke_tests": {
+      "file_id": "TESTS-PLAYMODE-SAMPLESCENEBOOTSMOKETESTS",
+      "path": "My project/Assets/Tests/PlayMode/SampleSceneBootSmokeTests.cs",
+      "related": [
+        "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT",
+        "SCRIPTS-PRESENTATION-CAMERA-CAMERAZOOM2D",
+        "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE",
+        "SCRIPTS-PRESENTATION-UI-HUDCONTROLLER"
+      ],
+      "tags": [
+        "tests",
+        "playmode",
+        "sample-scene",
+        "boot-smoke",
+        "scene-wiring"
+      ]
+    },
+    "sample_scene_renderer_diagnostics_tests": {
+      "file_id": "TESTS-PLAYMODE-SAMPLESCENERENDERERDIAGNOSTICSTESTS",
+      "path": "My project/Assets/Tests/PlayMode/SampleSceneRendererDiagnosticsTests.cs",
+      "related": [
+        "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMING",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BACKGROUNDPAYLOADCHUNKRENDERER",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-GROUNDPAYLOADCHUNKRENDERER",
+        "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BIOMEMASKCHUNKRENDERER",
+        "SCRIPTS-PRESENTATION-CAMERA-CAMERAZOOM2D",
+        "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP"
+      ],
+      "tags": [
+        "tests",
+        "playmode",
+        "sample-scene",
+        "diagnostic",
+        "renderer-baseline",
+        "streaming"
       ]
     }
   },
@@ -419,30 +1977,148 @@
   },
   "hot_ids": [
     "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
+    "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-LIFECYCLE",
+    "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMING",
+    "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMCHUNKS",
+    "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-PLACEMENT",
+    "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-PALETTES",
+    "PENV-02",
     "PENV-05",
+    "PENV-06",
     "PENV-07",
     "PENV-09",
     "PENV-10",
+    "PENV-19",
+    "PENV-20",
+    "PENV-21",
+    "PENV-22",
+    "PENV-23",
+    "PENV-24",
     "PENV-13",
     "PENV-17",
     "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
+    "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-UPDATELOOP",
+    "SCRIPTS-PRESENTATION-VIEW-UNITVIEW",
+    "SCRIPTS-PRESENTATION-VIEW-UNITVIEW-MOVEMENT",
+    "SCRIPTS-PRESENTATION-VIEW-UNITVIEW-RENDERING",
+    "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR",
+    "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR-PLAYBACK",
+    "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR-COMBAT",
+    "UVEW-01",
+    "UVEW-02",
+    "UVEW-03",
+    "UVEW-04",
+    "USPA-01",
+    "USPA-02",
+    "USPA-03",
     "UCOM-03",
+    "UCOM-11",
+    "UCOM-12",
+    "UCOM-13",
+    "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-STATE",
+    "UCOM-09",
+    "UCOM-10",
     "UCOM-06",
     "UCOM-08",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER-BUFFERS",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER-JOB",
+    "UCJS-01",
+    "UCJS-02",
+    "UCJS-03",
+    "UCJS-04",
     "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
     "ESQD-04",
     "ESQD-05",
     "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER",
+    "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-COSTMAPS",
+    "FFLD-04",
+    "FFLD-05",
     "FFLD-07",
     "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE",
     "PQUE-02",
     "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER",
+    "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER-OCCUPANCY",
     "PMGR-03",
+    "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER-REUSE",
+    "PMGR-04",
     "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
     "HPFB-04",
     "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM-BUFFERS",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM-JOB",
+    "ORCA-01",
+    "ORCA-02",
     "ORCA-03",
+    "ORCA-04",
+    "ORCA-05",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY-BUILD",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY-BUFFERS",
+    "USOA-01",
+    "USOA-02",
+    "USOA-03",
+    "USOA-04",
     "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM",
-    "MJOB-03"
+    "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM-BUFFERS",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM-JOB",
+    "LAVO-01",
+    "LAVO-02",
+    "LAVO-03",
+    "LAVO-04",
+    "MJOB-03",
+    "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER",
+    "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER-SEARCH",
+    "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER-THROTTLE",
+    "CROWD-01",
+    "CROWD-02",
+    "CROWD-03",
+    "CROWD-04",
+    "CROWD-05",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER-RECOVERY",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-STUCKRESOLVER-STATE",
+    "STUCK-01",
+    "STUCK-02",
+    "STUCK-03",
+    "STUCK-04",
+    "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-TILEGRAPH",
+    "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-FIELDSTATE",
+    "FFLD-06",
+    "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE-DISPATCH",
+    "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE-COMPLETION",
+    "PQUE-03",
+    "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT",
+    "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-SETUP",
+    "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-ACTIONS",
+    "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-PERSISTENCE",
+    "CROOT-01",
+    "CROOT-02",
+    "CROOT-03",
+    "CROOT-04",
+    "SCRIPTS-PRESENTATION-UI-HUDCONTROLLER",
+    "SCRIPTS-PRESENTATION-UI-HUDCONTROLLER-SQUADS",
+    "SCRIPTS-PRESENTATION-UI-ACTIONSPANEL",
+    "SCRIPTS-PRESENTATION-UI-ACTIONSPANEL-SELFTEST",
+    "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP-WALKABILITY",
+    "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP-GEOMETRY",
+    "HPFB-01",
+    "HPFB-02",
+    "HPFB-03",
+    "HPFB-05",
+    "HPFB-06",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER-MEMBERSHIP",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER-TACTICS",
+    "ESQD-01",
+    "ESQD-03",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM-BUFFERS",
+    "SCRIPTS-PRESENTATION-PERFORMANCE-MOVEMENTJOBSYSTEM-JOBS",
+    "MJOB-01",
+    "MJOB-02",
+    "MJOB-05",
+    "MJOB-04",
+    "TESTS-PLAYMODE-SAMPLESCENEBOOTSMOKETESTS",
+    "TESTS-PLAYMODE-SAMPLESCENERENDERERDIAGNOSTICSTESTS"
   ]
 }

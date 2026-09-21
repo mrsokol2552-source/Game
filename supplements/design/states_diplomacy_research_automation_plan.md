@@ -1,33 +1,58 @@
-﻿# Дополнение к проекту: **Государства, Дипломатия, Редкости Исследований, Аномалии и Автоматизация**
-Версия: 1.0 - Ядро: Unity (C#) - Архитектура: Domain/Data/Application/AI/Presentation/Infrastructure  
-Совместимость: off-screen LOD-симуляция, EventBus, сохранения JSON, Pathfinding
+# States, Diplomacy, Research Rarity, Anomalies, and Automation Plan
 
-> Цель: оформить в рабочий план доп. подсистемы - несколько государств с дипломатией (посольства/союзы/слияние), пересобранное древо исследований (обычные/редкие/аномальные) и автоматизация процессов через серверные/ядра.
+Version: `1.0`  
+Target stack: `Unity (C#)`  
+Architectural fit: `Domain / Data / Application / AI / Presentation / Infrastructure`
 
----
+This document is a working design plan for a future expansion layer:
 
-## 0) Коротко (TL;DR)
-- **Государства (States)**: старт за выбранное государство; уровни отношений -> *Нет контакта* -> *Посольство* -> *Союз* -> *(возможное) Слияние*.
-- **Видимость/интел**:  
-  - Нет контакта/вражда - **AI не "видит"** юниты/постройки других (собственный FoW).  
-  - Посольство - **видит юниты/постройки**, **без** экономики/задач.  
-  - Союз - видит **всё** (вкл. экономику и задачи), но **контролирует только свои** юниты.
-- **Слияние**: ежедневно малая вероятность p, растущая со временем союза; при слиянии управление передаётся **одному AI**; игрок остаётся лидером своей стороны.
-- **Исследования**: ветки с "одним видимым шагом"; редкость: **Обычные / Редкие / Аномальные**. Шанс редких зависит от **качества исследований** (скрытый показатель зданий). Стоимость растёт на **10-15%** за шаг.
-- **Здания науки**: два типа апгрейда - **количественный** (RP+) и **качественный** (QP+). Игрок **не знает** точный шанс редких.
-- **Аномалии**: доступны только при наличии **содержания заражённых** и **команд поимки**; образцы тратятся в ходе исследований; требуется **автоматизация** цикла "поимка->доставка->исследование".
-- **Автоматизация**: **Серверные** здания дают **вычислительные единицы (CU)**; **Ядро автоматизации** берёт под контроль **один** объект (отряд/здание), потребляя **много энергии** и CU; ядро выполняет процесс целиком.
+- multiple states / factions with diplomacy
+- research rarity and hidden research quality
+- anomalous research tied to infected capture loops
+- automation through compute resources and automation cores
 
----
+Use this document together with:
 
-## 1) Domain (модели и правила)
+- [../supplements_index.json](../supplements_index.json)
+- [README.md](./README.md)
+- [../../docs/gameplay_current_state.md](../../docs/gameplay_current_state.md)
+- [../../docs/code_map.md](../../docs/code_map.md)
+- [../../docs/deep-research-report.md](../../docs/deep-research-report.md)
 
-### 1.1 Сущности
+Supporting source file:
+
+- [project_addendum_states_diplomacy_research_anomalies_automation_economy.docx](./project_addendum_states_diplomacy_research_anomalies_automation_economy.docx)
+
+## TL;DR
+
+- The game starts with a selected `State`.
+- States can progress through diplomatic stages:
+  - `No Contact`
+  - `Embassy`
+  - `Alliance`
+  - optional `Merge`
+- Intel visibility depends on relation level.
+- Research is reorganized into:
+  - `Common`
+  - `Rare`
+  - `Anomalous`
+- Rare research chance depends on hidden research quality, not just output quantity.
+- Anomalous research requires infected samples and a full logistics loop.
+- Automation is powered by server capacity and dedicated automation cores.
+
+## 1. Domain Model
+
+### Core enums
+
 ```csharp
-public enum IntelAccess { None, UnitsAndBuildings, Full }        // уровни доступа
-public enum RelationKind { None, Hostile, Embassy, Alliance }     // стадия отношений
+public enum IntelAccess { None, UnitsAndBuildings, Full }
+public enum RelationKind { None, Hostile, Embassy, Alliance }
 public enum ResearchRarity { Common, Rare, Anomalous }
+```
 
+### Core entities
+
+```csharp
 public sealed record StateId(string Value);
 public sealed record SectorId(int X, int Y);
 
@@ -36,91 +61,59 @@ public sealed class State
     public StateId Id;
     public string Title;
     public Dictionary<StateId, Relation> Relations = new();
-    public IntelLayer Intel;                   // знание о мире (своё FoW)
-    public EconomySnapshot Economy;            // свои запасы
-    public ResearchProgress Research;          // прогресс по веткам/стоимость
-    public AutomationNetwork Automation;       // доступные CU и привязанные ядра
+    public IntelLayer Intel;
+    public EconomySnapshot Economy;
+    public ResearchProgress Research;
+    public AutomationNetwork Automation;
 }
 
 public sealed class Relation
 {
-    public RelationKind Kind;                  // None/Hostile/Embassy/Alliance
-    public float DaysInAlliance;               // растёт только в Alliance
-    public float Stability;                    // 0..1 (доверие, общие цели, история)
+    public RelationKind Kind;
+    public float DaysInAlliance;
+    public float Stability;
 }
 
-public sealed class IntelLayer               // "карта знаний" государства
+public sealed class IntelLayer
 {
-    // Что известно о секторах/юнитах/постройках других государств
     public IntelAccess AccessTo(StateId other);
     public KnownUnits GetKnownUnits(SectorId s, StateId other);
     public KnownBuildings GetKnownBuildings(SectorId s, StateId other);
-    public KnownEconomy GetKnownEconomy(StateId other); // только при Full
+    public KnownEconomy GetKnownEconomy(StateId other);
 }
 
 public sealed class ResearchProgress
 {
-    public Dictionary<string, Branch> Branches;  // "Экономика/Добыча" и пр.
-    public int TotalSteps;                       // для инфляции стоимости
-    public float CostMultiplier;                 // (1+r)^(n)
-    public float QualityScore;                   // агрегат QP/RP (скрыт от игрока)
+    public Dictionary<string, Branch> Branches;
+    public int TotalSteps;
+    public float CostMultiplier;
+    public float QualityScore;
 }
 
 public sealed class Branch
 {
-    public string Id;               // "economy.extraction"
-    public int Completed;           // сколько пройдено шагов
-    public ResearchDef Current;     // единственный видимый шаг
+    public string Id;
+    public int Completed;
+    public ResearchDef Current;
 }
 
 public sealed class ResearchDef
 {
     public string Id;
     public string BranchId;
-    public ResearchRarity Rarity;   // Common/Rare/Anomalous
-    public float BaseCostRP;        // базовая стоимость
-    public string[] PrereqIds;      // зависимости
-    public string[] RequiresAssets; // напр. "ContainmentLab", "CaptureTeam"
+    public ResearchRarity Rarity;
+    public float BaseCostRP;
+    public string[] PrereqIds;
+    public string[] RequiresAssets;
 }
 ```
 
-### 1.2 Формулы и правила
-- **Интел-доступ:**  
-  `None  -> (ничего)`;  
-  `Embassy -> Units+Buildings` (позиции/типы/здоровье, без экономики/задач);  
-  `Alliance -> Full` (вкл. экономики, очереди строительства/исследований).  
-  *Примечание:* доступ влияет только на **знание**, не на **контроль**.
-- **Шанс слияния в день** (в состоянии Alliance):
-  ```
-  p_merge(day) = clamp( p0 + a * ln(1 + DaysInAlliance/7) + b * Stability - c * Strain, 0, p_max )
-  ```
-  Где: `p0=0.0015` (0.15%), `a~0.002`, `b~0.005`, `c~0.003`, `p_max=0.12`.  
-  `Stability` (0..1) растёт при совместных операциях и низких потерях; `Strain` - штраф за конфликты интересов/дефициты.
-- **Инфляция стоимости исследований:**  
-  Для i-го завершённого шага (глобально или на ветку - опция баланса):
-  ```
-  Cost(i) = BaseCost * (1 + r)^i,   где r in [0.10, 0.15]
-  ```
-- **Редкость после шага:** после завершения `Branch.Current` переопределяем следующий `Current`:
-  ```
-  pRare = clamp(pRareBase + α * QualityScore, 0, pRareMax)
-  if (Roll(pRare)) pick Rare; else pick Common.
-  // Anomalous возможна, если выполнены RequiresAssets ("ContainmentLab", "CaptureTeam") и Roll(pAnom),
-  // где pAnom << pRare и также зависит от QualityScore и накопленной статистики образцов.
-  ```
-  *QualityScore* вычисляется как функция **QP/RP**: `QS = (ΣQP)/(ΣRP+ε)`, где RP - очки исследований/сутки, QP - "качество".
-- **Апгрейд зданий науки:**
-  - **Количественный** (Tier+): RP+ (напр. x1.6), QP - +/-0.  
-  - **Качественный** (Spec+): QP+ (напр. x1.4), RP - +/-0; **дороже** и **энергоёмче**.
-  - ROI-принцип: *одно улучшенное* выгоднее **двух базовых** на **10-30%** по целевому метрику категории.  
-    Пример для Science: `RP(Tier1) = 1.0`, `RP(Tier2)=2.2` (на 10% лучше 2x1.0); `QP(Tier2)=1.4`.
-- **Аномалии:** исследования требуют **образцы заражённых**; каждый шаг "сжигает" N образцов. Образцы добываются **командами поимки** и хранятся в **ContainmentLab**; утечки порождают риски (события).
+### Automation entities
 
-### 1.3 Автоматизация
 ```csharp
 public sealed class AutomationNetwork
 {
-    public int ComputeUnits;                 // суммарно от Server Farm
+    public int ComputeUnits;
     public int FreeComputeUnits;
     public List<AutomationCore> Cores;
 }
@@ -128,73 +121,196 @@ public sealed class AutomationNetwork
 public sealed class AutomationCore
 {
     public string Id;
-    public int ConsumeCU;                    //  например, 10 CU
-    public float PowerMW;                    //  большая энергозатрата
-    public IAutomatable Target;              //  один объект: отряд ИЛИ здание
-    public AutomationRecipe Recipe;          //  что именно автоматизируем
+    public int ConsumeCU;
+    public float PowerMW;
+    public IAutomatable Target;
+    public AutomationRecipe Recipe;
 }
 
-public interface IAutomatable { Guid InstanceId { get; } }
-public enum RecipeKind { CaptureLoop, ResearchLoop, ProductionLoop, Convoy, Patrol }
+public interface IAutomatable
+{
+    Guid InstanceId { get; }
+}
+
+public enum RecipeKind
+{
+    CaptureLoop,
+    ResearchLoop,
+    ProductionLoop,
+    Convoy,
+    Patrol
+}
 ```
-- **Server Farm**: даёт **ComputeUnits (CU)** и требует энергию/обслуживание.  
-- **Core**: берёт **1 цель** (отряд/здание), полностью ведёт процесс (например, цикл поимки: патруль->захват->доставка->пополнение).  
-- При дефиците **энергии/CU** - ядро ставится на паузу, генерируется событие.  
-- В off-screen секторах рецепты работают **агрегировано** (без спавна юнитов).
 
----
+## 2. Rules and Formulas
 
-## 2) Data (конфиги, JSON, SO)
+### Intel access levels
 
-### 2.1 Примеры JSON (упрощённо)
-**States/Relations:**
+- `None` -> no usable external information
+- `Embassy` -> visible units and buildings, but no economy or task visibility
+- `Alliance` -> full visibility, including economy and queues
+
+Visibility affects knowledge only, not direct unit control.
+
+### Merge chance
+
+Suggested daily merge probability while in `Alliance`:
+
+```text
+p_merge(day) =
+clamp(p0 + a * ln(1 + DaysInAlliance / 7) + b * Stability - c * Strain, 0, p_max)
+```
+
+Suggested defaults:
+
+- `p0 = 0.0015`
+- `a = 0.002`
+- `b = 0.005`
+- `c = 0.003`
+- `p_max = 0.12`
+
+### Research cost inflation
+
+For the `i`-th completed research step:
+
+```text
+Cost(i) = BaseCost * (1 + r)^i
+```
+
+Suggested range:
+
+- `r = 0.10 .. 0.15`
+
+### Rare research chance
+
+After finishing a branch step, assign the next visible step through:
+
+```text
+pRare = clamp(pRareBase + alpha * QualityScore, 0, pRareMax)
+```
+
+Then:
+
+- roll `Rare`
+- otherwise assign `Common`
+- `Anomalous` is available only if required assets and sample conditions are met
+
+### Hidden research quality
+
+The player should not see the exact rare-research chance.
+
+Internally, use a derived value such as:
+
+```text
+QualityScore = Sum(QP) / (Sum(RP) + epsilon)
+```
+
+Where:
+
+- `RP` = research throughput
+- `QP` = research quality
+
+### Science building upgrade philosophy
+
+Two upgrade directions:
+
+- `Quantitative` -> increases RP
+- `Qualitative` -> increases QP
+
+Economic rule:
+
+- one upgraded building should outperform two base buildings by roughly `10% .. 30%` in its specialization axis
+
+### Anomalies
+
+Anomalous research requires:
+
+- infected capture teams
+- transport / delivery flow
+- containment lab capacity
+- sample spending per research step
+
+Containment failure can trigger risk events.
+
+## 3. Data Layer
+
+### Example relations JSON
+
 ```json
 {
   "states": [
-    { "id": "player", "title": "Союз Горного Края" },
-    { "id": "red",    "title": "Красная Коммуна"   },
-    { "id": "blue",   "title": "Северный Консорциум" }
+    { "id": "player", "title": "Highland Union" },
+    { "id": "red",    "title": "Red Commune" },
+    { "id": "blue",   "title": "Northern Consortium" }
   ],
   "relations": [
-    { "a": "player", "b": "red",  "kind": "Hostile",  "stability": 0.2 },
-    { "a": "player", "b": "blue", "kind": "None",     "stability": 0.0 }
+    { "a": "player", "b": "red",  "kind": "Hostile", "stability": 0.2 },
+    { "a": "player", "b": "blue", "kind": "None",    "stability": 0.0 }
   ]
 }
 ```
-**ResearchDefs:**
+
+### Example research JSON
+
 ```json
 {
   "research": [
-    { "id":"eco.extraction.1", "branch":"economy.extraction", "rarity":"Common", "baseCostRP":100, "prereq":[] },
-    { "id":"eco.extraction.R1","branch":"economy.extraction", "rarity":"Rare",   "baseCostRP":160, "prereq":["eco.extraction.1"]},
-    { "id":"anom.capture.1",   "branch":"anomaly.capture",    "rarity":"Anomalous","baseCostRP":220,"requiresAssets":["ContainmentLab","CaptureTeam"]}
+    {
+      "id": "eco.extraction.1",
+      "branch": "economy.extraction",
+      "rarity": "Common",
+      "baseCostRP": 100,
+      "prereq": []
+    },
+    {
+      "id": "eco.extraction.R1",
+      "branch": "economy.extraction",
+      "rarity": "Rare",
+      "baseCostRP": 160,
+      "prereq": ["eco.extraction.1"]
+    },
+    {
+      "id": "anom.capture.1",
+      "branch": "anomaly.capture",
+      "rarity": "Anomalous",
+      "baseCostRP": 220,
+      "requiresAssets": ["ContainmentLab", "CaptureTeam"]
+    }
   ]
 }
 ```
-**Buildings (наука/контент/сервер/ядро):**
+
+### Example buildings JSON
+
 ```json
 {
   "buildings": [
-    { "id":"Lab_T1", "type":"Science", "rp":1.0, "qp":0.1, "power":0.5 },
-    { "id":"Lab_T2", "type":"Science", "rp":2.2, "qp":0.2, "power":0.8, "upgradeOf":"Lab_T1" },
-    { "id":"Lab_Spec", "type":"Science", "rp":1.0, "qp":1.4, "power":1.2 },
-    { "id":"ContainmentLab", "type":"Containment", "capacity":20, "power":1.5 },
-    { "id":"ServerFarm_T1", "type":"Server", "computeUnits":20, "power":3.0 },
-    { "id":"AutomationCore", "type":"Core", "consumeCU":10, "power":2.5 }
+    { "id": "Lab_T1",         "type": "Science",     "rp": 1.0, "qp": 0.1, "power": 0.5 },
+    { "id": "Lab_T2",         "type": "Science",     "rp": 2.2, "qp": 0.2, "power": 0.8, "upgradeOf": "Lab_T1" },
+    { "id": "Lab_Spec",       "type": "Science",     "rp": 1.0, "qp": 1.4, "power": 1.2 },
+    { "id": "ContainmentLab", "type": "Containment", "capacity": 20, "power": 1.5 },
+    { "id": "ServerFarm_T1",  "type": "Server",      "computeUnits": 20, "power": 3.0 },
+    { "id": "AutomationCore", "type": "Core",        "consumeCU": 10, "power": 2.5 }
   ]
 }
 ```
 
-### 2.2 ScriptableObject каталоги
-- `StateDef.asset`, `ResearchDef.asset`, `BuildingDef.asset`, `RecipeDef.asset`
-- Версионирование: `SaveVersion++` и мигратор (старые сейвы -> новые поля по умолчанию).
+### Suggested ScriptableObjects
 
----
+- `StateDef.asset`
+- `ResearchDef.asset`
+- `BuildingDef.asset`
+- `RecipeDef.asset`
 
-## 3) Application (циклы, события, сохранения)
+### Save compatibility
 
-### 3.1 EventBus - ключевые события
-```
+Increase `SaveVersion` when introducing these systems and use a migrator for default values in older saves.
+
+## 4. Application Layer
+
+### Key event bus events
+
+```text
 Diplomacy/RelationsChanged(stateA, stateB, kind)
 Diplomacy/MergeHappened(newStateId, absorbedStateId)
 Intel/AccessChanged(stateA, stateB, newAccess)
@@ -207,137 +323,212 @@ Automation/CoreStalled(coreId, reason)
 Power/GridOverload(stateId, deltaMW)
 ```
 
-### 3.2 SimulationLoop
-- Порядок: **Diplomacy->Intel->Research->Automation->Economy/Production->Combat/Anomaly->Events Flush**.  
-- **Off-screen**: Diplomacy/Research/Automation тикают **реже** для дальних секторов (агрегаты).
+### Simulation loop order
 
-### 3.3 Сохранения
-- Добавить разделы: `states[]`, `relations[]`, `researchProgress{}`, `automation{}`, `containment{}`.  
-- Хранить `DaysInAlliance`, `Stability`, `QualityScore`, `ComputeUnits`, привязки ядер.  
-- Сохранить **randomSeed** для бросков редкости/слияния.
+Suggested order:
 
----
+1. diplomacy
+2. intel
+3. research
+4. automation
+5. economy / production
+6. combat / anomaly
+7. event flush
 
-## 4) AI (стратегия, тактика, дипломатия)
+Off-screen sectors should tick these systems at aggregated or slower cadence.
 
-### 4.1 Решения дипломатии
-- **Utility-оценки**: выгода от Embassy/Alliance (торговля, совместный фронт, совпадение врагов).  
-- **Стоимость**: риск слива информации, будущая вероятность слияния (может быть желанна/нежеланна).  
-- **Политика**: агрессивные ИИ стремятся к войнам, прагматики - к посольствам на границах, коалиции - к союзам против общего врага.
+### Save payload additions
 
-### 4.2 Интел и FoW
-- У каждого State своя **IntelLayer**; решения строятся на основании доступного intel.  
-- При Embassy - AI рассматривает видимые юниты союзника в тактических оценках, но не планирует их использовать.
+Add sections for:
 
-### 4.3 Слияние
-- Если `Roll(p_merge)` - инициировать Merge: событие, переносятся владения/юниты/экономика; конфликты задач разрешаются приоритетами.  
-- Новый AI выбирается по правилу (напр., "старший союзник" либо "наибольшая экономика").
+- `states[]`
+- `relations[]`
+- `researchProgress{}`
+- `automation{}`
+- `containment{}`
 
----
+Persist:
 
-## 5) Presentation (UI/UX)
+- `DaysInAlliance`
+- `Stability`
+- `QualityScore`
+- `ComputeUnits`
+- core attachments
+- random seed state where deterministic replay matters
 
-- **Экран старта**: выбор государства (иконка, описание перков).  
-- **Дипломатия**: панель отношений (цвет/иконки None/Hostile/Embassy/Alliance), кнопки предложить/разорвать.  
-- **Интел-слои**: переключатели карты: "Наши", "Посольства", "Союзы". Тултипы: что видно/скрыто.  
-- **Слияние**: всплывающее событие (луп стинга SFX), лента изменений (перенос территорий/очередей).  
-- **Исследования**: каждая ветка показывает **ровно один** доступный шаг и "неизвестные дальше". Отсутствует точный шанс редких; можно показывать **косвенные намёки** (качество исследований "на уровне").  
-- **Аномалии**: индикаторы наличия образцов, риск утечки; панель автоматизации цикла.  
-- **Автоматизация**: экран сети - **ServerFarm (CU)**, **Cores**, привязки, потребление энергии, состояния (Active/Paused/Stalled).
+## 5. AI Layer
 
----
+### Diplomacy decisions
 
-## 6) Баланс и константы (первичный сет)
-- `p0=0.15%/day`, `p_max=12%/day`, `α=0.25`, `pRareBase=8%`, `pRareMax=40%`, `pAnomBase=1%` (строго реже).  
-- Инфляция: `r_common=0.12`, `r_rare=0.14`, `r_anom=0.15` (умножается на BaseCost).  
-- ROI здания (прирост к 2xбазовых): Economy +10%, Military +15%, Science +30%, Containment +20%.  
-- Сервер: `ServerFarm_T1 = 20 CU`; `Core` потребляет `10 CU`, `2.5 MW`.
+AI should evaluate:
 
----
+- survival pressure
+- resource needs
+- mutual threats
+- historical losses
+- alliance stability
+- merge desirability
 
-## 7) План внедрения (4 коротких спринта)
+### Intel and FoW
 
-### Спринт 1 - Государства и видимость (1-1.5 недели)
-**Что делаем:** модели State/Relation/Intel, EventBus-события, FoW на IntelLayer, стартовый экран выбора, UI дипломатии (минимум), Embassy/Alliance логика доступа.  
-**Готово, когда:** AI не видит чужих без отношений; при Embassy видит юниты/постройки; при Alliance видит всё, но не управляет чужими; работает сохранение/загрузка.
+Each state should maintain its own intel layer.
 
-### Спринт 2 - Слияние и экономика совместимости (1 неделя)
-**Что делаем:** формула `p_merge`, таймеры, миграция владений, разрешение конфликтов очередей, UI события.  
-**Готово, когда:** ежедневный ролл, стабильность влияет; слияние создаёт одно государство, один AI; сейвы валидны.
+This affects:
 
-### Спринт 3 - Исследования v2 (1.5 недели)
-**Что делаем:** ветки "один видимый шаг", редкости, QualityScore, апгрейды Lab (RP/QP), инфляция, gating аномалий.  
-**Готово, когда:** завершаешь шаг - назначается следующий; редкие иногда выпадают; без Containment/Capture аномалии недоступны; ROI зданий соблюдён.
+- target selection
+- build planning
+- diplomacy
+- anomaly routing
 
-### Спринт 4 - Аномалии и Автоматизация (1.5 недели)
-**Что делаем:** ContainmentLab, CaptureTeam, расход образцов; ServerFarm (CU), AutomationCore (1 цель), рецепты (CaptureLoop/ResearchLoop); off-screen агрегаты.  
-**Готово, когда:** цикл "поимка->доставка->исследование" работает вручную и под ядром; при дефиците энергии/CU ядро в паузе; UI сети автоматизации.
+### Merge behavior
 
----
+On merge:
 
-## 8) Тест-план и инварианты
+- one AI takes macro control for the merged bloc
+- the player remains the leader of their own side if the player state is involved
+- economy, intel, and diplomacy graphs must be consolidated carefully
 
-- **Дипломатия/Интел:** без отношений - AI нулевое знание; Embassy - нет доступа к экономике/задачам; Alliance - полный доступ, контроль только своего.  
-- **Слияние:** детерминированный сид, миграция владений корректна, поведение AI не ломается, сейв/лоад устойчив.  
-- **Исследования:** стоимость монотонно растёт; выпадение редких коррелирует с QP; шанс скрыт в UI.  
-- **ROI апгрейдов:** одно улучшенное >= (2 базовых) x (1.10..1.30) по метрике категории.  
-- **Аномалии:** без Containment/Capture - заблокированы; образцы списываются; утечки вызывают события.  
-- **Автоматизация:** ядро управляет ровно одной целью; пауза при нехватке CU/энергии; off-screen даёт равный итог on-screen при долгосрочной проверке (погрешность <=5%).
+## 6. Presentation Layer
 
----
+### UI / UX requirements
 
-## 9) Риски и меры
-- **Сложность UI веток:** начнём с "одной карточки на ветку" + лог. лента.  
-- **Баланс шансов:** телеметрия/дроп-таблица; ограничим pRareMax и p_merge.  
-- **Фризы при слиянии:** готовим батч-миграцию (N объектов/кадр).  
-- **Эксплойт редкости:** скрытый QS, но визуальные "намёки"; анти-спам (кулдаун редких).  
-- **Голод по образцам:** ранняя автоматизация CaptureLoop с лимитами дальности/риска.
+Needed views:
 
----
+- selected state identity
+- diplomacy panel
+- intel access state per faction
+- alliance progression / stability
+- research branch progression with rarity
+- automation capacity and assignments
+- anomaly sample stock and containment status
 
-## 10) Хуки интеграции (куда класть код)
-```
-/Game/Domain/States/*.cs          // State, Relation, IntelLayer
-/Game/Domain/Research/*.cs        // ResearchProgress, Branch, rarity logic
-/Game/Domain/Anomaly/*.cs         // Samples, Containment
-/Game/Domain/Automation/*.cs      // Network, Core, IAutomatable
-/Game/Application/Systems/*.cs    // DiplomacySystem, ResearchSystemV2, AutomationSystem
-/Game/AI/Strategic/*.cs           // DiplomacyPlanner, MergeDecider
-/Game/Presentation/UI/*.cs        // UI дипломатии, исслед., авто-сети
-/Game/Data/Defs/*.asset           // SO каталоги: State/Research/Building/Recipe
-/Game/Infrastructure/Saving/*.cs  // Save vNext мигратор
-```
+Important UX rule:
 
----
+- rare research probability should stay hidden from the player
+- the player should feel the effect of quality investment without seeing the exact formula
 
-### Приложение A - Псевдокод выбора следующего исследования
+## 7. Balance Seed Values
+
+Initial balance targets:
+
+- research cost growth: `10% .. 15%`
+- merge chance starts very low and ramps with time and stability
+- automation cores are expensive in both power and compute
+- qualitative science upgrades are more expensive than throughput upgrades
+
+## 8. Suggested Rollout Plan
+
+### Sprint 1: States and visibility
+
+- add `State`
+- add relation graph
+- add per-state intel layer
+- wire relation-driven visibility
+
+### Sprint 2: Alliance and merge logic
+
+- add alliance timers and stability
+- implement merge probability
+- implement merge resolution and persistence
+
+### Sprint 3: Research v2
+
+- add rarity tiers
+- add hidden quality score
+- add next-step reassignment logic
+
+### Sprint 4: Anomalies and automation
+
+- add infected sample logistics
+- add containment
+- add automation network and cores
+- add automation recipes
+
+## 9. Test Plan and Invariants
+
+Core invariants:
+
+- visibility level must never grant control
+- alliance info sharing must follow relation level exactly
+- merge must not duplicate state ownership or economy entries
+- anomalous research must fail cleanly without required assets
+- automation must pause on compute or power shortage
+- save/load must preserve relation and automation state
+
+Recommended test groups:
+
+- diplomacy progression
+- intel gating
+- merge simulation
+- research rarity assignment
+- containment consumption
+- automation stall / recovery
+- off-screen aggregated simulation
+
+## 10. Risks
+
+Main risks:
+
+- relation graph complexity spills into too many systems at once
+- merge logic corrupts ownership and save state
+- hidden quality becomes impossible to balance
+- anomaly capture loop becomes too content-heavy before the base game is stable
+- automation can trivialize gameplay if compute costs are too low
+
+Mitigation:
+
+- add systems incrementally
+- keep state ownership explicit
+- write save migration early
+- test off-screen behavior before full rollout
+
+## 11. Integration Hooks
+
+Likely integration targets in the current project:
+
+- [CompositionRoot.cs](../../My%20project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs)
+- [GameStateService.cs](../../My%20project/Assets/Scripts/Application/Services/GameStateService.cs)
+- [SaveSystem.cs](../../My%20project/Assets/Scripts/Infrastructure/Persistence/SaveSystem.cs)
+- [EnemySquadManager.cs](../../My%20project/Assets/Scripts/Presentation/Performance/EnemySquadManager.cs)
+- [UnitCombat.cs](../../My%20project/Assets/Scripts/Presentation/View/UnitCombat.cs)
+- [ProceduralEnvironment.cs](../../My%20project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.cs)
+
+Potential new module roots:
+
+- `Domain/States`
+- `Domain/Diplomacy`
+- `Domain/ResearchV2`
+- `Domain/Automation`
+- `Application/UseCases/Diplomacy`
+- `Application/UseCases/Automation`
+- `Infrastructure/Configs/States`
+- `Presentation/UI/Diplomacy`
+
+## Appendix A: Next Research Selection Pseudocode
+
 ```csharp
-void AssignNext(Branch b, State s) {
-    var poolCommon = GetCandidates(b, ResearchRarity.Common, s);
-    var poolRare   = GetCandidates(b, ResearchRarity.Rare, s);
-    var poolAnom   = GetCandidates(b, ResearchRarity.Anomalous, s);
+ResearchDef PickNextResearch(State state, Branch branch, Random rng)
+{
+    bool canRollAnomalous = HasRequiredAssets(state, "ContainmentLab", "CaptureTeam");
 
-    float QS = s.Research.QualityScore; // скрытый показатель (ΣQP/ΣRP)
-    float pRare = Mathf.Clamp(pRareBase + alpha * QS, 0, pRareMax);
-    float pAnom = (HasAssets("ContainmentLab","CaptureTeam") ? baseAnom + beta * QS : 0);
+    if (canRollAnomalous && RollAnomalous(state.Research.QualityScore, rng))
+        return PickAnomalous(branch, rng);
 
-    ResearchDef pick = null;
-    if (Roll(pAnom) && poolAnom.Any()) pick = RandomOf(poolAnom);
-    else if (Roll(pRare) && poolRare.Any()) pick = RandomOf(poolRare);
-    else pick = RandomOf(poolCommon);
+    if (RollRare(state.Research.QualityScore, rng))
+        return PickRare(branch, rng);
 
-    b.Current = pick;
+    return PickCommon(branch, rng);
 }
 ```
 
-### Приложение B - События автоматизации (пример)
-```
-Automation/CoreAttached(core, target)
-Automation/RecipeStarted(core, target, recipe)
-Automation/RecipePaused(core, reason)
-Automation/RecipeCompleted(core, target)
-```
+## Appendix B: Example Automation Events
 
----
-
-**Готово.** План совместим с текущей архитектурой, поддерживает off-screen симуляцию и скрытую редкость исследований. Следующий шаг - согласовать баланс констант и начать Спринт 1 (States+Intel).
+```text
+Automation/CoreAttached(coreId, targetId)
+Automation/CoreDetached(coreId, targetId)
+Automation/CorePaused(coreId, reason)
+Automation/CoreResumed(coreId)
+Automation/RecipeStageChanged(coreId, recipeKind, stageId)
+Automation/CaptureLoopCompleted(coreId, deliveredSamples)
+Automation/ResearchLoopBlocked(coreId, reason)
+```

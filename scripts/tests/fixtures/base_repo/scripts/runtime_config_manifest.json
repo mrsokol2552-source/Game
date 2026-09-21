@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "output": "docs/runtime_config_export.json",
+  "script_roots": [
+    "My project/Assets/Scripts"
+  ],
+  "scene_targets": [],
+  "prefab_targets": []
+}
+

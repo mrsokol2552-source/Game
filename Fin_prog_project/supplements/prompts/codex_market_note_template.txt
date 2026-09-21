@@ -1,0 +1,24 @@
+Use only the structured facts from evidence.json.
+
+Event ID: {event_id}
+Trigger type: {trigger_type}
+Comparison mode: {comparison_mode}
+Poll interval (minutes): {poll_interval_minutes}
+
+Triggered instruments:
+{triggered_instruments}
+
+Instrument snapshot:
+{instrument_snapshot}
+
+Model:
+- kind: {model_kind}
+- horizon_minutes: {model_horizon}
+- confidence_label: {confidence_label}
+
+Instructions:
+- Write in Russian.
+- Use only the facts in evidence.json.
+- Explain the move briefly and concretely.
+- Mention uncertainty explicitly if the model is missing or weak.
+- Do not provide personal financial advice.

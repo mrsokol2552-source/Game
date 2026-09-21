@@ -3,12 +3,24 @@
   "generated_manually": true,
   "roots": [
     {
+      "path": "My project",
+      "purpose": "Unity RTS project root"
+    },
+    {
+      "path": "Fin_prog_project",
+      "purpose": "Separate financial monitoring Python prototype"
+    },
+    {
+      "path": "Vrem_2",
+      "purpose": "Separate Dungeon Master Game / OmniRoute engineering orchestrator project"
+    },
+    {
       "path": "My project/Assets/Scripts",
       "purpose": "Project-owned runtime and editor code"
     },
     {
       "path": "My project/Assets/Tests",
-      "purpose": "PlayMode/EditMode tests and perf harness"
+      "purpose": "PlayMode/EditMode tests, SampleScene boot/churn smoke coverage, explicit renderer diagnostics, and perf harness"
     },
     {
       "path": "My project/Assets/Scenes",
@@ -17,6 +29,10 @@
     {
       "path": "docs",
       "purpose": "Human-readable architecture and debugging docs"
+    },
+    {
+      "path": "supplements",
+      "purpose": "Add-on design material, audio integration references, and source libraries"
     },
     {
       "path": "maps",
@@ -28,69 +44,559 @@
       "id": "worldgen",
       "file": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.cs",
       "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT",
-      "sections": ["PENV-03", "PENV-05", "PENV-07", "PENV-09", "PENV-13", "PENV-14"],
-      "purpose": "World generation, background conversion, streaming, far-view bake"
+      "sections": [
+        "PENV-01"
+      ],
+      "purpose": "World generation inspector state and shared runtime orchestration"
     },
     {
-      "id": "hex_grid",
-      "file": "My project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.cs",
-      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
-      "sections": ["HPFB-01", "HPFB-02", "HPFB-03", "HPFB-04"],
-      "purpose": "Authoritative hex grid and walkability"
+      "id": "worldgen_lifecycle",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Lifecycle.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-LIFECYCLE",
+      "sections": [
+        "PENV-02"
+      ],
+      "purpose": "MonoBehaviour lifecycle, generation entrypoints, prep/bootstrap, and grid/tilemap setup"
+    },
+    {
+      "id": "worldgen_streaming",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Streaming.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMING",
+      "sections": [
+        "PENV-03",
+        "PENV-04",
+        "PENV-05"
+      ],
+      "purpose": "Streaming bootstrap, tilemap parenting, queueing, and scheduler bounds"
+    },
+    {
+      "id": "worldgen_stream_chunks",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.StreamChunks.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-STREAMCHUNKS",
+      "sections": [
+        "PENV-06",
+        "PENV-07",
+        "PENV-08",
+        "PENV-09",
+        "PENV-10"
+      ],
+      "purpose": "Per-chunk generation, streamed background fill, biome-aware props/trees placement, and chunk cleanup"
+    },
+    {
+      "id": "worldgen_farview",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.FarView.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-FARVIEW",
+      "sections": [
+        "PENV-11",
+        "PENV-12",
+        "PENV-13",
+        "PENV-14",
+        "PENV-15"
+      ],
+      "purpose": "Far-view bake scheduling, render objects, chunked bake pipeline, HUD, loading overlay, and debug bounds"
+    },
+    {
+      "id": "worldgen_background_masks",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.BackgroundMasks.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BACKGROUNDMASKS",
+      "sections": [
+        "PENV-16",
+        "PENV-17",
+        "PENV-18"
+      ],
+      "purpose": "Background-grid sizing, streamed water/rock masks, land-distance fields, and background-cell lookup helpers"
+    },
+    {
+      "id": "worldgen_placement",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Placement.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-PLACEMENT",
+      "sections": [
+        "PENV-19",
+        "PENV-20",
+        "PENV-21"
+      ],
+      "purpose": "Biome-aware prop/tree placement, blocked-cell bookkeeping, and spatial placement helpers"
+    },
+    {
+      "id": "worldgen_palettes",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/ProceduralEnvironment.Palettes.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-PALETTES",
+      "sections": [
+        "PENV-22",
+        "PENV-23",
+        "PENV-24"
+      ],
+      "purpose": "Palette resolution, biome-mask cleanup, and post-placement obstacle baking helpers"
     },
     {
       "id": "paths",
       "file": "My project/Assets/Scripts/Presentation/Pathfinding/PathManager.cs",
       "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER",
-      "sections": ["PMGR-01", "PMGR-03"],
-      "purpose": "Path building, caching, occupancy-aware reuse"
+      "sections": [
+        "PMGR-01",
+        "PMGR-02",
+        "PMGR-05"
+      ],
+      "purpose": "Path building entrypoint, frame budgets, bootstrap caches, and pooled resources"
+    },
+    {
+      "id": "paths_occupancy",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/PathManager.Occupancy.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER-OCCUPANCY",
+      "sections": [
+        "PMGR-03"
+      ],
+      "purpose": "Occupancy caches and occupied-path rejection extracted from PathManager"
+    },
+    {
+      "id": "paths_reuse",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/PathManager.Reuse.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHMANAGER-REUSE",
+      "sections": [
+        "PMGR-04"
+      ],
+      "purpose": "Path reuse, nearest-free lookup, and cluster helpers extracted from PathManager"
     },
     {
       "id": "path_queue",
       "file": "My project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.cs",
       "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE",
-      "sections": ["PQUE-01", "PQUE-03", "PQUE-04"],
-      "purpose": "Async path request queue and job scheduling"
+      "sections": [
+        "PQUE-01",
+        "PQUE-04"
+      ],
+      "purpose": "Async path request queue state and immutable request payload"
+    },
+    {
+      "id": "crowding_resolver",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/CrowdingResolver.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER",
+      "sections": [
+        "CROWD-01",
+        "CROWD-02",
+        "CROWD-03"
+      ],
+      "purpose": "Crowd-pressure relief root state, caches, and LateUpdate orchestration"
+    },
+    {
+      "id": "crowding_resolver_search",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/CrowdingResolver.Search.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER-SEARCH",
+      "sections": [
+        "CROWD-04"
+      ],
+      "purpose": "Free-cell search, reservation keys, and odd-r ring enumeration extracted from CrowdingResolver"
+    },
+    {
+      "id": "crowding_resolver_throttle",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/CrowdingResolver.Throttle.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-CROWDINGRESOLVER-THROTTLE",
+      "sections": [
+        "CROWD-05"
+      ],
+      "purpose": "Adaptive-throttling, effective work-budget, and diagnostic logging extracted from CrowdingResolver"
     },
     {
       "id": "flow_fields",
       "file": "My project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.cs",
       "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER",
-      "sections": ["FFLD-01", "FFLD-03", "FFLD-06", "FFLD-07"],
+      "sections": [
+        "FFLD-01",
+        "FFLD-03"
+      ],
       "purpose": "Shared flow fields for squads and clustered movement"
+    },
+    {
+      "id": "flow_fields_costmaps",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.CostMaps.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-COSTMAPS",
+      "sections": [
+        "FFLD-04",
+        "FFLD-05"
+      ],
+      "purpose": "Crowd and influence cost-map maintenance extracted from FlowFieldManager"
     },
     {
       "id": "combat",
       "file": "My project/Assets/Scripts/Presentation/View/UnitCombat.cs",
       "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT",
-      "sections": ["UCOM-01", "UCOM-03", "UCOM-06", "UCOM-08"],
-      "purpose": "Per-unit combat update, targeting, chase, attack behavior"
+      "sections": [
+        "UCOM-01",
+        "UCOM-02"
+      ],
+      "purpose": "Per-unit combat state, tuning, and lifecycle wiring"
+    },
+    {
+      "id": "combat_update_loop",
+      "file": "My project/Assets/Scripts/Presentation/View/UnitCombat.UpdateLoop.cs",
+      "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-UPDATELOOP",
+      "sections": [
+        "UCOM-03",
+        "UCOM-11",
+        "UCOM-12",
+        "UCOM-13"
+      ],
+      "purpose": "Combat tick orchestration, engage/no-target branching, chase/repath logic, and stall recovery extracted from UnitCombat"
+    },
+    {
+      "id": "combat_state",
+      "file": "My project/Assets/Scripts/Presentation/View/UnitCombat.State.cs",
+      "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-STATE",
+      "sections": [
+        "UCOM-09",
+        "UCOM-10"
+      ],
+      "purpose": "Damage/health mutation, forced-target control, and behavior/combat profile application extracted from UnitCombat"
+    },
+    {
+      "id": "unit_view",
+      "file": "My project/Assets/Scripts/Presentation/View/UnitView.cs",
+      "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITVIEW",
+      "sections": [
+        "UVEW-01",
+        "UVEW-02"
+      ],
+      "purpose": "Per-unit movement state, destination and override API, and shared runtime flags"
+    },
+    {
+      "id": "unit_view_movement",
+      "file": "My project/Assets/Scripts/Presentation/View/UnitView.Movement.cs",
+      "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITVIEW-MOVEMENT",
+      "sections": [
+        "UVEW-03"
+      ],
+      "purpose": "Per-frame movement integration, steering blend, and facing updates extracted from UnitView"
+    },
+    {
+      "id": "unit_view_rendering",
+      "file": "My project/Assets/Scripts/Presentation/View/UnitView.Rendering.cs",
+      "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITVIEW-RENDERING",
+      "sections": [
+        "UVEW-04"
+      ],
+      "purpose": "Y-sorting bootstrap and selection-gizmo helpers extracted from UnitView"
+    },
+    {
+      "id": "unit_sprite_animator",
+      "file": "My project/Assets/Scripts/Presentation/View/UnitSpriteAnimator.cs",
+      "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR",
+      "sections": [
+        "USPA-01"
+      ],
+      "purpose": "Directional sprite animation state, renderer binding, and combat event wiring"
+    },
+    {
+      "id": "unit_sprite_animator_playback",
+      "file": "My project/Assets/Scripts/Presentation/View/UnitSpriteAnimator.Playback.cs",
+      "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR-PLAYBACK",
+      "sections": [
+        "USPA-02"
+      ],
+      "purpose": "Per-frame directional playback and crouch/locomotion state machine extracted from UnitSpriteAnimator"
+    },
+    {
+      "id": "unit_sprite_animator_combat",
+      "file": "My project/Assets/Scripts/Presentation/View/UnitSpriteAnimator.Combat.cs",
+      "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITSPRITEANIMATOR-COMBAT",
+      "sections": [
+        "USPA-03"
+      ],
+      "purpose": "Attack/death animation triggers and external crouch requests extracted from UnitSpriteAnimator"
+    },
+    {
+      "id": "combat_targeting",
+      "file": "My project/Assets/Scripts/Presentation/View/UnitCombat.Targeting.cs",
+      "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-TARGETING",
+      "sections": [
+        "UCOM-05",
+        "UCOM-06",
+        "UCOM-07"
+      ],
+      "purpose": "Target arbitration, faction overrides, facing, crouch logic, and repath gating"
+    },
+    {
+      "id": "combat_formation_flow",
+      "file": "My project/Assets/Scripts/Presentation/View/UnitCombat.FormationFlow.cs",
+      "code_id": "SCRIPTS-PRESENTATION-VIEW-UNITCOMBAT-FORMATIONFLOW",
+      "sections": [
+        "UCOM-04",
+        "UCOM-08"
+      ],
+      "purpose": "Squad metadata, formation slot math, shared hex access, and flow-field steering"
     },
     {
       "id": "squads",
       "file": "My project/Assets/Scripts/Presentation/Performance/EnemySquadManager.cs",
       "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER",
-      "sections": ["ESQD-01", "ESQD-03", "ESQD-04", "ESQD-05"],
-      "purpose": "Squad formation and macro combat states"
+      "sections": [
+        "ESQD-01",
+        "ESQD-02",
+        "ESQD-03"
+      ],
+      "purpose": "Squad registry, lifecycle, and orchestration tick"
+    },
+    {
+      "id": "squads_membership",
+      "file": "My project/Assets/Scripts/Presentation/Performance/EnemySquadManager.Membership.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER-MEMBERSHIP",
+      "sections": [
+        "ESQD-04"
+      ],
+      "purpose": "Squad composition, recruitment, and center maintenance"
+    },
+    {
+      "id": "squads_tactics",
+      "file": "My project/Assets/Scripts/Presentation/Performance/EnemySquadManager.Tactics.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ENEMYSQUADMANAGER-TACTICS",
+      "sections": [
+        "ESQD-05"
+      ],
+      "purpose": "Squad state hysteresis, target assignment, and flow-anchor logic"
+    },
+    {
+      "id": "unit_combat_job_scheduler",
+      "file": "My project/Assets/Scripts/Presentation/Performance/UnitCombatJobScheduler.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER",
+      "sections": [
+        "UCJS-01",
+        "UCJS-02"
+      ],
+      "purpose": "Nearest-target combat job scheduler core state, lifecycle, and scheduling loop"
+    },
+    {
+      "id": "unit_combat_job_scheduler_buffers",
+      "file": "My project/Assets/Scripts/Presentation/Performance/UnitCombatJobScheduler.Buffers.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER-BUFFERS",
+      "sections": [
+        "UCJS-03"
+      ],
+      "purpose": "Native buffer growth, snapshot ingestion, hash fill, and applyback extracted from UnitCombatJobScheduler"
+    },
+    {
+      "id": "unit_combat_job_scheduler_job",
+      "file": "My project/Assets/Scripts/Presentation/Performance/UnitCombatJobScheduler.Job.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITCOMBATJOBSCHEDULER-JOB",
+      "sections": [
+        "UCJS-04"
+      ],
+      "purpose": "Burst-compiled nearest-enemy search job extracted from UnitCombatJobScheduler"
+    },
+    {
+      "id": "local_avoidance",
+      "file": "My project/Assets/Scripts/Presentation/Performance/LocalAvoidanceSystem.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM",
+      "sections": [
+        "LAVO-01",
+        "LAVO-02"
+      ],
+      "purpose": "Legacy local-avoidance scheduler, ORCA handoff, and job submission state"
+    },
+    {
+      "id": "local_avoidance_buffers",
+      "file": "My project/Assets/Scripts/Presentation/Performance/LocalAvoidanceSystem.Buffers.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM-BUFFERS",
+      "sections": [
+        "LAVO-03"
+      ],
+      "purpose": "Unit gathering, Native buffer growth/fill, and steering applyback extracted from LocalAvoidanceSystem"
+    },
+    {
+      "id": "local_avoidance_job",
+      "file": "My project/Assets/Scripts/Presentation/Performance/LocalAvoidanceSystem.Job.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-LOCALAVOIDANCESYSTEM-JOB",
+      "sections": [
+        "LAVO-04"
+      ],
+      "purpose": "Steering job and cell/hash helpers extracted from LocalAvoidanceSystem"
     },
     {
       "id": "orca",
       "file": "My project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.cs",
       "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM",
-      "sections": ["ORCA-01", "ORCA-03", "ORCA-04"],
-      "purpose": "Local avoidance via ORCA/RVO"
+      "sections": [
+        "ORCA-01",
+        "ORCA-02",
+        "ORCA-03"
+      ],
+      "purpose": "Local avoidance scheduler, lifecycle, and main ORCA tick"
     },
     {
-      "id": "bootstrap",
-      "file": "My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs",
-      "code_id": "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT",
-      "purpose": "Scene service wiring and asset binding"
+      "id": "orca_buffers",
+      "file": "My project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.Buffers.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM-BUFFERS",
+      "sections": [
+        "ORCA-05"
+      ],
+      "purpose": "Unit gathering, Native buffer growth, snapshot ingestion, and applyback extracted from OrcaAvoidanceSystem"
+    },
+    {
+      "id": "orca_job",
+      "file": "My project/Assets/Scripts/Presentation/Performance/OrcaAvoidanceSystem.Job.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-ORCAAVOIDANCESYSTEM-JOB",
+      "sections": [
+        "ORCA-04"
+      ],
+      "purpose": "Burst-compiled ORCA solver and linear-program helpers extracted from OrcaAvoidanceSystem"
+    },
+    {
+      "id": "unit_soa_registry",
+      "file": "My project/Assets/Scripts/Presentation/Performance/UnitSoARegistry.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY",
+      "sections": [
+        "USOA-01",
+        "USOA-02"
+      ],
+      "purpose": "Shared structure-of-arrays snapshot root for ORCA and combat systems"
+    },
+    {
+      "id": "unit_soa_registry_build",
+      "file": "My project/Assets/Scripts/Presentation/Performance/UnitSoARegistry.Build.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY-BUILD",
+      "sections": [
+        "USOA-03"
+      ],
+      "purpose": "Per-frame snapshot projection extracted from UnitSoARegistry"
+    },
+    {
+      "id": "unit_soa_registry_buffers",
+      "file": "My project/Assets/Scripts/Presentation/Performance/UnitSoARegistry.Buffers.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PERFORMANCE-UNITSOAREGISTRY-BUFFERS",
+      "sections": [
+        "USOA-04"
+      ],
+      "purpose": "Native buffer ownership, capacity growth, and disposal extracted from UnitSoARegistry"
     },
     {
       "id": "camera",
       "file": "My project/Assets/Scripts/Presentation/Camera/CameraZoom2D.cs",
       "code_id": "SCRIPTS-PRESENTATION-CAMERA-CAMERAZOOM2D",
       "purpose": "Camera zoom and pan; affects streaming pressure"
+    },
+    {
+      "id": "hud_controller",
+      "file": "My project/Assets/Scripts/Presentation/UI/HudController.cs",
+      "code_id": "SCRIPTS-PRESENTATION-UI-HUDCONTROLLER",
+      "purpose": "Main HUD shell for resources, status, and panel toggles"
+    },
+    {
+      "id": "hud_controller_squads",
+      "file": "My project/Assets/Scripts/Presentation/UI/HudController.Squads.cs",
+      "code_id": "SCRIPTS-PRESENTATION-UI-HUDCONTROLLER-SQUADS",
+      "purpose": "Squad summary aggregation and bottom-strip squad selection extracted from HudController"
+    },
+    {
+      "id": "actions_panel",
+      "file": "My project/Assets/Scripts/Presentation/UI/ActionsPanel.cs",
+      "code_id": "SCRIPTS-PRESENTATION-UI-ACTIONSPANEL",
+      "purpose": "Dev actions shell for spawning, resources, build, and save-file utilities"
+    },
+    {
+      "id": "actions_panel_self_test",
+      "file": "My project/Assets/Scripts/Presentation/UI/ActionsPanel.SelfTest.cs",
+      "code_id": "SCRIPTS-PRESENTATION-UI-ACTIONSPANEL-SELFTEST",
+      "purpose": "Deterministic save/load self-test extracted from ActionsPanel"
+    },
+    {
+      "id": "flow_fields_tilegraph",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.TileGraph.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-TILEGRAPH",
+      "sections": [
+        "FFLD-06"
+      ],
+      "role": "Coarse tile-graph construction and macro tile-path expansion extracted from FlowFieldManager."
+    },
+    {
+      "id": "flow_fields_fieldstate",
+      "path": "My project/Assets/Scripts/Presentation/Pathfinding/FlowFieldManager.FieldState.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-FLOWFIELDMANAGER-FIELDSTATE",
+      "sections": [
+        "FFLD-07"
+      ],
+      "role": "Per-target field storage, LoS state, and next-cell sampling extracted from FlowFieldManager."
+    },
+    {
+      "id": "path_queue_dispatch",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.Dispatch.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE-DISPATCH",
+      "sections": [
+        "PQUE-02"
+      ],
+      "purpose": "Queue draining, job scheduling, and immediate fallback dispatch extracted from PathRequestQueue"
+    },
+    {
+      "id": "path_queue_completion",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/PathRequestQueue.Completion.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-PATHREQUESTQUEUE-COMPLETION",
+      "sections": [
+        "PQUE-03"
+      ],
+      "purpose": "Async job completion, occupancy snapshots, stats, and safe callback/log handling extracted from PathRequestQueue"
+    },
+    {
+      "id": "bootstrap",
+      "file": "My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.cs",
+      "code_id": "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT",
+      "purpose": "Root lifecycle, inspector references, and root service ownership",
+      "sections": [
+        "CROOT-01"
+      ]
+    },
+    {
+      "id": "bootstrap_setup",
+      "file": "My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.Setup.cs",
+      "code_id": "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-SETUP",
+      "purpose": "Bootstrap helpers, singleton wiring, and existing-scene unit setup",
+      "sections": [
+        "CROOT-02"
+      ]
+    },
+    {
+      "id": "bootstrap_actions",
+      "file": "My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.Actions.cs",
+      "code_id": "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-ACTIONS",
+      "purpose": "Save/load wrappers and build/research debug actions",
+      "sections": [
+        "CROOT-03"
+      ]
+    },
+    {
+      "id": "bootstrap_persistence",
+      "file": "My project/Assets/Scripts/Presentation/Bootstrap/CompositionRoot.Persistence.cs",
+      "code_id": "SCRIPTS-PRESENTATION-BOOTSTRAP-COMPOSITIONROOT-PERSISTENCE",
+      "purpose": "Unit snapshot capture/restore and faction visual helpers",
+      "sections": [
+        "CROOT-04"
+      ]
+    },
+    {
+      "id": "hex_grid",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP",
+      "purpose": "Authoritative hex grid ownership, initialization, and core walkability state",
+      "sections": [
+        "HPFB-01",
+        "HPFB-02",
+        "HPFB-03"
+      ]
+    },
+    {
+      "id": "hex_grid_walkability",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.Walkability.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP-WALKABILITY",
+      "purpose": "Walkability mutation, collider rebake, persistence, and Native buffer maintenance",
+      "sections": [
+        "HPFB-04",
+        "HPFB-06"
+      ]
+    },
+    {
+      "id": "hex_grid_geometry",
+      "file": "My project/Assets/Scripts/Presentation/Pathfinding/HexPathfindingBootstrap.Geometry.cs",
+      "code_id": "SCRIPTS-PRESENTATION-PATHFINDING-HEXPATHFINDINGBOOTSTRAP-GEOMETRY",
+      "purpose": "World/grid conversion, gizmos, and geometry snapshots",
+      "sections": [
+        "HPFB-05"
+      ]
     }
   ],
   "docs": [
@@ -111,12 +617,64 @@
       "purpose": "Runtime and inspector tuning switches"
     },
     {
+      "path": "docs/document_roles.md",
+      "purpose": "Role boundaries for the documentation set"
+    },
+    {
+      "path": "docs/document_roles_index.json",
+      "purpose": "Machine-readable manifest of governed docs, role IDs, and required links"
+    },
+    {
+      "path": "docs/deep-research-report.md",
+      "purpose": "Repository navigation architecture reference"
+    },
+    {
       "path": "docs/code_index.json",
       "purpose": "Machine-readable code/system index"
     },
     {
+      "path": "docs/machine_layer_audit.md",
+      "purpose": "Formal audit and invariants for the machine-readable routing layer"
+    },
+    {
+      "path": "scripts/audit_docs_architecture.py",
+      "purpose": "Executable audit for documentation ownership, required links, and governed-doc coverage"
+    },
+    {
+      "path": "scripts/run_all_repo_audits.py",
+      "purpose": "One-command pipeline for strict export refresh, both audits, and the Python regression suite"
+    },
+    {
+      "path": "scripts/extract_sample_scene_renderer_probe.py",
+      "purpose": "Extracts SampleScene renderer diagnostic probe metrics from Unity TestResults.xml and evaluates the provisional owner budget"
+    },
+    {
+      "path": "scripts/extract_combat_pressure_probe.py",
+      "purpose": "Extracts CombatPressureProbe 100v100 path/combat metrics from Unity TestResults.xml and evaluates the provisional owner budget"
+    },
+    {
+      "path": "docs/runtime_config_export.json",
+      "purpose": "Generated scene/prefab runtime-config snapshot from inspector-visible serialized values"
+    },
+    {
+      "path": "supplements/supplements_index.json",
+      "purpose": "Machine-readable supplement routing index"
+    },
+    {
       "path": "docs/agent_comment_standard.md",
       "purpose": "Agent file-header/comment convention"
+    },
+    {
+      "path": "supplements/README.md",
+      "purpose": "Top-level supplement index"
+    },
+    {
+      "path": "supplements/audio/README.md",
+      "purpose": "Audio supplement index"
+    },
+    {
+      "path": "supplements/design/README.md",
+      "purpose": "Design supplement index"
     }
   ]
 }

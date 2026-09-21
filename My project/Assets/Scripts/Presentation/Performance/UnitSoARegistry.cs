@@ -1,3 +1,19 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Performance/UnitSoARegistry.cs
+@module: presentation.performance.unitsoa
+@purpose: Builds and exposes a shared structure-of-arrays snapshot for hot runtime systems such as ORCA and combat targeting jobs.
+@entry: UnitSoARegistry.Update, USOA-02, USOA-03
+@api: shared MonoBehaviour singleton queried by ORCA and UnitCombatJobScheduler
+@deps: UnitView, UnitCombat, Unity.Collections, Unity.Mathematics
+@data: active unit lists plus NativeArray snapshots for movement, combat, and ORCA inputs
+@perf: hotpath snapshot builder; per-frame gather cost scales with active units
+@thread: main thread only; Native data is read later by jobs
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs, manual movement/combat verification
+@config: Enabled, ExternalUpdate, OrcaCellSize, OrcaMinResponsibility
+@assets: none
+@notes: keep this layer focused on data extraction; gameplay decisions should stay in owning systems
+*/
+
 using System.Collections.Generic;
 using Game.Presentation.View;
 using Unity.Collections;
@@ -12,8 +28,10 @@ namespace Game.Presentation.Performance
     /// <summary>
     /// Builds a data-oriented snapshot (SoA) for hot systems like ORCA.
     /// </summary>
-    public class UnitSoARegistry : MonoBehaviour
+    public partial class UnitSoARegistry : MonoBehaviour
     {
+        // [USOA-01]
+        // Singleton state, inspector toggles, SoA buffers, and snapshot payload structs.
         public static UnitSoARegistry Instance { get; private set; }
 
         [Tooltip("Enable SoA snapshot generation.")]
@@ -76,6 +94,8 @@ namespace Game.Presentation.Performance
             DontDestroyOnLoad(go);
         }
 
+        // [USOA-02]
+        // Lifecycle setup, external tick control, and snapshot accessors.
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -150,129 +170,6 @@ namespace Game.Presentation.Performance
                 IsInSquad = _isInSquad
             };
             return true;
-        }
-
-        private void BuildSnapshot()
-        {
-            _units.Clear();
-            _combats.Clear();
-            int needed = UnitView.All.Count;
-            if (needed <= 0)
-            {
-                _count = 0;
-                return;
-            }
-            EnsureCapacity(needed);
-            if (_units.Capacity < needed) _units.Capacity = needed;
-            if (_combats.Capacity < needed) _combats.Capacity = needed;
-
-            float cellSize = OrcaCellSize;
-            float minResp = Mathf.Max(0f, OrcaMinResponsibility);
-            int count = 0;
-            foreach (var uv in UnitView.All)
-            {
-                if (uv == null || !uv.isActiveAndEnabled) continue;
-                _units.Add(uv);
-                var combat = uv.GetComponent<UnitCombat>();
-                _combats.Add(combat);
-
-                var pos3 = uv.transform.position;
-                _positions[count] = new float2(pos3.x, pos3.y);
-
-                var m = uv.GetMovementSettings();
-                _maxSpeed[count] = m.MaxSpeed;
-
-                Vector3 lastDir3 = uv.GetLastDirection();
-                float2 lastDir = new float2(lastDir3.x, lastDir3.y);
-                float speed = uv.GetSpeed();
-                _velocities[count] = lastDir * speed;
-
-                if (uv.TryGetDestination(out var dest))
-                {
-                    _hasDestination[count] = 1;
-                    float2 to = new float2(dest.x - pos3.x, dest.y - pos3.y);
-                    float len = math.length(to);
-                    float2 dir = len > 0.0001f ? (to / len) : new float2(1f, 0f);
-                    _preferred[count] = dir * m.MaxSpeed;
-                }
-                else
-                {
-                    _hasDestination[count] = 0;
-                    _preferred[count] = default;
-                }
-
-                _useOrca[count] = uv.UseOrcaVelocity ? (byte)1 : (byte)0;
-                float priority = Mathf.Clamp01(uv.OrcaPriority);
-                float resp = Mathf.Max(minResp, Mathf.Max(0f, 1f - priority));
-                _responsibility[count] = resp;
-
-                _factions[count] = combat != null ? (int)combat.Faction : 0;
-                _hasCombat[count] = combat != null ? (byte)1 : (byte)0;
-                _isInSquad[count] = (combat != null && combat.IsInSquad) ? (byte)1 : (byte)0;
-
-                _cells[count] = ToCell(pos3, cellSize);
-                count++;
-            }
-
-            _count = count;
-        }
-
-        private void EnsureCapacity(int needed)
-        {
-            if (needed <= _capacity && AreArraysCreated()) return;
-            DisposeArrays();
-            _capacity = Mathf.NextPowerOfTwo(Mathf.Max(4, needed));
-            _positions = new NativeArray<float2>(_capacity, Allocator.Persistent);
-            _velocities = new NativeArray<float2>(_capacity, Allocator.Persistent);
-            _preferred = new NativeArray<float2>(_capacity, Allocator.Persistent);
-            _maxSpeed = new NativeArray<float>(_capacity, Allocator.Persistent);
-            _hasDestination = new NativeArray<byte>(_capacity, Allocator.Persistent);
-            _useOrca = new NativeArray<byte>(_capacity, Allocator.Persistent);
-            _responsibility = new NativeArray<float>(_capacity, Allocator.Persistent);
-            _factions = new NativeArray<int>(_capacity, Allocator.Persistent);
-            _cells = new NativeArray<int2>(_capacity, Allocator.Persistent);
-            _hasCombat = new NativeArray<byte>(_capacity, Allocator.Persistent);
-            _isInSquad = new NativeArray<byte>(_capacity, Allocator.Persistent);
-        }
-
-        private bool AreArraysCreated()
-        {
-            return _positions.IsCreated
-                && _velocities.IsCreated
-                && _preferred.IsCreated
-                && _maxSpeed.IsCreated
-                && _hasDestination.IsCreated
-                && _useOrca.IsCreated
-                && _responsibility.IsCreated
-                && _factions.IsCreated
-                && _cells.IsCreated
-                && _hasCombat.IsCreated
-                && _isInSquad.IsCreated;
-        }
-
-        private void DisposeArrays()
-        {
-            if (_positions.IsCreated) { _positions.Dispose(); _positions = default; }
-            if (_velocities.IsCreated) { _velocities.Dispose(); _velocities = default; }
-            if (_preferred.IsCreated) { _preferred.Dispose(); _preferred = default; }
-            if (_maxSpeed.IsCreated) { _maxSpeed.Dispose(); _maxSpeed = default; }
-            if (_hasDestination.IsCreated) { _hasDestination.Dispose(); _hasDestination = default; }
-            if (_useOrca.IsCreated) { _useOrca.Dispose(); _useOrca = default; }
-            if (_responsibility.IsCreated) { _responsibility.Dispose(); _responsibility = default; }
-            if (_factions.IsCreated) { _factions.Dispose(); _factions = default; }
-            if (_cells.IsCreated) { _cells.Dispose(); _cells = default; }
-            if (_hasCombat.IsCreated) { _hasCombat.Dispose(); _hasCombat = default; }
-            if (_isInSquad.IsCreated) { _isInSquad.Dispose(); _isInSquad = default; }
-            _capacity = 0;
-            _count = 0;
-        }
-
-        private static int2 ToCell(Vector3 pos, float cellSize)
-        {
-            float inv = cellSize > 0.0001f ? 1f / cellSize : 1f;
-            int x = Mathf.FloorToInt(pos.x * inv);
-            int y = Mathf.FloorToInt(pos.y * inv);
-            return new int2(x, y);
         }
     }
 }

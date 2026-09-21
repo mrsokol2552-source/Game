@@ -1,3 +1,19 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Performance/UnitCombatJobScheduler.cs
+@module: presentation.combat.jobs
+@purpose: Main scheduler state, lifecycle, and dispatch timing for nearest-enemy combat jobs.
+@entry: UCJS-01, UCJS-02
+@api: UnitCombatJobScheduler singleton and scheduling loop
+@deps: UnitCombat, UnitSoARegistry, Unity Jobs
+@data: double-buffered unit lists, Native job-buffer ownership, scheduler timers
+@perf: hotpath; runs every Interval and gates nearest-target recomputation cadence
+@thread: main thread orchestration, worker-thread job scheduling
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs
+@config: Interval, HashCellSize, HashRings, Disabled, UseSoARegistry
+@assets: none
+@notes: buffer management and job logic are extracted into sibling partial files
+*/
+
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -13,8 +29,10 @@ namespace Game.Presentation.Performance
     /// Periodically computes nearest enemy for all UnitCombat instances using a job.
     /// Uses a spatial hash to avoid O(N^2) scans on large crowds.
     /// </summary>
-    public class UnitCombatJobScheduler : MonoBehaviour
+    public partial class UnitCombatJobScheduler : MonoBehaviour
     {
+        // [UCJS-01]
+        // Scheduler config, double-buffered unit lists, and Native job-buffer ownership.
         public static UnitCombatJobScheduler Instance { get; private set; }
 
         [Tooltip("How often to recompute nearest enemies for all units.")]
@@ -57,6 +75,8 @@ namespace Game.Presentation.Performance
         private JobHandle _jobHandle;
         private bool _jobActive;
 
+        // [UCJS-02]
+        // Lifecycle setup and per-interval nearest-enemy job scheduling.
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -175,176 +195,11 @@ namespace Game.Presentation.Performance
             return target.Count;
         }
 
-        private void EnsureCapacity(ref Buffer buf, int count)
-        {
-            if (count <= buf.Capacity && buf.Buckets.IsCreated && buf.BucketCapacity >= count * 2) return;
-            DisposeBuffer(ref buf);
-            buf.Capacity = Mathf.NextPowerOfTwo(count);
-            buf.Positions = new NativeArray<Vector3>(buf.Capacity, Allocator.Persistent);
-            buf.Factions = new NativeArray<int>(buf.Capacity, Allocator.Persistent);
-            buf.Nearest = new NativeArray<int>(buf.Capacity, Allocator.Persistent);
-            buf.Cells = new NativeArray<int2>(buf.Capacity, Allocator.Persistent);
-            buf.BucketCapacity = Mathf.NextPowerOfTwo(Mathf.Max(16, count * 2));
-            buf.Buckets = new NativeParallelMultiHashMap<int, int>(buf.BucketCapacity, Allocator.Persistent);
-        }
-
-        private bool FillArrays(ref Buffer buf, List<UnitCombat> units, int count)
-        {
-            if (!buf.Positions.IsCreated || !buf.Factions.IsCreated || !buf.Nearest.IsCreated || !buf.Cells.IsCreated || !buf.Buckets.IsCreated)
-                return false;
-            buf.Buckets.Clear();
-            for (int i = 0; i < count; i++)
-            {
-                var uc = units[i];
-                var pos = uc != null ? uc.transform.position : Vector3.zero;
-                buf.Positions[i] = pos;
-                buf.Factions[i] = uc != null ? (int)uc.Faction : -1;
-                buf.Nearest[i] = -1;
-                var cell = ToCell(pos, HashCellSize);
-                buf.Cells[i] = cell;
-                buf.Buckets.Add(HashKey(cell.x, cell.y), i);
-            }
-            return true;
-        }
-
-        private bool FillArraysFromSnapshot(ref Buffer buf, UnitSoARegistry.CombatSnapshot snap, List<int> indices, int count)
-        {
-            if (!buf.Positions.IsCreated || !buf.Factions.IsCreated || !buf.Nearest.IsCreated || !buf.Cells.IsCreated || !buf.Buckets.IsCreated)
-                return false;
-            if (!snap.Positions.IsCreated || !snap.Factions.IsCreated) return false;
-            if (indices == null || indices.Count < count) return false;
-
-            buf.Buckets.Clear();
-            for (int i = 0; i < count; i++)
-            {
-                int snapIndex = indices[i];
-                var pos2 = snap.Positions[snapIndex];
-                var pos = new Vector3(pos2.x, pos2.y, 0f);
-                buf.Positions[i] = pos;
-                buf.Factions[i] = snap.Factions[snapIndex];
-                buf.Nearest[i] = -1;
-                var cell = ToCell(pos, HashCellSize);
-                buf.Cells[i] = cell;
-                buf.Buckets.Add(HashKey(cell.x, cell.y), i);
-            }
-            return true;
-        }
-
-        private void ApplyResults(int bufferIndex)
-        {
-            if (bufferIndex < 0 || bufferIndex >= _buffers.Length) return;
-            ref var buf = ref _buffers[bufferIndex];
-            int count = buf.Count;
-            if (count <= 0) return;
-            var units = _unitBuffers[bufferIndex];
-            for (int i = 0; i < count; i++)
-            {
-                var uc = units[i];
-                if (uc == null) continue;
-                int idx = buf.Nearest[i];
-                UnitCombat target = (idx >= 0 && idx < count) ? units[idx] : null;
-                uc.SetJobNearest(target);
-            }
-            units.Clear();
-            _indexBuffers[bufferIndex].Clear();
-        }
-
-        private void DisposeBuffers()
-        {
-            for (int i = 0; i < _buffers.Length; i++)
-            {
-                DisposeBuffer(ref _buffers[i]);
-            }
-        }
-
-        private static void DisposeBuffer(ref Buffer buf)
-        {
-            if (buf.Positions.IsCreated) { buf.Positions.Dispose(); buf.Positions = default; }
-            if (buf.Factions.IsCreated) { buf.Factions.Dispose(); buf.Factions = default; }
-            if (buf.Nearest.IsCreated) { buf.Nearest.Dispose(); buf.Nearest = default; }
-            if (buf.Cells.IsCreated) { buf.Cells.Dispose(); buf.Cells = default; }
-            if (buf.Buckets.IsCreated) { buf.Buckets.Dispose(); buf.Buckets = default; }
-            buf.Capacity = 0;
-            buf.BucketCapacity = 0;
-            buf.Count = 0;
-        }
-
-        private struct NearestEnemyJob : IJobParallelFor
-        {
-            [ReadOnly] public NativeArray<Vector3> Positions;
-            [ReadOnly] public NativeArray<int> Factions;
-            [WriteOnly] public NativeArray<int> Nearest;
-            [ReadOnly] public NativeArray<int2> Cells;
-            [ReadOnly] public NativeParallelMultiHashMap<int, int>.ReadOnly Buckets;
-            [ReadOnly] public int Rings;
-
-            public void Execute(int index)
-            {
-                var p = Positions[index];
-                int f = Factions[index];
-                float best = float.MaxValue;
-                int bestIdx = -1;
-                var myCell = Cells[index];
-                int rings = Mathf.Max(0, Rings);
-
-                for (int dy = -rings; dy <= rings; dy++)
-                {
-                    for (int dx = -rings; dx <= rings; dx++)
-                    {
-                        int key = HashKey(myCell.x + dx, myCell.y + dy);
-                        if (!Buckets.TryGetFirstValue(key, out var otherIdx, out var it))
-                            continue;
-                        do
-                        {
-                            if (otherIdx == index) continue;
-                            if (Factions[otherIdx] == f) continue;
-                            float d2 = (Positions[otherIdx] - p).sqrMagnitude;
-                            if (d2 < best)
-                            {
-                                best = d2;
-                                bestIdx = otherIdx;
-                            }
-                        }
-                        while (Buckets.TryGetNextValue(out otherIdx, ref it));
-                    }
-                }
-                Nearest[index] = bestIdx;
-            }
-
-            private static int HashKey(int x, int y)
-            {
-                unchecked
-                {
-                    int h = 73856093 ^ x;
-                    h = (h * 19349663) ^ y;
-                    return h;
-                }
-            }
-        }
-
         public static void EnsureExists()
         {
             if (Instance != null) return;
             var go = new GameObject("UnitCombatJobScheduler");
             go.AddComponent<UnitCombatJobScheduler>();
-        }
-
-        private static int HashKey(int x, int y)
-        {
-            unchecked
-            {
-                int h = 73856093 ^ x;
-                h = (h * 19349663) ^ y;
-                return h;
-            }
-        }
-
-        private static int2 ToCell(Vector3 pos, float cellSize)
-        {
-            float inv = cellSize > 0.0001f ? 1f / cellSize : 1f;
-            int x = Mathf.FloorToInt(pos.x * inv);
-            int y = Mathf.FloorToInt(pos.y * inv);
-            return new int2(x, y);
         }
     }
 }

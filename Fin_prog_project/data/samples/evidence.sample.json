@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-04-15T05:55:35Z",
+  "source": {
+    "provider": "moex_iss",
+    "config_name": "appsettings.example.json",
+    "snapshot_path": "data/exports/latest_market_snapshot.json"
+  },
+  "event": {
+    "id": "20260415T055535Z-price-move-usd-rub",
+    "trigger_type": "price_move",
+    "comparison_mode": "previous_poll",
+    "poll_interval_minutes": 30,
+    "cooldown_applied": false,
+    "thresholds": {
+      "price_move_pct": 1.0,
+      "volatility_ratio": 2.0
+    }
+  },
+  "instruments": [
+    {
+      "id": "usd_rub_tom",
+      "label": "USD/RUB TOM",
+      "resolved_security": {
+        "query": "USDRUB_TOM",
+        "secid": "USD000UTSTOM",
+        "shortname": "USDRUB_TOM",
+        "name": "USDRUB_TOM - USD/RUB",
+        "type": "currency",
+        "group": "currency_selt",
+        "board": "CETS",
+        "engine": "currency",
+        "market": "selt"
+      },
+      "price_snapshot": {
+        "current_price": 75.28,
+        "current_price_field": "LAST",
+        "previous_price": 74.8475,
+        "previous_price_field": "PREVPRICE",
+        "bid": null,
+        "offer": null,
+        "open": 74.75,
+        "high": 75.28,
+        "low": 74.41,
+        "exchange_time": "14:27:48",
+        "system_time": "2026-04-15 14:54:45"
+      },
+      "analytics": {
+        "delta_pct": 0.5778,
+        "log_return": 0.005761,
+        "vol_short": 0.0048,
+        "vol_long": 0.0021,
+        "vol_ratio": 2.29
+      }
+    }
+  ],
+  "model": {
+    "kind": "ridge_regression",
+    "horizon_minutes": 30,
+    "predicted_delta_pct": 0.2,
+    "predicted_price": 75.43,
+    "confidence_label": "medium",
+    "quality": {
+      "r2": 0.28,
+      "mae_pct": 0.35
+    }
+  },
+  "codex": {
+    "prompt_template": "Use only evidence.json and write a short Russian market note.",
+    "prompt_path": "data/evidence/prompts/20260415T055535Z.prompt.txt"
+  }
+}

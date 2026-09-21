@@ -2,33 +2,43 @@ using System;
 using System.Collections.Generic;
 using Game.Domain.Economy;
 using Game.Presentation.Bootstrap;
-using Game.Presentation.View;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
+
+/*
+@file: My project/Assets/Scripts/Presentation/UI/HudController.cs
+@module: presentation.ui.hud
+@purpose: Main HUD shell for resources, status text, panel toggles, and pointer-over-UI blocking.
+@entry: SCRIPTS-PRESENTATION-UI-HUDCONTROLLER
+@api: HudController MonoBehaviour
+@deps: CompositionRoot, ActionsPanel, ResearchPanel
+@data: IMGUI rect registry, status scroll, squad panel state
+@perf: IMGUI-only; low cost relative to world systems
+@thread: main thread only
+@tests: manual HUD interaction and pointer-block verification
+@config: none beyond scene presence
+@assets: scene HUD root only
+@notes: squad summary/selection strip is isolated in HudController.Squads.cs
+*/
 
 // [CODE-ID: SCRIPTS-PRESENTATION-UI-HUDCONTROLLER]
 // Logical block: Scripts/Presentation/UI/HudController.
 
 namespace Game.Presentation.UI
 {
-    public class HudController : MonoBehaviour
+    public partial class HudController : MonoBehaviour
     {
-        private static System.Collections.Generic.List<Rect> s_UiAreas = new System.Collections.Generic.List<Rect>(4);
+        private static readonly List<Rect> s_UiAreas = new List<Rect>(4);
         private static int s_LastFrame = -1;
+
         private Vector2 _statusScroll;
         private Vector2 _squadScroll;
         private readonly Dictionary<int, SquadUiInfo> _squadInfo = new Dictionary<int, SquadUiInfo>(32);
         private readonly List<int> _squadIds = new List<int>(32);
-        public static int SelectedSquadId { get; private set; }
 
-        private struct SquadUiInfo
-        {
-            public int Count;
-            public UnitCombat.SquadMode Mode;
-            public bool Mixed;
-        }
+        public static int SelectedSquadId { get; private set; }
 
         public static bool IsPointerOverHud()
         {
@@ -39,7 +49,6 @@ namespace Game.Presentation.UI
 #else
             Vector2 p = UnityEngine.Input.mousePosition;
 #endif
-            // Convert to IMGUI coordinates (top-left origin)
             p.y = Screen.height - p.y;
             for (int i = 0; i < s_UiAreas.Count; i++)
             {
@@ -90,7 +99,6 @@ namespace Game.Presentation.UI
 
         private void OnStockChanged(ResourceType type, int value)
         {
-            // For prototype we rely on OnGUI to repaint each frame.
         }
 
         private void OnGUI()
@@ -100,7 +108,7 @@ namespace Game.Presentation.UI
             var area = new Rect(10, 10, 300, 230);
             AddUiRect(area);
             GUILayout.BeginArea(area, GUI.skin.box);
-            GUILayout.Label($"Units: {UnitCombat.All.Count}");
+            GUILayout.Label($"Units: {Game.Presentation.View.UnitCombat.All.Count}");
             GUILayout.Label("Resources:");
             foreach (ResourceType type in Enum.GetValues(typeof(ResourceType)))
             {
@@ -108,29 +116,21 @@ namespace Game.Presentation.UI
                 GUILayout.Label($"- {type}: {v}");
             }
 
-            // Controls first so they stay visible
             if (GUILayout.Button("Save"))
-            {
                 UnityEngine.Object.FindAnyObjectByType<CompositionRoot>()?.Save();
-            }
             if (GUILayout.Button("Load"))
-            {
                 UnityEngine.Object.FindAnyObjectByType<CompositionRoot>()?.Load();
-            }
 
             GUILayout.Space(4);
             var label = ResearchPanel.Visible ? "Hide Research" : "Research";
             if (GUILayout.Button(label))
-            {
                 ResearchPanel.Visible = !ResearchPanel.Visible;
-            }
 
             var devLabel = ActionsPanel.Visible ? "Hide Dev" : "Dev";
             if (GUILayout.Button(devLabel))
             {
                 if (!ActionsPanel.Visible)
                 {
-                    // Ensure panel exists in scene before showing
                     var ap = UnityEngine.Object.FindAnyObjectByType<ActionsPanel>();
                     if (ap == null)
                     {
@@ -145,7 +145,6 @@ namespace Game.Presentation.UI
                 }
             }
 
-            // Scrollable status area so long messages don't push controls out
             var root = UnityEngine.Object.FindAnyObjectByType<CompositionRoot>();
             if (root != null && !string.IsNullOrEmpty(root.LastStatusMessage))
             {
@@ -155,91 +154,10 @@ namespace Game.Presentation.UI
                 GUILayout.Label(root.LastStatusMessage, style);
                 GUILayout.EndScrollView();
             }
+
             GUILayout.EndArea();
 
             DrawPlayerSquads();
         }
-
-        private void DrawPlayerSquads()
-        {
-            BuildSquadSummary();
-            float height = 70f;
-            var area = new Rect(10, Screen.height - height - 10f, Screen.width - 20f, height);
-            AddUiRect(area);
-            GUILayout.BeginArea(area, GUI.skin.box);
-            string header = SelectedSquadId > 0 ? $"Player squads (selected: S{SelectedSquadId})" : "Player squads";
-            GUILayout.Label(header);
-            _squadScroll = GUILayout.BeginScrollView(_squadScroll, GUILayout.Height(36f));
-            GUILayout.BeginHorizontal();
-
-            if (_squadIds.Count == 0)
-            {
-                GUILayout.Label("No squads");
-            }
-            else
-            {
-                for (int i = 0; i < _squadIds.Count; i++)
-                {
-                    int id = _squadIds[i];
-                    if (!_squadInfo.TryGetValue(id, out var info)) continue;
-                    string modeLabel = info.Mixed ? "Mixed" : info.Mode.ToString();
-                    bool isSelected = id == SelectedSquadId;
-                    string label = isSelected ? $"▶ S{id} ({info.Count}) {modeLabel}" : $"S{id} ({info.Count}) {modeLabel}";
-                    if (GUILayout.Button(label))
-                        SelectedSquadId = isSelected ? 0 : id;
-                }
-            }
-
-            if (_squadIds.Count > 0)
-            {
-                if (GUILayout.Button("Clear"))
-                    SelectedSquadId = 0;
-            }
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
-            GUILayout.EndScrollView();
-            GUILayout.EndArea();
-        }
-
-        private void BuildSquadSummary()
-        {
-            _squadInfo.Clear();
-            _squadIds.Clear();
-
-            foreach (var uc in UnitCombat.All)
-            {
-                if (uc == null || !uc.isActiveAndEnabled) continue;
-                if (uc.Faction != Game.Domain.Units.Faction.Player) continue;
-                if (!uc.IsInSquad) continue;
-
-                int id = uc.SquadId;
-                if (!_squadInfo.TryGetValue(id, out var info))
-                {
-                    info = new SquadUiInfo
-                    {
-                        Count = 1,
-                        Mode = uc.CurrentSquadMode,
-                        Mixed = false
-                    };
-                    _squadInfo.Add(id, info);
-                    _squadIds.Add(id);
-                }
-                else
-                {
-                    info.Count++;
-                    if (info.Mode != uc.CurrentSquadMode)
-                        info.Mixed = true;
-                    _squadInfo[id] = info;
-                }
-            }
-
-            if (_squadIds.Count > 1)
-                _squadIds.Sort();
-
-            if (SelectedSquadId > 0 && !_squadInfo.ContainsKey(SelectedSquadId))
-                SelectedSquadId = 0;
-        }
     }
 }
-
-

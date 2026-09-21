@@ -1,3 +1,19 @@
+/*
+@file: My project/Assets/Scripts/Presentation/Performance/StuckResolver.cs
+@module: presentation.performance.stuck_resolver
+@purpose: Detects movers that fail to make progress and orchestrates recovery nudges or combat repaths.
+@entry: StuckResolver.Update, STUCK-02
+@api: scene MonoBehaviour singleton used by movement/combat path recovery
+@deps: PathManager, UnitView, UnitCombat, UnitPathFollower
+@data: per-unit movement progress windows, stale-state cleanup, throttled log counters
+@perf: light-medium periodic scan over active units; bounded by Interval and UnitView.All
+@thread: main thread only
+@tests: My project/Assets/Tests/PlayMode/FpsStressTests.cs, manual stuck-unit recovery verification
+@config: Interval, WindowSeconds, MinTravelDistance, NudgeRadius, ResolveCooldown
+@assets: none
+@notes: must remain subordinate to flow-field and squad ownership; only FreeCombat units may be nudged
+*/
+
 using System.Collections.Generic;
 using Game.Presentation.Pathfinding;
 using Game.Presentation.View;
@@ -11,8 +27,10 @@ namespace Game.Presentation.Performance
     /// <summary>
     /// Detects units that are moving but not making progress and nudges them.
     /// </summary>
-    public class StuckResolver : MonoBehaviour
+    public partial class StuckResolver : MonoBehaviour
     {
+        // [STUCK-01]
+        // Resolver config, singleton ownership, per-unit progress windows, and throttled log state.
         public static StuckResolver Instance { get; private set; }
 
         [Tooltip("Enable stuck detection and resolution.")]
@@ -53,6 +71,8 @@ namespace Game.Presentation.Performance
             public int LastSeenFrame;
         }
 
+        // [STUCK-02]
+        // Periodic progress sampling across active units, with squad/flow/manual guards and recovery dispatch.
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -156,53 +176,6 @@ namespace Game.Presentation.Performance
             }
 
             CleanupStale(frame);
-        }
-
-        private void ResolveStuck(UnitView uv, PathManager pm, UnitCombat uc)
-        {
-            if (uv == null || pm == null) return;
-            if (ForceCombatRepath && uc != null)
-            {
-                uc.ForceRepath();
-            }
-
-            if (pm.TryFindNearestFreeWorld(uv.transform.position, uv, NudgeRadius, out var free))
-            {
-                uv.SetDestination(free);
-                if (LogStuck && (MaxLogsPerTick <= 0 || _logsThisTick < MaxLogsPerTick))
-                {
-                    _logsThisTick++;
-                    Debug.LogWarning($"[StuckResolver] nudged {uv.name} to {free} (combat={uc != null})");
-                }
-            }
-        }
-
-        private void ResetState(UnitView uv, int frame)
-        {
-            if (uv == null) return;
-            int id = uv.GetInstanceID();
-            if (_states.TryGetValue(id, out var state))
-            {
-                state.LastPos = uv.transform.position;
-                state.WindowTime = 0f;
-                state.Moved = 0f;
-                state.LastSeenFrame = frame;
-                _states[id] = state;
-            }
-        }
-
-        private void CleanupStale(int frame)
-        {
-            if (_states.Count == 0) return;
-            _staleKeys.Clear();
-            foreach (var kv in _states)
-            {
-                if (frame - kv.Value.LastSeenFrame > 60)
-                    _staleKeys.Add(kv.Key);
-            }
-            for (int i = 0; i < _staleKeys.Count; i++)
-                _states.Remove(_staleKeys[i]);
-            _staleKeys.Clear();
         }
 
         public static void EnsureExists()

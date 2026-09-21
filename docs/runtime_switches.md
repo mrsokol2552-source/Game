@@ -8,6 +8,9 @@ See also:
 - [debug_playbooks.md](./debug_playbooks.md)
 - [code_id_index.md](./code_id_index.md)
 - [code_map.md](./code_map.md)
+- [runtime_config_export.json](./runtime_config_export.json)
+- [scripts/export_runtime_config.py](../scripts/export_runtime_config.py)
+- [runtime_config_manifest.json](../scripts/runtime_config_manifest.json)
 
 Columns:
 
@@ -39,26 +42,33 @@ Columns:
 | `StreamKeepGeneratedChunks` | Keep already generated chunks | If re-bake must be avoided | High memory usage on big maps | `PENV-05`, `PENV-10` |
 | `StreamBakeAllChunksOnIdle` | Gradually pre-bake chunks while the camera is idle | If the world should fill in over time | Hidden background load | `PENV-03`, `PENV-11` |
 | `StreamPropsUseBackgroundGrid` | Place props/trees on background-grid instead of hex-grid | If visuals must lock to square background cells | Easy to break mask coordinates and cleanup | `PENV-09`, `PENV-10`, `PENV-18` |
+| `UseBackgroundPayloadChunkRenderer` | Mirrors cached/streamed background payload into experimental chunked sprite meshes using a texture shader | Validate background payload rendering before replacing tilemap/background rendering | Experimental overlay can obscure tilemaps and is not the final replacement renderer yet | `SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT`, `SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BACKGROUNDPAYLOADCHUNKRENDERER` |
+| `BackgroundPayloadChunkRendererChunkSize` | Cell size for experimental background payload mesh chunks | Tune only while profiling or validating the background payload renderer seam | Too small creates many renderers, too large creates heavy meshes | `SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BACKGROUNDPAYLOADCHUNKRENDERER` |
+| `UseGroundPayloadChunkRenderer` | Mirrors committed ground payload into experimental chunked sprite meshes using a texture shader | First shader/render migration smoke path; keep off unless validating payload-driven rendering | Experimental overlay can obscure tilemaps and is not the final replacement renderer yet | `SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT`, `SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-GROUNDPAYLOADCHUNKRENDERER` |
+| `GroundPayloadChunkRendererChunkSize` | Cell size for experimental ground payload mesh chunks | Tune only while profiling the experimental renderer | Too small creates many renderers, too large creates heavy meshes | `SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-GROUNDPAYLOADCHUNKRENDERER` |
+| `UseBiomeMaskChunkRenderer` | Mirrors extracted water/rock biome-mask payload into experimental chunked vertex-color meshes | Validate mask extraction and streaming/non-stream chunk routing before replacing background rendering | Debug overlay can be mistaken for final visuals and should stay off in normal play | `SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT`, `SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BIOMEMASKCHUNKRENDERER` |
+| `BiomeMaskChunkRendererChunkSize` | Cell size for experimental water/rock mask overlay chunks | Tune only while profiling or validating the biome-mask renderer seam | Too small creates many renderers, too large creates heavy meshes | `SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-BIOMEMASKCHUNKRENDERER` |
 
 ## ProceduralEnvironment: far view and bake
 
 | Parameter | Effect | When to touch | Risk | Where to read |
 |---|---|---|---|---|
-| `UseFarViewBake` | Enables the far-view system | For high zoom-out views | Can conflict with streaming and hide the map | `PENV-11`, `PENV-12`, `PENV-13` |
+| `UseFarViewBake` | Enables the far-view system; default and `SampleScene` both keep it off after a max-zoom regression | Only for controlled diagnostic zoom-out experiments until fixed | Current far-view can hide the map and drop FPS at full stream coverage; `810/810` chunks with about `14` FPS was observed with it enabled | `PENV-11`, `PENV-12`, `PENV-13` |
 | `UseFarViewChunkedBake` | Bakes far view in chunks | Almost always for large maps | Slower full readiness | `PENV-13` |
-| `UseFarViewDirectChunkRender` | Draws chunks directly instead of a safer intermediate path | Only for targeted profiling | Higher risk of render bugs | `PENV-13` |
+| `UseFarViewDirectChunkRender` | Draws chunks directly instead of the safer readback path; `SampleScene` keeps this off while far-view is under investigation | Only for targeted profiling | Higher risk of render bugs and harder visual verification | `PENV-13` |
 | `FarViewOrthoThreshold` | Absolute ortho size threshold | If threshold should not depend on camera settings | Easy to miss the right switch point | `PENV-11`, `CameraZoom2D` |
 | `UseFarViewThresholdFromCameraZoom` | Derives threshold from `CameraZoom2D.MaxOrthoSize` | If threshold should scale with the camera setup | Wrong percentage makes far-view too early or too late | `PENV-11` |
 | `FarViewOrthoThresholdPercent` | Threshold as a fraction of `MaxOrthoSize` | Main practical tuning knob | Too low = extra bake load, too high = low FPS before switch | `PENV-11` |
 | `FarViewChunksPerFrame` | Far-view chunks baked per frame | To balance bake speed vs FPS | Strong direct cost during bake | `PENV-13` |
-| `FarViewBakeFrameBudgetMs` | Time budget for bake work in a frame | If FPS during bake must stay stable | Bake can become too slow | `PENV-13` |
-| `FarViewChunkPixels` | Chunk resolution | To trade quality against speed | Large = CPU/GPU spikes, small = overhead | `PENV-13` |
-| `FarViewPixelsPerUnit` | Far-view texture density | If distant view looks blurry | Higher memory and bake time | `PENV-13` |
+| `FarViewBakeFrameBudgetMs` | Time budget for bake work in a frame; `SampleScene` uses `0` for deterministic chunks-per-frame diagnostics | If FPS during bake must stay stable | Bake can become too slow; `0` means use `FarViewChunksPerFrame` directly | `PENV-13` |
+| `FarViewChunkPixels` | Chunk resolution; `SampleScene` diagnostic value is `512` | To trade quality against speed | Large = CPU/GPU spikes, small = overhead | `PENV-13` |
+| `FarViewPixelsPerUnit` | Far-view texture density; `SampleScene` diagnostic value is `16` | If distant view looks blurry | Higher memory and bake time | `PENV-13` |
 | `FarViewMaxTextureSize` | Upper bound for RT/texture size | To respect VRAM limits | Too high risks GPU memory pressure | `PENV-12`, `PENV-13` |
 | `UseFarViewAsyncReadback` | Async readback of baked chunks | If sync readback kills FPS | Pending readbacks can stall | `PENV-13` |
 | `FarViewMaxPendingReadbacks` | Maximum queued readbacks | If async readback stalls | Too low = slow, too high = memory/stability risk | `PENV-13` |
 | `FarViewHideMapWhileBaking` | Hide the regular map during bake | If bake causes distracting popping | Harder to debug visuals during bake | `PENV-14` |
 | `ShowFarViewBakeHUD` | Show bake HUD | Usually useful during tuning | UI noise if left on permanently | `PENV-14` |
+| `LogFarViewPayloadSourcesOnBake` | Logs background/ground/placement payload source routing when a far-view bake starts | Smoke-check payload-only vs legacy fallback paths after refactors | Console noise if left enabled | `PENV-14`, `SCRIPTS-PRESENTATION-PATHFINDING-PROCEDURALENVIRONMENT-FARVIEWSOURCE` |
 
 ## ProceduralEnvironment: ground conversion and background
 
@@ -143,8 +153,8 @@ Columns:
 | `FriendlyReserveSeconds` | Temporary reservation of friendly cells | If paths should avoid moving through crowds | Too high produces false blocking | `PMGR-01`, `PMGR-03` |
 | `UseOccupancyHash` | Uses dynamic occupancy | Usually should stay on | If off, units route through moving crowds too easily | `PMGR-03` |
 | `UseStaticObstacleHash` | Uses static obstacle hash | If blockers, rocks, or trees matter | If off, units route through hard obstacles | `PMGR-03` |
-| `MaxPerFrame` | Path requests processed per frame | If the queue keeps growing | Too high hurts the frame | `PQUE-01`, `PQUE-02` |
-| `UseJobs` | Uses jobified path builds | Usually for large scenes | If native data is suspect, fallback behavior becomes important | `PQUE-01`, `PQUE-02` |
+| `MaxPerFrame` | Path request dispatch/completion steps processed per frame; completed jobs consume budget before the next job is scheduled | If the queue keeps growing or path latency needs a hard cap | Too high hurts the frame; `1` can intentionally split job completion and next scheduling across frames, raising latency | `PQUE-01`, `PQUE-02` |
+| `UseJobs` | Uses jobified path builds; queued requests wait while a job is active instead of draining through sync fallback in the same frame | Usually for large scenes | If native data is suspect, queue latency rises before fallback paths run | `PQUE-01`, `PQUE-02` |
 | `MaxQueueSize` | Maximum path request queue size | If command spam overwhelms the system | Older requests will be dropped | `PQUE-01` |
 | `ProcessSynchronouslyIfIdle` | Handles requests immediately when idle | For lower latency in quiet moments | Can create CPU spikes | `PQUE-01` |
 
@@ -189,8 +199,10 @@ Columns:
 | `FlowFieldMinDistance` | Minimum distance before flow mode is used | If flow activates too early or too late | Changes macro/micro movement quality | `UCOM-08` |
 | `RepathInterval*` | Per-unit repath timing | If units stall or thrash | High repath frequency increases load | `UCOM-03` |
 | `InstantRepathOnTargetCellChange` | Repath immediately when the target cell changes | If targets move rapidly | More path load | `UCOM-03` |
+| `CombatTickBudgetPerFrame` | Slot-spreads combat ticks when active combat units exceed the per-frame budget; default is `48` | If first-contact combat frames bunch attacks, resets, or target work into one spike | Too low makes combat reaction and attack cadence feel sluggish; unfair implementation can starve later-created units | `UCOM-01`, `UCOM-03`, `UCOM-07` |
 | `TargetRefreshInterval` | How often the unit reevaluates targets | If units react too slowly | Too fast = CPU, too slow = sluggishness | `UCOM-03`, `UCOM-06` |
 | `JobTargetTtl` | Lifetime of a job-scheduler target | If units stick to stale targets | Low TTL forces more local searches | `UCOM-06` |
+| `PreferForcedTarget` | Lets a valid forced squad target win before job/hash/local target lookup | For ordered focus fire or owner-assigned squad targets | Can create tunnel vision if nearby threats should override orders | `UCOM-06`, `UCOM-07` |
 | `LostTargetGraceSeconds` | Keeps combat intent briefly after losing target | If units freeze the moment a target dies | Too high makes them drift into empty space | `UCOM-03` |
 | `DisableOrcaWhenInRange` | Disables ORCA near attack range | If ranged firing lines misbehave | Can reintroduce overlap near targets | `UCOM-03` |
 | `FriendlySeparationRadius` | Friendly spacing during combat | If friendlies overlap and flicker | Too high breaks formations | `UCOM-03` |
@@ -239,11 +251,12 @@ These are the first knobs to consider before touching deeper code:
 11. `TreeCoverage`
 12. `RockPropCoverage`
 13. `UseFlowFields`
-14. `TargetRefreshInterval`
-15. `FriendlySeparationRadius`
-16. `AgentRadius`
-17. `MaxPerFrame` in `PathRequestQueue`
-18. `MaxBuildsPerFrame` in `PathManager`
+14. `CombatTickBudgetPerFrame`
+15. `TargetRefreshInterval`
+16. `FriendlySeparationRadius`
+17. `AgentRadius`
+18. `MaxPerFrame` in `PathRequestQueue`
+19. `MaxBuildsPerFrame` in `PathManager`
 
 Practical rule:
 

@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "output": "docs/runtime_config_export.json",
+  "script_roots": [
+    "My project/Assets/Scripts",
+    "My project/Assets/Editor"
+  ],
+  "scene_targets": [
+    {
+      "path": "My project/Assets/Scenes/SampleScene.unity",
+      "game_objects": [
+        "Main Camera",
+        "Global Light 2D",
+        "Bootstrap",
+        "HexPathfinding",
+        "ProceduralEnvironment",
+        "ProceduralObstacles",
+        "Spawner",
+        "ActionsPanel"
+      ],
+      "include_component_types": [
+        "MonoBehaviour",
+        "Transform",
+        "Camera",
+        "RectTransform",
+        "Grid",
+        "Tilemap",
+        "TilemapRenderer",
+        "Canvas",
+        "Image"
+      ]
+    },
+    {
+      "path": "My project/Assets/Scenes/CharacterCreator_Simple.unity",
+      "game_objects": [
+        "CharacterCreator",
+        "Renderers",
+        "Canvas",
+        "EventSystem",
+        "LoadScreenPanel",
+        "GunFire",
+        "MachineGun2",
+        "Use64",
+        "Use128",
+        "MaxFrames15"
+      ],
+      "include_component_types": [
+        "MonoBehaviour",
+        "Transform",
+        "RectTransform",
+        "Canvas",
+        "SpriteRenderer",
+        "Animator",
+        "Image",
+        "Toggle",
+        "Slider"
+      ]
+    }
+  ],
+  "prefab_targets": [
+    {
+      "path": "My project/Assets/Prefabs/Unit.prefab",
+      "include_component_types": [
+        "MonoBehaviour",
+        "Transform",
+        "SpriteRenderer",
+        "Animator"
+      ]
+    }
+  ]
+}

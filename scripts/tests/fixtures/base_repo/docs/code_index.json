@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "documents": {
+    "code_map": "docs/code_map.md"
+  },
+  "hot_ids": [
+    "SCRIPTS-EXAMPLE-SYSTEM"
+  ],
+  "systems": [
+    {
+      "file": "My project/Assets/Scripts/ExampleSystem.cs",
+      "code_id": "SCRIPTS-EXAMPLE-SYSTEM",
+      "sections": [
+        "EXMP-01"
+      ]
+    }
+  ]
+}
+

@@ -385,17 +385,17 @@ MonoBehaviour:
   FarViewOrthoThresholdPercent: 0.5
   FarViewAlwaysActive: 0
   UseFarViewChunkedBake: 1
-  UseFarViewDirectChunkRender: 1
-  FarViewChunkPixels: 2048
+  UseFarViewDirectChunkRender: 0
+  FarViewChunkPixels: 512
   FarViewChunksPerFrame: 1
   UseFarViewAsyncReadback: 0
   FarViewReadbacksPerFrame: 1
   FarViewMaxPendingReadbacks: 2
   FarViewReadbackTimeout: 2
   FarViewFallbackToSyncReadback: 1
-  FarViewBakeFrameBudgetMs: 6
+  FarViewBakeFrameBudgetMs: 0
   FarViewBakeOnStart: 0
-  FarViewPixelsPerUnit: 96
+  FarViewPixelsPerUnit: 16
   FarViewMaxTextureSize: 4096
   FarViewBakeLayerName: 
   FarViewSortingOrder: -10

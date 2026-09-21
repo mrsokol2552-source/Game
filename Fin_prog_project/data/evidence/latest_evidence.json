@@ -1,0 +1,170 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-04-15T12:01:59Z",
+  "source": {
+    "provider": "moex_iss",
+    "config_name": "appsettings.example.json",
+    "snapshot_path": "C:\\Users\\Александр\\Desktop\\Game\\Fin_prog_project\\data\\exports\\latest_market_snapshot.json"
+  },
+  "event": {
+    "id": "20260415T120159Z-manual-manual",
+    "trigger_type": "manual",
+    "comparison_mode": "previous_poll",
+    "poll_interval_minutes": 30,
+    "cooldown_applied": false,
+    "thresholds": {
+      "price_move_pct": 1.0,
+      "volatility_ratio": 2.0
+    }
+  },
+  "instruments": [
+    {
+      "id": "usd_rub_tom",
+      "label": "USD/RUB TOM",
+      "resolved_security": {
+        "query": "USDRUB_TOM",
+        "secid": "USD000UTSTOM",
+        "shortname": "USDRUB_TOM",
+        "name": "USDRUB_TOM - USD/РУБ",
+        "type": "currency",
+        "group": "currency_selt",
+        "board": "CETS",
+        "engine": "currency",
+        "market": "selt"
+      },
+      "price_snapshot": {
+        "current_price": 75.39,
+        "current_price_field": "LAST",
+        "previous_price": 74.8475,
+        "previous_price_field": "PREVPRICE",
+        "bid": null,
+        "offer": null,
+        "open": 74.75,
+        "high": 75.39,
+        "low": 74.41,
+        "exchange_time": "14:46:20",
+        "system_time": "2026-04-15 15:01:51"
+      },
+      "analytics": {
+        "delta_pct": 0.7248071077858409,
+        "log_return": 0.007221930049370651,
+        "vol_short": null,
+        "vol_long": null,
+        "vol_ratio": null
+      }
+    },
+    {
+      "id": "cny_rub_tom",
+      "label": "CNY/RUB TOM",
+      "resolved_security": {
+        "query": "CNYRUB_TOM",
+        "secid": "CNYRUB_TOM",
+        "shortname": "CNYRUB_TOM",
+        "name": "CNY/RUB_TOM - CNY/РУБ",
+        "type": "currency",
+        "group": "currency_selt",
+        "board": "CETS",
+        "engine": "currency",
+        "market": "selt"
+      },
+      "price_snapshot": {
+        "current_price": 11.1005,
+        "current_price_field": "LAST",
+        "previous_price": 11.047,
+        "previous_price_field": "PREVPRICE",
+        "bid": null,
+        "offer": null,
+        "open": 11.0275,
+        "high": 11.156,
+        "low": 10.96,
+        "exchange_time": "14:46:54",
+        "system_time": "2026-04-15 15:01:55"
+      },
+      "analytics": {
+        "delta_pct": 0.48429437856432056,
+        "log_return": 0.004831254458697905,
+        "vol_short": null,
+        "vol_long": null,
+        "vol_ratio": null
+      }
+    },
+    {
+      "id": "gold_rub_tom",
+      "label": "GLD/RUB TOM",
+      "resolved_security": {
+        "query": "GLDRUB_TOM",
+        "secid": "GLDRUB_TOM",
+        "shortname": "GLDRUB_TOM",
+        "name": "GLD/RUB_TOM - GLD/РУБ",
+        "type": "gold_metal",
+        "group": "currency_metal",
+        "board": "CETS",
+        "engine": "currency",
+        "market": "selt"
+      },
+      "price_snapshot": {
+        "current_price": 11616.0,
+        "current_price_field": "LAST",
+        "previous_price": 11550.0,
+        "previous_price_field": "PREVPRICE",
+        "bid": null,
+        "offer": null,
+        "open": 11571.0,
+        "high": 11647.0,
+        "low": 11475.0,
+        "exchange_time": "14:46:40",
+        "system_time": "2026-04-15 15:01:56"
+      },
+      "analytics": {
+        "delta_pct": 0.5714285714285783,
+        "log_return": 0.005698021114637796,
+        "vol_short": null,
+        "vol_long": null,
+        "vol_ratio": null
+      }
+    },
+    {
+      "id": "brent_front",
+      "label": "Brent Front Month",
+      "resolved_security": {
+        "query": "BR",
+        "secid": "BRK6",
+        "shortname": "BR-5.26",
+        "name": "Фьючерсный контракт BR-5.26",
+        "type": "futures",
+        "group": "futures_forts",
+        "board": "RFUD",
+        "engine": "futures",
+        "market": "forts"
+      },
+      "price_snapshot": {
+        "current_price": 96.05,
+        "current_price_field": "LAST",
+        "previous_price": 95.67,
+        "previous_price_field": "PREVPRICE",
+        "bid": null,
+        "offer": null,
+        "open": 96.21,
+        "high": 97.39,
+        "low": 94.94,
+        "exchange_time": "14:46:56",
+        "system_time": "2026-04-15 15:01:57"
+      },
+      "analytics": {
+        "delta_pct": 0.3971987038779101,
+        "log_return": 0.003964119524489677,
+        "vol_short": null,
+        "vol_long": null,
+        "vol_ratio": null
+      }
+    }
+  ],
+  "model": {
+    "kind": "not_computed_yet",
+    "horizon_minutes": 30,
+    "confidence_label": "low"
+  },
+  "codex": {
+    "prompt_template": "supplements/prompts/codex_market_note_template.txt"
+  }
+}

@@ -40,7 +40,7 @@ Should Grass connect diagonally, splitting Dirt? Or should Dirt connect, splitti
 
 ---
 
-# 3. Classical Engineering Solutions: Bitmasking and Variants
+## 3. Classical Engineering Solutions: Bitmasking and Variants
 
 The classical methods mentioned (bitmasking) are the first line of defense against grid artifacts. They don’t remove the grid, but they make seams **consistent**.
 
@@ -101,7 +101,7 @@ If bitmasking solves border continuity, **Wang Tiles** solve **texture repetitio
 
 ---
 
-# 4. A Geometric Revolution: The Dual Grid System
+## 4. A Geometric Revolution: The Dual Grid System
 
 To solve “hard seams” and “stair-steps,” one of the most progressive geometric approaches today is the **Dual Grid** system. Popularized by **Oskar Stålberg** (developer of *Townscaper*), it offers an elegant way out of the bitmasking combinatorial trap.
 
@@ -179,7 +179,7 @@ This is a “gold standard” for 2D indie games aiming for an organic look.
 
 ---
 
-# 5. Shader and Stochastic Methods: 3D and High-Fidelity Solutions
+## 5. Shader and Stochastic Methods: 3D and High-Fidelity Solutions
 
 If Dual Grid solves geometry in 2D, then for 3D terrains or highly detailed 2D maps (where tile-internal texture is visible), shader-based solutions are needed. The prompt mentions “shader blending”; below is its evolution up to modern techniques.
 
@@ -229,7 +229,7 @@ To implement transparency (e.g., fading grass at distance or blending layers) wi
 
 ---
 
-# 6. Algorithmic Synthesis: Wave Function Collapse (WFC)
+## 6. Algorithmic Synthesis: Wave Function Collapse (WFC)
 
 If Dual Grid and shaders are rendering techniques, **Wave Function Collapse (WFC)** is a data generation method that prevents artifacts at the logical level.
 
@@ -255,7 +255,7 @@ WFC output looks less like random tiles and more like a coherent structure. Arti
 
 ---
 
-# 7. The Future: Neural Synthesis and Gaussian Splatting
+## 7. The Future: Neural Synthesis and Gaussian Splatting
 
 The most forward-looking direction in eliminating grid artifacts is abandoning polygonal grids entirely and moving to volumetric and neural representations.
 
@@ -276,7 +276,7 @@ Using **GANs** (Generative Adversarial Networks) and **NeRF** to “expand” te
 
 ---
 
-# 8. Comparative Analysis and Implementation Recommendations
+## 8. Comparative Analysis and Implementation Recommendations
 
 Ultimately, the best method depends on your project’s style and resources.
 

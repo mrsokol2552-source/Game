@@ -1,0 +1,27 @@
+Use only the structured facts from evidence.json.
+
+Event ID: 20260415T120159Z-manual-manual
+Trigger type: manual
+Comparison mode: previous_poll
+Poll interval (minutes): 30
+
+Triggered instruments:
+- No threshold trigger fired. Treat this as a manual evidence build.
+
+Instrument snapshot:
+- USD/RUB TOM [USD000UTSTOM] price=75.39 field=LAST delta_pct=0.7248071077858409
+- CNY/RUB TOM [CNYRUB_TOM] price=11.1005 field=LAST delta_pct=0.48429437856432056
+- GLD/RUB TOM [GLDRUB_TOM] price=11616.0 field=LAST delta_pct=0.5714285714285783
+- Brent Front Month [BRK6] price=96.05 field=LAST delta_pct=0.3971987038779101
+
+Model:
+- kind: not_computed_yet
+- horizon_minutes: 30
+- confidence_label: low
+
+Instructions:
+- Write in Russian.
+- Use only the facts in evidence.json.
+- Explain the move briefly and concretely.
+- Mention uncertainty explicitly if the model is missing or weak.
+- Do not provide personal financial advice.

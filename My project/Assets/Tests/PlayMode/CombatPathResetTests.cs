@@ -11,14 +11,28 @@ using Game.Domain.Units;
 
 namespace Tests.PlayMode
 {
+    [Category("Gate")]
     public class CombatPathResetTests
     {
+        [SetUp]
+        public void SetUp()
+        {
+            CleanupAll();
+            PathProfiler.ResetTotals();
+            UnitCombat.DisableCombat = false;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            CleanupAll();
+            PathProfiler.ResetTotals();
+            UnitCombat.DisableCombat = false;
+        }
+
         [UnityTest]
         public IEnumerator CombatPathResetsStayLowDuringChase()
         {
-            PathProfiler.ResetTotals();
-            UnitCombat.DisableCombat = false;
-
             // Bootstrap minimal hex grid and path systems
             var hexGo = new GameObject("HexBootstrap");
             var hex = hexGo.AddComponent<Game.Presentation.Pathfinding.HexPathfindingBootstrap>();
@@ -94,11 +108,6 @@ namespace Tests.PlayMode
             Assert.Less(PathProfiler.TotalPathResets, 15, $"Too many path/destination resets during combat chase (TotalPathResets={PathProfiler.TotalPathResets}). Reasons: {FormatReasons(reasons)}; chaseFrames={chaseFrames} destChanges={destChanges} destChangesDuringChase={destChangesDuringChase} centerDestChanges={centerDestChanges} centerDestChangeRatio={centerChangeRatio:F3} destCellBacktracks={destCellBacktracks}");
             Assert.Less(centerDestChanges, 3, $"Too many destination assignments to current hex center during chase (centerDestChanges={centerDestChanges}, destChangesDuringChase={destChangesDuringChase}, ratio={centerChangeRatio:F3}).");
             Assert.Less(destCellBacktracks, 3, $"Destination cell backtracks suggest hex-center oscillation (backtracks={destCellBacktracks}).");
-
-            Object.Destroy(attacker.gameObject);
-            Object.Destroy(target.gameObject);
-            Object.Destroy(hexGo);
-            PathProfiler.ResetTotals();
         }
 
         private static UnitCombat SpawnUnit(string name, Vector3 pos, Faction faction)
@@ -129,6 +138,23 @@ namespace Tests.PlayMode
                 sb.Append(kv.Key).Append("=").Append(kv.Value);
             }
             return sb.ToString();
+        }
+
+        private static void CleanupAll()
+        {
+            PathRequestQueue.Instance?.CompleteActiveJobAndClear();
+            foreach (var uc in new System.Collections.Generic.List<UnitCombat>(UnitCombat.All))
+            {
+                if (uc != null)
+                    Object.DestroyImmediate(uc.gameObject);
+            }
+            UnitCombat.All.Clear();
+
+            foreach (var hex in Object.FindObjectsByType<HexPathfindingBootstrap>())
+            {
+                if (hex != null && hex.gameObject.name == "HexBootstrap")
+                    Object.DestroyImmediate(hex.gameObject);
+            }
         }
     }
 }
