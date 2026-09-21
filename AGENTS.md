@@ -70,6 +70,7 @@ Vrem_2 / OmniRoute orchestrator:
 
 - `Vrem_2/dungeon_master_game/docs/operations/omniroute-runtime.md` - OmniRoute writer runtime and model routing operations.
 - `Vrem_2/dungeon_master_game/docs/operations/gemini38-migration-20260918.md` - Gemini 3.8 primary migration status and verified behavior.
+- `Vrem_2/dungeon_master_game/docs/operations/orchestrator-portability-and-bottlenecks.md` - Engineering orchestrator efficiency bottlenecks, coupling audit, and cross-project adoption roadmap.
 
 ## Shared Verification
 
