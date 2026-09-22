@@ -83,7 +83,9 @@ TextureImporter:
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
+  spriteTessellationMethod: 0
   spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
@@ -390,16 +392,16 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":true,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Walk_0: 1724145382
-      Walk_1: -33069281
-      Walk_2: 1950174320
-      Walk_3: 1190628431
-      Walk_4: 351493894
-      Walk_5: 203627523
-      Walk_6: 1671934784
-      Walk_7: 508824364
-      Walk_8: 1280324957
-      Walk_9: -539570903
+      Walk_0: 2071240708
+      Walk_1: 502070838
+      Walk_2: -1045346214
+      Walk_3: -1310771626
+      Walk_4: 1373092004
+      Walk_5: -1340554810
+      Walk_6: -1247710079
+      Walk_7: 1130828578
+      Walk_8: -1218389471
+      Walk_9: -1886192076
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -106,6 +106,10 @@ Use it as the source of truth for "what belongs where".
   - add-on design material and external content references
   - not part of the main runtime/navigation layer unless explicitly promoted
 
+- [../supplements/design/gdd_match3_survival_siege.md](../supplements/design/gdd_match3_survival_siege.md)
+  - canonical game design document for the "Match-3 Colony Siege" pivot
+  - split-screen layout, day/night loop, token mechanics, monetization and WebGL specs
+
 ## Practical Rule
 
 When adding new documentation:

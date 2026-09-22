@@ -15,12 +15,69 @@
 - [repo_map.md](../maps/repo_map.md) - compact top-level repo map.
 - [repo_map.json](../maps/repo_map.json) - machine-readable repo map for tools/agents.
 - [agent_comment_standard.md](./agent_comment_standard.md) - current file-header convention for hot code.
-- [supplements/README.md](../supplements/README.md) - add-on design and audio reference material.
+- [../supplements/README.md](../supplements/README.md) - add-on design and audio reference material.
+- [../supplements/design/gdd_match3_survival_siege.md](../supplements/design/gdd_match3_survival_siege.md) - canonical game design document for the "Match-3 Colony Siege" pivot.
 - [supplements_index.json](../supplements/supplements_index.json) - machine-readable supplement index.
 
 ## Current Engineering Direction
 
-This is the current canonical technical direction for large rendering and world-generation work.
+### Strategic Pivot: «Колония: Осада» (Match-3 Colony Survival)
+
+The project has officially pivoted from the unconstrained procedural 2D RTS into a commercially focused WebGL hybrid: **«Колония: Осада» (Match-3 Colony Survival)**, fully specified in master GDD [../supplements/design/gdd_match3_survival_siege.md](../supplements/design/gdd_match3_survival_siege.md).
+
+Key architectural tenets of the pivot:
+- **Canonical Viewport**: Single 9:16 portrait layout across both mobile and desktop (top ~44–46% arena, bottom ~54–56% 7x7 board). On desktop, this vertical viewport is centered with letterbox statistics/backgrounds to ensure identical gameplay balance and muscle memory.
+- **Pacing**: Move-limited Day preparation (15–25 moves) paired with a high-intensity, real-time 60–90 second Night siege (continuous swarm, 200–350 ms board animation budget with input buffering, combat simulation never locks).
+- **Cognitive Clarity**: 5 persistent color families (Red = Firepower, Blue = Defense/Wall, Yellow = Tech/Stun, Green = Meds/Recruitment, Purple = Tactical/Sniper).
+- **Decoupled Architecture**: Pure C# `Match3BoardModel` communicates via events to `Match3CombatBridge`, completely decoupled from underlying `UnitCombat` and `FlowFieldManager` implementations.
+- **Stage 1 Minimal Viable Slice (MVS)**: 1 arena, 1 wall, 1 rifle squad, 5 token colors, 3 enemy archetypes (Walker, Runner, Brute), 3 power-up types, 1 90s Night + 1 short Day, early `IPlatformServices` contract for Yandex SDK. Target economics: ~30,000 ₽/mo (~1,500 DAU).
+
+### Match-3 Development Roadmap & Current State
+
+- **Stage 1: Match3BoardModel v0.1 Core Domain (COMPLETED & HARDENED)**:
+  - Pure C# assembly `Match3.asmdef` with `noEngineReferences: true` (zero coupling to Unity Engine, MonoBehaviour, or RTS).
+  - Deterministic PCG32 pseudo-random number generator (`Pcg32Match3Random`) with rejection sampling and verified golden vector for persistence (`pcg32-v1`).
+  - Deep immutability for `BoardResolution`, `ResolutionStep`, and `MatchGroup` with `ReadOnlyCollection<T>`.
+  - Non-mutating `HasAnyLegalMove()` preserving board state and PRNG state.
+  - Bounded loops for `AutoShuffle()` and initial generation with deterministic emergency fallback.
+  - Hard cascade limit `MaxCascadeDepth = 32` with deterministic stabilization and `MaxCascadeDepthExceeded` flag.
+  - Coordinate convention: `(0, 0)` is bottom-left, X right, Y up, gravity downwards.
+  - Tests: 30 unit, property, and fuzz tests all green in EditMode.
+- **Stage 2: Match3BoardModel v0.2 Special Resolution (COMPLETED & FROZEN)**:
+  - Precedence: `Intersection (Dynamite) > Line5Plus (Airstrike) > Line4 (Rocket) > Line3 (None)`. Exactly 1 special per merged group.
+  - Deterministic anchor selection: Intersection point > Destination cell B > Source cell A > lowest Y > lowest X.
+  - Pre-gravity chain reaction resolver: all triggered specials enqueued into `Queue<BoardPosition>`, visited set prevents re-triggering within the step, board mutated once.
+  - Newly spawned specials at anchor participate in same-step chain reactions if struck by explosions.
+  - Full special swap matrix verified:
+    - Rocket + Rocket (cross)
+    - Rocket + Dynamite (3 rows + 3 columns centered at destination)
+    - Dynamite + Dynamite (5x5 Chebyshev distance <= 2)
+    - Airstrike + Airstrike (full 49-cell board clear)
+    - Airstrike + RocketHorizontal (transforms target color, detonates alternating rockets)
+    - Airstrike + RocketVertical (transforms target color, detonates alternating rockets)
+    - Airstrike + Dynamite (transforms target color, detonates all 3x3 dynamites)
+    - Single special swap (destination activation with source cell survival)
+  - Rich `ClearedTile` snapshots with first-cause-wins semantics: `ClearCause = первая детерминированная причина, добавившая позицию в ClearSet`, while `SpecialActivation` retains full geometric impact area.
+  - Canonical ordering: every collection sorted by Y ascending then X ascending.
+  - Authoritative Unity Test Runner batchmode run verified:
+    - **Match-3 C# Unity EditMode Suite: 55 passed, 0 failed** (Total repository EditMode suite: 62 passed, 0 failed).
+    - Fuzz invariants: 10,000 board generations + 500 special swap simulations pass with zero residual matches and valid legal moves.
+  - Mathematical core frozen.
+- **Stage 3: v0.3 Match3 Presentation (NEXT MILESTONE)**:
+  - Architecture: `Match3InputController` -> `Match3BoardController` -> `Match3BoardModel` -> `BoardResolution` -> `Match3ResolutionPlayer` -> `Match3BoardView`.
+  - Core principle: `BoardView` decides nothing and maintains zero game state; it purely receives and visualizes calculated `BoardResolution`.
+  - Timing & responsivity:
+    - `0 ms`: `TrySwap()` execution.
+    - `<1 ms`: Complete deterministic logical resolution.
+    - `0–60 ms`: Swap animation playback.
+    - `60–130 ms`: Match & special activation explosions.
+    - `130–220 ms`: Gravity drop & refill cascade.
+    - `~220 ms`: Input unlocked (board visually reaches new domain state).
+    - `220–350 ms`: Lingering VFX, particle trails, audio tails.
+  - Development integrity guard: `AssertViewMatchesModel()` checking all 49 cells (`occupied`, `color`, `special`, `position`) against domain model snapshot after each completed `BoardResolution`.
+
+### Legacy RTS Engine Maintenance Status
+This is the preserved canonical technical reference for the earlier large rendering and world-generation work:
 
 Before any shader migration, the project must first go through code cleanup and decomposition.
 

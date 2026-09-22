@@ -5,6 +5,7 @@ This directory contains future-facing gameplay expansion material.
 Main documents:
 
 - [../supplements_index.json](../supplements_index.json)
+- [gdd_match3_survival_siege.md](./gdd_match3_survival_siege.md)
 - [states_diplomacy_research_automation_plan.md](./states_diplomacy_research_automation_plan.md)
 - [project_addendum_states_diplomacy_research_anomalies_automation_economy.docx](./project_addendum_states_diplomacy_research_anomalies_automation_economy.docx)
 

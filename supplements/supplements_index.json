@@ -23,6 +23,7 @@
     "music_integration": "supplements/audio/music_integration.md",
     "sfx_integration": "supplements/audio/sfx_integration.md",
     "design_readme": "supplements/design/README.md",
+    "gdd_match3_survival_siege": "supplements/design/gdd_match3_survival_siege.md",
     "states_diplomacy_research_automation_plan": "supplements/design/states_diplomacy_research_automation_plan.md",
     "design_addendum_docx": "supplements/design/project_addendum_states_diplomacy_research_anomalies_automation_economy.docx"
   },
@@ -30,7 +31,7 @@
     "start_from_audio_runtime": "Open supplements/audio/music_integration.md and supplements/audio/sfx_integration.md after checking the supplements index.",
     "start_from_soundtrack_bank": "Use domains.audio.soundtrack_banks to route by normalized bank IDs, then open supplements/audio/music_integration.md.",
     "start_from_sfx_category": "Use domains.audio.sfx_categories to route by normalized category IDs, then open supplements/audio/sfx_integration.md.",
-    "start_from_future_design": "Open supplements/design/README.md and supplements/design/states_diplomacy_research_automation_plan.md after checking the supplements index.",
+    "start_from_future_design": "Open supplements/design/README.md, supplements/design/gdd_match3_survival_siege.md, and supplements/design/states_diplomacy_research_automation_plan.md after checking the supplements index.",
     "do_not_route_by_raw_source_filename": "Raw source file names inside soundtrack_variants and sound_effects are intentionally preserved; use the normalized directory IDs below instead."
   },
   "naming_policy": {

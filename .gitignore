@@ -31,10 +31,12 @@ My project/.plastic/
 # Keep VS Code project settings (helpful cross-PC)
 !My project/.vscode/
 
-# Additional local folders
+# Additional local folders and generated test results
 LOGS UNITY/
 Vrem_2/
 *.log
+TestResults.xml
+scratch*.txt
 
 # Python caches
 __pycache__/

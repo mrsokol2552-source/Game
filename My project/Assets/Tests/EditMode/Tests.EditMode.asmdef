@@ -2,7 +2,8 @@
   "name": "Tests.EditMode",
   "references": [
     "RTS.Presentation",
-    "RTS.Domain"
+    "RTS.Domain",
+    "Match3"
   ],
   "optionalUnityReferences": [
     "TestAssemblies"

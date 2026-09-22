@@ -200,7 +200,17 @@
       "role_id": "design_supplements_overview",
       "ownership_tags": ["design_supplement_routing", "design_reference_scope"],
       "required_links": [
+        "supplements/design/gdd_match3_survival_siege.md",
         "supplements/design/states_diplomacy_research_automation_plan.md"
+      ]
+    },
+    {
+      "path": "supplements/design/gdd_match3_survival_siege.md",
+      "layer": "supplements",
+      "role_id": "design_match3_survival_siege_gdd",
+      "ownership_tags": ["match3_survival_siege_gdd", "yandex_games_monetization_spec"],
+      "required_links": [
+        "docs/gameplay_current_state.md"
       ]
     },
     {
