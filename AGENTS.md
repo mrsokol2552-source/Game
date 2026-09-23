@@ -89,4 +89,16 @@ Vrem_2 / OmniRoute orchestrator:
 
 ## Agent Guidelines
 
+- **Strict Orchestrator Delegation Policy (Zero Manual Coding by Primary Assistant)**:
+  Antigravity / the primary assistant is strictly prohibited from directly modifying, refactoring, implementing, or editing application or domain code files in Vrem / Dungeon Master Game when the OmniRoute-backed engineering orchestrator is alive and operational.
+  Direct manual coding by the primary assistant is an emergency fallback permitted ONLY if a catastrophic bootstrap defect demonstrably prevents the orchestrator itself from executing.
+  In all normal operations:
+  1. The assistant acts strictly as the **Supervisor / Dispatcher**.
+  2. The assistant formulates an `EngineeringMissionV1` (`mission.json`), clearly defining the objective, explicit acceptance criteria, bounded scope hints, and test commands.
+  3. The assistant dispatches the mission to the orchestrator:
+     `.\.venv\Scripts\python.exe tools\orchestrator.py mission <mission.json> --auto`
+  4. The assistant consumes only the compact handoff (`supervisor_summary.json`), verification verdict, and provenance receipt.
+  5. The assistant must NOT waste its own context or user subscription manually inspecting files, writing patches, or running iterative pytest loops that belong to the autonomous orchestrator.
+
 - **Bounded Improvement Capture**: After completing a task, briefly record only directly observed, actionable follow-up ideas in the owning backlog or documentation when they are useful. Do not continue implementation, refactoring, architecture work, or prompt optimization after the requested outcome and acceptance criteria are satisfied unless the extra work is required to correct a concrete blocker or regression, or the user explicitly authorizes it. Optional ideas do not reopen a completed task, and having no follow-up idea is not a blocker to stopping.
+
